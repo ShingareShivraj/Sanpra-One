@@ -1,0 +1,2352 @@
+import 'dart:async';
+import 'dart:io';
+
+import 'package:auto_size_text/auto_size_text.dart';
+import 'package:fl_chart/fl_chart.dart';
+import 'package:flutter/material.dart';
+import 'package:geolocation/model/dashboard.dart';
+import 'package:geolocation/screens/comp_off_screen/list_comp_off/list_comp_off_view.dart';
+import 'package:geolocation/screens/home_screen/home_view_model.dart';
+import 'package:geolocation/screens/tour_forms/list_tour/list_tour_screen.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:iconsax/iconsax.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart';
+import 'package:slide_to_act/slide_to_act.dart';
+import 'package:stacked/stacked.dart';
+
+import '../../constants.dart';
+import '../../router.router.dart';
+import '../../widgets/drop_down.dart';
+import '../Marketing Material Issue/list_marketing/list_marketing_screen.dart';
+import '../attendance_request/list_attendance_request/list_attendance_request_screen.dart';
+import '../attendence_screen/attendence_view.dart';
+import '../holiday_screen/holiday_view.dart';
+import '../profile_screen/profile_screen.dart';
+import '../stock_screen/stock_screen.dart';
+
+class HomePage extends StatefulWidget {
+  const HomePage({super.key});
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  @override
+  Widget build(BuildContext context) {
+    return ViewModelBuilder<HomeViewModel>.reactive(
+      viewModelBuilder: () => HomeViewModel(),
+      onViewModelReady: (vm) => vm.initialize(context),
+      builder: (context, model, child) {
+        // Wait until initial check loaded
+        if (!model.checkInStatusLoaded) {
+          return const Scaffold(
+              body: Center(child: CircularProgressIndicator()));
+        }
+
+        // If NOT checked in -> show full-screen lock page
+        if (!model.isCheckedIn) {
+          return CheckInLockScreen(model: model);
+        }
+
+        // Otherwise show normal dashboard
+        return Scaffold(
+          backgroundColor: const Color(0xFFF5F7FA),
+          body: SafeArea(child: dashboardPage(context, model)),
+        );
+      },
+    );
+  }
+
+  Widget dashboardPage(BuildContext context, HomeViewModel model) {
+    return RefreshIndicator(
+      onRefresh: () => model.onRefresh(),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          // Header
+          Row(
+            children: [
+              // Logo (kept your fade-in, but wrapped + sized consistently)
+              SizedBox(
+                height: 40,
+                child: Image.asset(
+                  'assets/images/Logo D CMYK.png',
+                  width: 120,
+                  fit: BoxFit.contain,
+                  frameBuilder:
+                      (context, child, frame, wasSynchronouslyLoaded) {
+                    if (wasSynchronouslyLoaded) return child;
+                    return AnimatedOpacity(
+                      opacity: frame == null ? 0 : 1,
+                      duration: const Duration(milliseconds: 250),
+                      child: child,
+                    );
+                  },
+                ),
+              ),
+
+              const Spacer(),
+
+              // Profile button
+              Tooltip(
+                message: 'Profile',
+                child: InkResponse(
+                  radius: 24,
+                  onTap: () =>
+                      Navigator.pushNamed(context, Routes.profileScreen),
+                  child: CircleAvatar(
+                    radius: 18,
+                    backgroundColor:
+                        Theme.of(context).colorScheme.surfaceContainerHighest,
+                    child: Icon(
+                      Icons.person_rounded,
+                      size: 20,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+              ),
+
+              const SizedBox(width: 10),
+
+              // Logout button
+              GestureDetector(
+                child: const Icon(Icons.logout),
+                onTap: () {
+                  showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return AlertDialog(
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12)),
+                        title: const Text('Logout'),
+                        content:
+                            const Text('Are you sure you want to log out?'),
+                        actions: [
+                          TextButton(
+                              onPressed: () => Navigator.of(context).pop(),
+                              child: const Text('Cancel')),
+                          TextButton(
+                            onPressed: () {
+                              logout(context);
+                              // implement logout
+                            },
+                            child: const Text('Logout',
+                                style: TextStyle(color: Colors.redAccent)),
+                          ),
+                        ],
+                      );
+                    },
+                  );
+                },
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Container(
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                /// ---- TOP ROW: Welcome + Date + Button ----
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    /// Left side (Welcome + Date)
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "Welcome, ${model.dashboard.empName ?? ''}!",
+                            style: const TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.w600),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            DateFormat('EEEE, dd/MM/yyyy')
+                                .format(DateTime.now()),
+                            style: const TextStyle(color: Colors.black54),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    /// Right side button
+                    ElevatedButton(
+                      onPressed: () async {
+                        final nextType = model.isCheckedIn ? "OUT" : "IN";
+
+                        final meterReading = await Navigator.push<String>(
+                          context,
+                          MaterialPageRoute(
+                            fullscreenDialog: true,
+                            builder: (_) => MeterReadingScreen(type: nextType),
+                          ),
+                        );
+                        if (!mounted ||
+                            meterReading == null ||
+                            meterReading.isEmpty) {
+                          _showError(context, "Meter reading required");
+                          return;
+                        }
+
+                        final photoPath = await Navigator.push<String>(
+                          context,
+                          MaterialPageRoute(
+                            fullscreenDialog: true,
+                            builder: (_) => PhotoCaptureScreen(type: nextType),
+                          ),
+                        );
+                        if (!mounted ||
+                            photoPath == null ||
+                            photoPath.isEmpty) {
+                          _showError(context, "Photo capture cancelled");
+                          return;
+                        }
+                        final photoFile = File(photoPath);
+
+                        final position = await Navigator.push<Position>(
+                          context,
+                          MaterialPageRoute(
+                            fullscreenDialog: true,
+                            builder: (_) => LocationScreen(type: nextType),
+                          ),
+                        );
+                        if (!mounted || position == null) {
+                          _showError(context, "Location access failed");
+                          return;
+                        }
+
+                        // Processing overlay
+                        if (!mounted) return;
+                        showDialog(
+                          context: context,
+                          barrierDismissible: false,
+                          builder: (_) => ProcessingScreen(type: nextType),
+                        );
+
+                        final success = await model.employeeLog(
+                          nextType,
+                          context,
+                          photoFile: photoFile,
+                          meterReading: meterReading,
+                          position: position,
+                        );
+
+                        if (!mounted) return;
+                        Navigator.pop(context); // close processing
+
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(success
+                                ? "Employee $nextType successful"
+                                : "Failed to update log"),
+                            backgroundColor:
+                                success ? Colors.green : Colors.red,
+                          ),
+                        );
+
+                        model.notifyListeners();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.redAccent,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 18, vertical: 10),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: Text(
+                        model.isCheckedIn ? "Day-Out" : "Day-In",
+                        style:
+                            const TextStyle(color: Colors.white, fontSize: 16),
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 20),
+
+                /// ---- BOTTOM ROW: Day-In | Spend | Day-Out ----
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    /// Day In
+                    Expanded(
+                      child: Column(
+                        children: [
+                          const Text(
+                            "Day In",
+                            style: TextStyle(
+                              fontSize: 18,
+                              color: Colors.green,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(model.dashboard.inTime ?? "Not Marked"),
+                        ],
+                      ),
+                    ),
+
+                    /// Divider
+                    Container(
+                        width: 1, height: 40, color: Colors.grey.shade300),
+
+                    /// Spend
+                    Expanded(
+                      child: Column(
+                        children: [
+                          const Text(
+                            "Spend",
+                            style: TextStyle(
+                                fontSize: 18, fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(model.spendHours),
+                        ],
+                      ),
+                    ),
+
+                    /// Divider
+                    Container(
+                        width: 1, height: 40, color: Colors.grey.shade300),
+
+                    /// Day Out
+                    Expanded(
+                      child: Column(
+                        children: [
+                          const Text(
+                            "Day Out",
+                            style: TextStyle(
+                              fontSize: 18,
+                              color: Colors.red,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(model.dashboard.outTime?.isNotEmpty == true
+                              ? model.dashboard.outTime!
+                              : "Not Marked"),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+
+          SizedBox(height: 20),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: const [
+                    Icon(Icons.location_on, color: Colors.blueAccent),
+                    SizedBox(width: 8),
+                    Text(
+                      "Current Area",
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                const Text(
+                  "Tap to change area",
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.black45,
+                  ),
+                ),
+                const SizedBox(height: 14),
+                CustomDropdownButton2(
+                  value: model.selectedTerritory,
+                  items: model.territoryList,
+                  hintText: 'Select Area / Territory',
+                  onChanged: (value) {
+                    if (value != null) {
+                      model.setSelectedTerritory(value);
+                    }
+                  },
+                  validator: (value) => (value == null || value.isEmpty)
+                      ? 'Please select an area'
+                      : null,
+                  labelText: '',
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 24),
+
+          // ---------------------------------------------------------
+          // If NO Territory → Show Friendly Message, Hide Dashboard
+          // ---------------------------------------------------------
+          if (model.selectedTerritory == null) ...[
+            Center(
+              child: Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                        color: Colors.black12,
+                        blurRadius: 6,
+                        offset: Offset(0, 2))
+                  ],
+                ),
+                child: Column(
+                  children: const [
+                    Icon(Icons.info, color: Colors.blueAccent, size: 40),
+                    SizedBox(height: 12),
+                    Text(
+                      "Please select your Territory to continue",
+                      textAlign: TextAlign.center,
+                      style:
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            SizedBox(height: 40),
+          ] else ...[
+            // Quick Actions + rest of dashboard content
+            const Text("Quick Actions",
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+            const SizedBox(height: 16),
+            SizedBox(
+              height: 120, // adjust based on your card height
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(right: 16.0),
+                    child: _QuickActionCard(
+                      icon: Iconsax.filter_search,
+                      label: "Search",
+                      onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) =>
+                                  QuickActionGrid(model: model))),
+                    ),
+                  ),
+                  if (model.isFormAvailableForDocType("Customer"))
+                    Padding(
+                      padding: const EdgeInsets.only(right: 16.0),
+                      child: _QuickActionCard(
+                        icon: Iconsax.user_add,
+                        label: "Customer",
+                        onTap: () =>
+                            Navigator.pushNamed(context, Routes.customerList),
+                      ),
+                    ),
+                  if (model.isFormAvailableForDocType("Tours"))
+                    Padding(
+                      padding: const EdgeInsets.only(right: 16.0),
+                      child: _QuickActionCard(
+                        icon: Iconsax.map_1,
+                        label: "Tours",
+                        onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => ListTourScreen())),
+                      ),
+                    ),
+                  if (model.isFormAvailableForDocType("Lead"))
+                    Padding(
+                      padding: const EdgeInsets.only(right: 16.0),
+                      child: _QuickActionCard(
+                        icon: Iconsax.activity,
+                        label: "Lead",
+                        onTap: () =>
+                            Navigator.pushNamed(context, Routes.leadListScreen),
+                      ),
+                    ),
+                  if (model.isFormAvailableForDocType("Visit"))
+                    Padding(
+                      padding: const EdgeInsets.only(right: 16.0),
+                      child: _QuickActionCard(
+                        icon: Iconsax.location,
+                        label: "Visit",
+                        onTap: () =>
+                            Navigator.pushNamed(context, Routes.visitScreen),
+                      ),
+                    ),
+                  if (model.isFormAvailableForDocType("Sales Order"))
+                    Padding(
+                      padding: const EdgeInsets.only(right: 16.0),
+                      child: _QuickActionCard(
+                        icon: Iconsax.shopping_cart,
+                        label: "Orders",
+                        onTap: () => Navigator.pushNamed(
+                            context, Routes.listOrderScreen),
+                      ),
+                    ),
+                  if (model.isFormAvailableForDocType("Expense Claim"))
+                    Padding(
+                      padding: const EdgeInsets.only(right: 16.0),
+                      child: _QuickActionCard(
+                        icon: Iconsax.wallet,
+                        label: "Expense",
+                        onTap: () =>
+                            Navigator.pushNamed(context, Routes.expenseScreen),
+                      ),
+                    ),
+                  if (model.isFormAvailableForDocType("Leave Application"))
+                    Padding(
+                      padding: const EdgeInsets.only(right: 16.0),
+                      child: _QuickActionCard(
+                        icon: Iconsax.briefcase,
+                        label: "Leaves",
+                        onTap: () => Navigator.pushNamed(
+                            context, Routes.listLeaveScreen),
+                      ),
+                    ),
+                  // if (model.isFormAvailableForDocType("Delivery Note"))
+                  //   Padding(
+                  //     padding: const EdgeInsets.only(right: 16.0),
+                  //     child: _QuickActionCard(
+                  //       icon: Iconsax.box,
+                  //       label: "Delivery",
+                  //       onTap: () => Navigator.pushNamed(
+                  //           context, Routes.listDeliveryNoteScreen),
+                  //     ),
+                  //   ),
+
+                  if (model.isFormAvailableForDocType("Stock Entry"))
+                    Padding(
+                      padding: const EdgeInsets.only(right: 16.0),
+                      child: _QuickActionCard(
+                        icon: Iconsax.graph,
+                        label: "Actual Stock",
+                        onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => ItemStockScreen())),
+                      ),
+                    ),
+
+                  // if (model.isFormAvailableForDoctype("Project Lead"))
+                  //   Padding(
+                  //     padding: const EdgeInsets.only(right: 16.0),
+                  //     child: _QuickActionCard(
+                  //       icon: Iconsax.personalcard,
+                  //       label: "Project Lead",
+                  //       onTap: () => Navigator.push(
+                  //           context,
+                  //           MaterialPageRoute(
+                  //               builder: (context) => ProjectLeadListScreen())),
+                  //     ),
+                  //   ),
+                ],
+              ),
+            ),
+            CurrentLocationMapCard(),
+
+            const SizedBox(height: 16),
+
+            // Sales Dashboard
+            const Text(
+              "Visit & Tour Dashboard",
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 8,
+                    spreadRadius: 1,
+                  )
+                ],
+              ),
+              child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: const [
+                        Text(
+                          "The Visit & Tour",
+                          style: TextStyle(color: Colors.grey, fontSize: 14),
+                        ),
+                        Icon(Iconsax.trend_up, color: Colors.green, size: 18),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    weeklySummary(model.weekData),
+                    const SizedBox(height: 16),
+                    weeklyBarChart(model.weekData),
+                  ]),
+            ),
+            const SizedBox(height: 24),
+
+            /// ===== MONTH SUMMARY =====
+            Text(
+              "This Month Summary",
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 12),
+            GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: 6,
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
+                childAspectRatio: 1.4, // 🔥 gives enough height
+              ),
+              itemBuilder: (context, index) {
+                final summaries = [
+                  {
+                    "title": "Visits",
+                    "value":
+                        model.monthlySummary.visit?.total.toString() ?? "0",
+                    "icon": Icons.location_on,
+                    "color": Colors.blue,
+                  },
+                  {
+                    "title": "Attendance",
+                    "value": model.monthlySummary.attendance?.total ?? 0,
+                    "icon": Icons.how_to_reg,
+                    "color": Colors.green,
+                  },
+                  {
+                    "title": "Leaves",
+                    "value": model.monthlySummary.leave?.total ?? 0,
+                    "icon": Icons.beach_access,
+                    "color": Colors.orange,
+                  },
+                  {
+                    "title": "Orders",
+                    "value": model.monthlySummary.orders?.total ?? 0,
+                    "icon": Icons.shopping_cart,
+                    "color": Colors.purple,
+                  },
+                  {
+                    "title": "Leads",
+                    "value":
+                        model.monthlySummary.leads?.total.toString() ?? "0",
+                    "icon": Icons.leaderboard,
+                    "color": Colors.redAccent,
+                  },
+                  {
+                    "title": "Tours",
+                    "value":
+                        model.monthlySummary.tours?.total.toString() ?? "0",
+                    "icon": Icons.location_on_outlined,
+                    "color": Colors.orangeAccent,
+                  }
+                ];
+
+                final summary = summaries[index];
+
+                return MonthSummary(
+                  title: summary["title"]?.toString() ?? "",
+                  value: int.tryParse(summary["value"].toString()) ?? 0,
+                );
+              },
+            ),
+          ]
+        ]),
+      ),
+    );
+  }
+
+  void _showError(BuildContext c, String msg) {
+    ScaffoldMessenger.of(c).showSnackBar(
+        SnackBar(content: Text(msg), backgroundColor: Colors.redAccent));
+  }
+
+  Widget weeklyBarChart(List<SalesPerson> data) {
+    if (data.isEmpty) {
+      return const SizedBox(
+        height: 200,
+        child: Center(
+          child: Text(
+            "No data for this week",
+            style: TextStyle(color: Colors.grey),
+          ),
+        ),
+      );
+    }
+
+    final maxY = data
+            .map((e) => (e.visitCount ?? 0) + (e.tourCount ?? 0))
+            .fold<int>(0, (prev, el) => el > prev ? el : prev)
+            .toDouble() +
+        1;
+
+    return SizedBox(
+      height: 200,
+      child: BarChart(
+        BarChartData(
+          maxY: maxY,
+          barTouchData: BarTouchData(enabled: true),
+          gridData: FlGridData(show: true, horizontalInterval: 1),
+          borderData: FlBorderData(show: false),
+          barGroups: data.asMap().entries.map((e) {
+            final day = DateTime.parse(e.value.date!).weekday;
+
+            return BarChartGroupData(
+              x: day,
+              barsSpace: 6,
+              barRods: [
+                BarChartRodData(
+                  toY: (e.value.visitCount ?? 0).toDouble(),
+                  width: 7,
+                  color: Colors.blue.shade400,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                BarChartRodData(
+                  toY: (e.value.tourCount ?? 0).toDouble(),
+                  width: 7,
+                  color: Colors.blue.shade100,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ],
+            );
+          }).toList(),
+          titlesData: FlTitlesData(
+            leftTitles: AxisTitles(
+              sideTitles: SideTitles(
+                showTitles: true,
+                reservedSize: 30,
+                getTitlesWidget: (value, meta) => Text(
+                  value.toInt().toString(),
+                  style: const TextStyle(fontSize: 10),
+                ),
+              ),
+            ),
+            bottomTitles: AxisTitles(
+              sideTitles: SideTitles(
+                showTitles: true,
+                getTitlesWidget: (value, meta) {
+                  const days = [
+                    "",
+                    "Mon",
+                    "Tue",
+                    "Wed",
+                    "Thu",
+                    "Fri",
+                    "Sat",
+                    "Sun"
+                  ];
+                  return Text(
+                    days[value.toInt()],
+                    style: const TextStyle(fontSize: 10),
+                  );
+                },
+              ),
+            ),
+            topTitles:
+                const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            rightTitles:
+                const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget weeklySummary(List<SalesPerson> data) {
+    final totalVisits =
+        data.fold<int>(0, (sum, e) => sum + (e.visitCount ?? 0));
+    final totalTours = data.fold<int>(0, (sum, e) => sum + (e.tourCount ?? 0));
+
+    return Row(
+      children: [
+        _summaryCard(
+          title: "Visits",
+          value: totalVisits.toString(),
+          color: Colors.blue.shade400,
+        ),
+        const SizedBox(width: 12),
+        _summaryCard(
+          title: "Tours",
+          value: totalTours.toString(),
+          color: Colors.blue.shade100,
+        ),
+      ],
+    );
+  }
+
+  Widget _summaryCard({
+    required String title,
+    required String value,
+    required Color color,
+  }) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: color.withOpacity(.12),
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(title,
+                style:
+                    const TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
+            const SizedBox(height: 6),
+            Text(value,
+                style:
+                    const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class MonthSummary extends StatelessWidget {
+  final String title;
+  final int value;
+
+  const MonthSummary({
+    super.key,
+    required this.title,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 10,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          /// VALUE
+          Text(
+            value.toString(),
+            style: const TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+              color: Colors.blue,
+            ),
+          ),
+
+          const SizedBox(height: 6),
+
+          /// TITLE
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: Colors.black,
+            ),
+          ),
+
+          const SizedBox(height: 4),
+
+          /// SUB TEXT
+          const Text(
+            "Total Count",
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.grey,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class QuickActionGrid extends StatefulWidget {
+  final dynamic model;
+
+  const QuickActionGrid({super.key, required this.model});
+
+  @override
+  State<QuickActionGrid> createState() => _QuickActionGridState();
+}
+
+class _QuickActionGridState extends State<QuickActionGrid>
+    with SingleTickerProviderStateMixin {
+  final TextEditingController _searchController = TextEditingController();
+  late AnimationController _anim;
+
+  Map<String, List<Map<String, dynamic>>> sections = {};
+  List<Map<String, dynamic>> allActionsFlat = [];
+
+  @override
+  void initState() {
+    super.initState();
+
+    _anim = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 120),
+      lowerBound: 0.92,
+      upperBound: 1.0,
+    );
+
+    _buildSections();
+  }
+
+  void _buildSections() {
+    // SALES
+    List<Map<String, dynamic>> sales = [
+      if (widget.model.isFormAvailableForDocType("Customer"))
+        {
+          "label": "Customer",
+          "icon": Iconsax.user_add,
+          "route": Routes.customerList
+        },
+      if (widget.model.isFormAvailableForDocType("Lead"))
+        {
+          "label": "Lead",
+          "icon": Iconsax.activity,
+          "route": Routes.leadListScreen
+        },
+      if (widget.model.isFormAvailableForDocType("Sales Order"))
+        {
+          "label": "Orders",
+          "icon": Iconsax.shopping_cart,
+          "route": Routes.listOrderScreen
+        },
+      // if (widget.model.isFormAvailableForDocType("Delivery Note"))
+      //   {
+      //     "label": "Delivery",
+      //     "icon": Iconsax.box,
+      //     "route": Routes.listDeliveryNoteScreen
+      //   },
+      {"label": "Visit", "icon": Iconsax.location, "route": Routes.visitScreen},
+    ];
+
+    // HR
+    List<Map<String, dynamic>> hr = [
+      if (widget.model.isFormAvailableForDocType("Leave Application"))
+        {
+          "label": "Leaves",
+          "icon": Iconsax.briefcase,
+          "route": Routes.listLeaveScreen
+        },
+      if (widget.model.isFormAvailableForDocType("Attendance"))
+        {
+          "label": "Attendance",
+          "icon": Iconsax.calendar,
+          "screen": AttendanceScreen()
+        },
+      if (widget.model.isFormAvailableForDocType("Compensatory Leave Request"))
+        {
+          "label": "Comp off Request",
+          "icon": Iconsax.receipt_add,
+          "screen": ListCompOffView()
+        },
+      if (widget.model.isFormAvailableForDocType("Attendance Request"))
+        {
+          "label": "Attendance Request",
+          "icon": Iconsax.document_text,
+          "screen": AttendanceRequestScreen()
+        },
+      if (widget.model.isFormAvailableForDocType("Expense Claim"))
+        {
+          "label": "Expense",
+          "icon": Iconsax.wallet,
+          "route": Routes.expenseScreen
+        },
+      if (widget.model.isFormAvailableForDocType("Holiday List"))
+        {
+          "label": "Holiday",
+          "icon": Iconsax.calendar_search5,
+          "screen": HolidayScreen()
+        },
+      if (widget.model.isFormAvailableForDocType("Employee"))
+        {
+          "label": "Profile",
+          "icon": Iconsax.personalcard,
+          "screen": ProfileScreen()
+        },
+    ];
+
+    // OPERATIONS
+    List<Map<String, dynamic>> operations = [
+      if (widget.model.isFormAvailableForDocType("Stock Entry"))
+        {"label": "Stock", "icon": Iconsax.graph, "screen": ItemStockScreen()},
+      if (widget.model.isFormAvailableForDocType("Marketing Material Issue"))
+        {
+          "label": "Merchandise",
+          "icon": Iconsax.shopping_cart,
+          "screen": MarketingListScreen()
+        },
+      {"label": "Tours", "icon": Iconsax.calendar, "screen": ListTourScreen()},
+    ];
+
+    sections = {
+      "Sales": sales,
+      "HR": hr,
+      "Operations": operations,
+    };
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text("Search Options")),
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+              _buildSearchBar(),
+              const SizedBox(height: 20),
+              _buildSectionView(),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // SEARCH BAR
+  Widget _buildSearchBar() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.black12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(.04),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          )
+        ],
+      ),
+      child: TextField(
+        controller: _searchController,
+        decoration: const InputDecoration(
+          prefixIcon: Icon(Icons.search),
+          hintText: "Search actions...",
+          border: InputBorder.none,
+          contentPadding: EdgeInsets.all(14),
+        ),
+        onChanged: (_) => setState(() {}),
+      ),
+    );
+  }
+
+  // SECTION VIEW — FIXED (NO LISTVIEW!)
+  Widget _buildSectionView() {
+    final query = _searchController.text.toLowerCase();
+
+    return Column(
+      children: [
+        for (var entry in sections.entries)
+          if (_hasVisibleItems(entry.value, query))
+            _buildSectionCard(entry.key, entry.value, query),
+      ],
+    );
+  }
+
+  bool _hasVisibleItems(List<Map<String, dynamic>> list, String query) =>
+      list.any((a) => a["label"].toLowerCase().contains(query));
+
+  // SECTION CARD
+  Widget _buildSectionCard(
+      String title, List<Map<String, dynamic>> items, String query) {
+    final filtered =
+        items.where((a) => a["label"].toLowerCase().contains(query)).toList();
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 22),
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: Colors.black12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(.05),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          )
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title,
+              style:
+                  const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+          const SizedBox(height: 12),
+          Container(height: 1, color: Colors.black12),
+          const SizedBox(height: 14),
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: filtered.length,
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 4,
+              crossAxisSpacing: 10,
+              mainAxisSpacing: 10,
+              childAspectRatio: 0.8,
+            ),
+            itemBuilder: (_, i) => _buildActionButton(filtered[i]),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActionButton(Map<String, dynamic> item) {
+    return GestureDetector(
+      onTap: () {
+        if (item["route"] != null) {
+          Navigator.pushNamed(context, item["route"]);
+        } else {
+          Navigator.push(
+              context, MaterialPageRoute(builder: (_) => item["screen"]));
+        }
+      },
+      child: Column(
+        children: [
+          Container(
+            height: 52,
+            width: 52,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.blueAccent.withOpacity(.1),
+              border: Border.all(color: Colors.blueAccent.withOpacity(.3)),
+            ),
+            child: Icon(item["icon"], color: Colors.blueAccent, size: 28),
+          ),
+          const SizedBox(height: 6),
+          AutoSizeText(
+            item["label"],
+            textAlign: TextAlign.center,
+            minFontSize: 10,
+            style: const TextStyle(
+              fontSize: 11, // 👈 smaller text
+              fontWeight: FontWeight.w600,
+              height: 1.1,
+            ),
+          )
+        ],
+      ),
+    );
+  }
+}
+
+// -----------------------------
+// CHECK-IN LOCK SCREEN
+// -----------------------------
+class CheckInLockScreen extends StatefulWidget {
+  final HomeViewModel model;
+  const CheckInLockScreen({super.key, required this.model});
+
+  @override
+  State<CheckInLockScreen> createState() => _CheckInLockScreenState();
+}
+
+class _CheckInLockScreenState extends State<CheckInLockScreen> {
+  final GlobalKey<SlideActionState> _slideKey = GlobalKey();
+  bool _processing = false;
+
+  @override
+  void dispose() {
+    _processing = false;
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: SafeArea(
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xFF2196F3), Color(0xFF64B5F6)],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+            ),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // 🔒 Animated Glass Icon
+              TweenAnimationBuilder<double>(
+                tween: Tween(begin: 0.85, end: 1),
+                duration: const Duration(milliseconds: 600),
+                curve: Curves.easeOutBack,
+                builder: (context, scale, child) =>
+                    Transform.scale(scale: scale, child: child),
+                child: Container(
+                  padding: const EdgeInsets.all(26),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: LinearGradient(
+                      colors: [
+                        Colors.white.withOpacity(0.28),
+                        Colors.white.withOpacity(0.08),
+                      ],
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.25),
+                        blurRadius: 18,
+                        offset: const Offset(0, 10),
+                      ),
+                    ],
+                  ),
+                  child: const Icon(
+                    Icons.lock_clock_rounded,
+                    size: 96,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 32),
+
+              const Text(
+                "Welcome Back",
+                style: TextStyle(
+                  fontSize: 34,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.6,
+                  color: Colors.white,
+                ),
+              ),
+
+              const SizedBox(height: 8),
+
+              Text(
+                "Slide to check-in and start your workday",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 17,
+                  height: 1.4,
+                  color: Colors.white.withOpacity(0.85),
+                ),
+              ),
+
+              const SizedBox(height: 44),
+
+              // 🟢 SLIDE TO CHECK-IN
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(36),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Colors.black26,
+                      blurRadius: 8,
+                      offset: Offset(0, 4),
+                    )
+                  ],
+                ),
+                padding: const EdgeInsets.all(4),
+                child: SwipeToConfirm(
+                  processing: _processing,
+                  text: "Slide to Check-In 🌟",
+                  onConfirm: () => _handleCheckIn(context),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  bool _showProcessing = false;
+
+  // ================= CHECK-IN FLOW =================
+
+  Future<void> _handleCheckIn(BuildContext context) async {
+    if (_processing) return;
+
+    setState(() {
+      _processing = true;
+    });
+
+    try {
+      // 1️⃣ Meter reading
+      final meterReading = await Navigator.push<String>(
+        context,
+        MaterialPageRoute(
+          fullscreenDialog: true,
+          builder: (_) => const MeterReadingScreen(type: "IN"),
+        ),
+      );
+      if (!mounted || meterReading == null) return _reset();
+
+      // 2️⃣ Photo
+      final photoPath = await Navigator.push<String>(
+        context,
+        MaterialPageRoute(
+          fullscreenDialog: true,
+          builder: (_) => const PhotoCaptureScreen(type: "IN"),
+        ),
+      );
+      if (!mounted || photoPath == null) return _reset();
+
+      // 3️⃣ Location
+      final position = await Navigator.push<Position>(
+        context,
+        MaterialPageRoute(
+          fullscreenDialog: true,
+          builder: (_) => const LocationScreen(type: "IN"),
+        ),
+      );
+      if (!mounted || position == null) return _reset();
+
+      // 4️⃣ Show processing overlay
+      if (mounted) {
+        setState(() => _showProcessing = true);
+      }
+
+      // 5️⃣ API call
+      final success = await widget.model.employeeLog(
+        "IN",
+        context,
+        photoFile: File(photoPath),
+        meterReading: meterReading,
+        position: position,
+      );
+
+      if (!mounted) return;
+
+      // 6️⃣ Hide overlay
+      setState(() => _showProcessing = false);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content:
+              Text(success ? "Check-in successful ✅" : "Check-in failed ❌"),
+          backgroundColor: success ? Colors.green : Colors.red,
+        ),
+      );
+    } catch (e) {
+      if (mounted) {
+        setState(() => _showProcessing = false);
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error: $e")),
+        );
+      }
+    } finally {
+      _reset();
+    }
+  }
+
+  void _reset() {
+    if (!mounted) return;
+
+    try {
+      _slideKey.currentState?.reset();
+    } catch (e, stack) {
+      debugPrint("SlideAction reset skipped: $e\n$stack");
+    }
+
+    if (mounted) {
+      setState(() => _processing = false);
+    }
+  }
+}
+
+class SwipeToConfirm extends StatefulWidget {
+  final VoidCallback onConfirm;
+  final bool processing;
+  final String text;
+
+  const SwipeToConfirm({
+    super.key,
+    required this.onConfirm,
+    required this.processing,
+    this.text = "Slide to Check-In",
+  });
+
+  @override
+  State<SwipeToConfirm> createState() => _SwipeToConfirmState();
+}
+
+class _SwipeToConfirmState extends State<SwipeToConfirm> {
+  double _dragX = 0;
+  final double _buttonSize = 52;
+
+  @override
+  Widget build(BuildContext context) {
+    final maxDrag = MediaQuery.of(context).size.width - _buttonSize - 64;
+
+    return Container(
+      height: 60,
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(36),
+        boxShadow: const [
+          BoxShadow(
+            color: Colors.black26,
+            blurRadius: 8,
+            offset: Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Stack(
+        alignment: Alignment.centerLeft,
+        children: [
+          // 📝 Text
+          Center(
+            child: widget.processing
+                ? const SizedBox(
+                    height: 22,
+                    width: 22,
+                    child: CircularProgressIndicator(strokeWidth: 3),
+                  )
+                : Text(
+                    widget.text,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+          ),
+
+          // 👉 Draggable button
+          Positioned(
+            left: _dragX,
+            child: GestureDetector(
+              onHorizontalDragUpdate: widget.processing
+                  ? null
+                  : (details) {
+                      setState(() {
+                        _dragX += details.delta.dx;
+                        _dragX = _dragX.clamp(0, maxDrag);
+                      });
+                    },
+              onHorizontalDragEnd: widget.processing
+                  ? null
+                  : (_) {
+                      if (_dragX >= maxDrag * 0.9) {
+                        widget.onConfirm();
+                      }
+                      setState(() => _dragX = 0);
+                    },
+              child: Container(
+                height: _buttonSize,
+                width: _buttonSize,
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.blueAccent,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black26,
+                      blurRadius: 4,
+                      offset: Offset(2, 2),
+                    ),
+                  ],
+                ),
+                child: const Icon(
+                  Icons.login,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// -----------------------------
+// METER READING SCREEN
+// -----------------------------
+class MeterReadingScreen extends StatelessWidget {
+  final String type;
+  const MeterReadingScreen({super.key, required this.type});
+
+  @override
+  Widget build(BuildContext context) {
+    final controller = TextEditingController();
+
+    return Scaffold(
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        title: Text(
+          "$type - Meter Reading",
+          style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+        ),
+      ),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            children: [
+              SizedBox(height: 20),
+
+              // Center Card
+              Expanded(
+                child: Center(
+                  child: Container(
+                    padding: EdgeInsets.all(20),
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black12,
+                          blurRadius: 8,
+                          offset: Offset(0, 3),
+                        )
+                      ],
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          "Meter Reading",
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        SizedBox(height: 10),
+                        TextField(
+                          controller: controller,
+                          keyboardType: TextInputType.number,
+                          decoration: InputDecoration(
+                            labelText: "Enter meter reading",
+                            hintText:
+                                "Please enter your vehicle meter reading.",
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+
+              // Next Button
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    if (controller.text.isNotEmpty) {
+                      Navigator.pop(context, controller.text);
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    padding: EdgeInsets.symmetric(vertical: 16),
+                    backgroundColor: Color(0xFF1565C0),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: Text(
+                    "Next",
+                    style: TextStyle(fontSize: 18, color: Colors.white),
+                  ),
+                ),
+              ),
+
+              SizedBox(height: 20),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// -----------------------------
+// PHOTO CAPTURE SCREEN (returns path String)
+// -----------------------------
+
+class PhotoCaptureScreen extends StatefulWidget {
+  final String type;
+  const PhotoCaptureScreen({super.key, required this.type});
+
+  @override
+  _PhotoCaptureScreenState createState() => _PhotoCaptureScreenState();
+}
+
+class _PhotoCaptureScreenState extends State<PhotoCaptureScreen> {
+  final ImagePicker picker = ImagePicker();
+  File? photo;
+  bool isCapturing = true;
+
+  @override
+  void initState() {
+    super.initState();
+    // Launch camera after small delay
+    Future.delayed(const Duration(milliseconds: 300), capturePhoto);
+  }
+
+  Future<void> capturePhoto() async {
+    setState(() => isCapturing = true);
+
+    try {
+      final picked = await picker.pickImage(
+        source: ImageSource.camera,
+        imageQuality: 70,
+        maxWidth: 1280,
+      );
+
+      if (!mounted) return;
+
+      if (picked != null) {
+        photo = File(picked.path);
+        // Return path to previous screen
+        Navigator.pop(context, picked.path);
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Failed to capture photo: $e")),
+      );
+    } finally {
+      setState(() => isCapturing = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        elevation: 0,
+        title: Text(
+          "Capture Photo (${widget.type})",
+          style: const TextStyle(color: Colors.white),
+        ),
+        iconTheme: const IconThemeData(color: Colors.white),
+      ),
+      body: Center(
+        child: photo != null
+            ? ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Image.file(photo!, fit: BoxFit.cover),
+              )
+            : Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: const [
+                  CircularProgressIndicator(color: Colors.blueAccent),
+                  SizedBox(height: 16),
+                  Text(
+                    "Opening Camera...",
+                    style: TextStyle(color: Colors.white70, fontSize: 18),
+                  ),
+                ],
+              ),
+      ),
+      floatingActionButton: photo == null
+          ? FloatingActionButton(
+              onPressed: capturePhoto,
+              backgroundColor: Colors.blueAccent,
+              child:
+                  const Icon(Icons.camera_alt, color: Colors.white, size: 32),
+            )
+          : null,
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+    );
+  }
+}
+
+// -----------------------------
+// LOCATION SCREEN (returns Position)
+// -----------------------------
+class LocationScreen extends StatefulWidget {
+  final String type;
+  final Position? initialPosition; // optional pre-fetched position
+
+  const LocationScreen({super.key, required this.type, this.initialPosition});
+
+  @override
+  State<LocationScreen> createState() => _LocationScreenState();
+}
+
+class _LocationScreenState extends State<LocationScreen> {
+  Position? pos;
+  bool loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    // Use initial position if provided
+    if (widget.initialPosition != null) {
+      pos = widget.initialPosition;
+      loading = false;
+      _fetchFreshLocation(); // still update in background
+    } else {
+      _fetchLocation();
+    }
+  }
+
+  Future<void> _fetchLocation() async {
+    try {
+      // 1️⃣ Check location service
+      if (!await Geolocator.isLocationServiceEnabled()) {
+        await Geolocator.openLocationSettings();
+        return;
+      }
+
+      // 2️⃣ Check permissions
+      var permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Location permission denied")),
+          );
+          return;
+        }
+      }
+
+      if (permission == LocationPermission.deniedForever) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text(
+                  "Location permission permanently denied.\nEnable it from settings.")),
+        );
+        await Geolocator.openAppSettings();
+        return;
+      }
+
+      // 3️⃣ Try last known position first (fast)
+      pos = await Geolocator.getLastKnownPosition();
+
+      // 4️⃣ Immediately show last known position if available
+      if (pos != null) {
+        setState(() => loading = false);
+      }
+
+      // 5️⃣ Fetch fresh high-accuracy position
+      await _fetchFreshLocation();
+    } catch (e) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text("Failed to get location: $e")));
+    }
+  }
+
+  Future<void> _fetchFreshLocation() async {
+    try {
+      final freshPos = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+        timeLimit: const Duration(seconds: 10),
+      );
+      pos = freshPos;
+      if (mounted) setState(() => loading = false);
+    } catch (e) {
+      if (mounted) setState(() => loading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        title: Text("${widget.type} - Location",
+            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+      ),
+      body: SafeArea(
+        child: Stack(
+          children: [
+            // Map
+            if (pos != null)
+              GoogleMap(
+                mapType: MapType.hybrid,
+                initialCameraPosition: CameraPosition(
+                  target: LatLng(pos!.latitude, pos!.longitude),
+                  zoom: 16,
+                ),
+                markers: {
+                  Marker(
+                    markerId: const MarkerId("me"),
+                    position: LatLng(pos!.latitude, pos!.longitude),
+                  ),
+                },
+              ),
+            // Loading overlay
+            if (loading)
+              const Center(
+                child: CircularProgressIndicator(color: Colors.blueAccent),
+              ),
+          ],
+        ),
+      ),
+      bottomNavigationBar: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: ElevatedButton(
+          onPressed: pos != null ? () => Navigator.pop(context, pos) : null,
+          style: ElevatedButton.styleFrom(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            backgroundColor: const Color(0xFF1565C0),
+          ),
+          child: const Text(
+            "Next",
+            style: TextStyle(fontSize: 18, color: Colors.white),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// -----------------------------
+// PROCESSING SCREEN (modal)
+// -----------------------------
+class ProcessingScreen extends StatelessWidget {
+  final String type;
+
+  const ProcessingScreen({
+    super.key,
+    required this.type,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.black.withOpacity(0.55),
+      child: Center(
+        child: Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: 28,
+            vertical: 24,
+          ),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.15),
+                blurRadius: 20,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(
+                height: 42,
+                width: 42,
+                child: CircularProgressIndicator(
+                  strokeWidth: 3,
+                ),
+              ),
+              const SizedBox(height: 18),
+              Text(
+                "Processing $type",
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+              ),
+              const SizedBox(height: 6),
+              const Text(
+                "Please wait…",
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Colors.black54,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _QuickActionCard extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  const _QuickActionCard({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+        onTap: onTap,
+        child: Column(
+          children: [
+            CircleAvatar(
+              radius: 28,
+              backgroundColor: Colors.white,
+              child: Icon(icon, size: 28, color: Colors.black87),
+            ),
+            const SizedBox(height: 6),
+            Text(label, style: const TextStyle(fontSize: 13)),
+          ],
+        ));
+  }
+}
+
+class _SummaryCard extends StatelessWidget {
+  final String title;
+  final String value;
+  final Color color;
+
+  const _SummaryCard({
+    required this.title,
+    required this.value,
+    this.color = Colors.black,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 6,
+            spreadRadius: 1,
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title, style: const TextStyle(color: Colors.grey, fontSize: 14)),
+          const SizedBox(height: 8),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class CurrentLocationMapCard extends StatefulWidget {
+  const CurrentLocationMapCard({super.key});
+
+  @override
+  State<CurrentLocationMapCard> createState() => _CurrentLocationMapCardState();
+}
+
+class _CurrentLocationMapCardState extends State<CurrentLocationMapCard> {
+  GoogleMapController? _mapController;
+  StreamSubscription<Position>? _sub;
+
+  LatLng? _position;
+  DateTime? _fetchedAt;
+
+  bool _loading = true;
+  String? _error;
+
+  // ✅ Throttle UI updates (prevents excessive setState)
+  DateTime _lastUiUpdate = DateTime.fromMillisecondsSinceEpoch(0);
+  static const _uiUpdateGap = Duration(milliseconds: 800);
+
+  @override
+  void initState() {
+    super.initState();
+    _initAndTrack();
+  }
+
+  @override
+  void dispose() {
+    _sub?.cancel();
+    _mapController?.dispose();
+    super.dispose();
+  }
+
+  Future<void> _initAndTrack() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+
+    try {
+      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) throw Exception("Location services are disabled");
+
+      var permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+      if (permission == LocationPermission.denied) {
+        throw Exception("Location permission denied");
+      }
+      if (permission == LocationPermission.deniedForever) {
+        throw Exception("Location permission permanently denied");
+      }
+
+      // NOTE: Show last known position quickly for slow networks/GPS.
+      Position? lastKnown;
+      try {
+        lastKnown = await Geolocator.getLastKnownPosition();
+      } catch (_) {}
+
+      if (lastKnown != null && mounted) {
+        setState(() {
+          _position = LatLng(lastKnown!.latitude, lastKnown!.longitude);
+          _fetchedAt = DateTime.now();
+          _loading = false;
+          _error = null;
+        });
+      }
+
+      // NOTE: Get a fresh fix; keep last known if this times out.
+      Position? first;
+      try {
+        first = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.medium,
+          timeLimit: const Duration(seconds: 8),
+        );
+      } catch (_) {
+        if (lastKnown == null) {
+          throw Exception("Unable to get location");
+        }
+      }
+
+      if (first != null && mounted) {
+        setState(() {
+          _position = LatLng(first!.latitude, first.longitude);
+          _fetchedAt = DateTime.now();
+          _loading = false;
+          _error = null;
+        });
+      }
+
+      // ✅ Start listening, but not too frequently
+      await _sub?.cancel();
+
+      const settings = LocationSettings(
+        accuracy: LocationAccuracy.high,
+        distanceFilter: 10, // ✅ updates only after 10 meters movement
+      );
+
+      _sub = Geolocator.getPositionStream(locationSettings: settings).listen(
+        (pos) {
+          final now = DateTime.now();
+          // ✅ throttle UI rebuilds
+          if (now.difference(_lastUiUpdate) < _uiUpdateGap) return;
+          _lastUiUpdate = now;
+
+          if (!mounted) return;
+          setState(() {
+            _position = LatLng(pos.latitude, pos.longitude);
+            _fetchedAt = now;
+          });
+        },
+        onError: (e) {
+          if (!mounted) return;
+          setState(() {
+            _error = e.toString();
+          });
+        },
+      );
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = e.toString();
+        _loading = false;
+        _position = null;
+        _fetchedAt = null;
+      });
+    }
+  }
+
+  String _formatTime(DateTime dt) => DateFormat('dd MMM, hh:mm a').format(dt);
+
+  Future<void> _recenter() async {
+    if (_position == null || _mapController == null) return;
+    await _mapController!.animateCamera(
+      CameraUpdate.newLatLngZoom(_position!, 16),
+    );
+  }
+
+  void _openFullMap(BuildContext context) {
+    if (_position == null) return;
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => FullMapView(
+          lat: _position!.latitude,
+          lng: _position!.longitude,
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Container(
+      margin: const EdgeInsets.only(top: 20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(14),
+            child: Row(
+              children: [
+                const Icon(Icons.my_location, color: Colors.blueAccent),
+                const SizedBox(width: 8),
+                InkWell(
+                  borderRadius: BorderRadius.circular(10),
+                  onTap: _position == null ? null : () => _openFullMap(context),
+                  child: Text(
+                    "Current Location",
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                const Spacer(),
+                if (_fetchedAt != null)
+                  Text(
+                    _formatTime(_fetchedAt!),
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: Colors.black45,
+                    ),
+                  ),
+                const SizedBox(width: 6),
+                IconButton(
+                  tooltip: "Recenter",
+                  onPressed: _recenter,
+                  icon: const Icon(Icons.center_focus_strong, size: 20),
+                ),
+              ],
+            ),
+          ),
+          SizedBox(
+            height: 180,
+            child: ClipRRect(
+              borderRadius: const BorderRadius.vertical(
+                bottom: Radius.circular(16),
+              ),
+              child: _loading
+                  ? const Center(child: CircularProgressIndicator())
+                  : (_position == null)
+                      ? _LocationUnavailable(
+                          message: _error ??
+                              "Unable to fetch current location right now.",
+                          onRetry: _initAndTrack,
+                        )
+                      : GoogleMap(
+                          onMapCreated: (c) => _mapController = c,
+                          initialCameraPosition: CameraPosition(
+                            target: _position!,
+                            zoom: 16,
+                          ),
+                          markers: {
+                            Marker(
+                              markerId: const MarkerId("current"),
+                              position: _position!,
+                            ),
+                          },
+                          myLocationEnabled: true,
+                          myLocationButtonEnabled: false,
+                          zoomControlsEnabled: false,
+                          compassEnabled: false,
+                          mapToolbarEnabled: false,
+                        ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LocationUnavailable extends StatelessWidget {
+  final String message;
+  final VoidCallback onRetry;
+
+  const _LocationUnavailable({
+    required this.message,
+    required this.onRetry,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: Colors.grey.shade50,
+      padding: const EdgeInsets.all(14),
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.location_off, size: 30, color: Colors.black45),
+            const SizedBox(height: 10),
+            Text(
+              message.replaceFirst("Exception: ", ""),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 10),
+            OutlinedButton.icon(
+              onPressed: onRetry,
+              icon: const Icon(Icons.refresh),
+              label: const Text("Retry"),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class GoogleMapWidget extends StatelessWidget {
+  final LatLng position;
+
+  const GoogleMapWidget({super.key, required this.position});
+
+  @override
+  Widget build(BuildContext context) {
+    return GoogleMap(
+      initialCameraPosition: CameraPosition(
+        target: position,
+        zoom: 16,
+      ),
+      markers: {
+        Marker(
+          markerId: const MarkerId("current"),
+          position: position,
+        ),
+      },
+      myLocationEnabled: true,
+      myLocationButtonEnabled: false,
+      zoomControlsEnabled: false,
+      compassEnabled: false,
+      mapToolbarEnabled: false,
+    );
+  }
+}
+
+class FullMapView extends StatelessWidget {
+  final double lat;
+  final double lng;
+
+  const FullMapView({super.key, required this.lat, required this.lng});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final pos = LatLng(lat, lng);
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("Current Location"),
+        centerTitle: true,
+        elevation: 0,
+        backgroundColor: theme.colorScheme.surface,
+        foregroundColor: theme.colorScheme.onSurface,
+      ),
+      body: GoogleMap(
+        initialCameraPosition: CameraPosition(
+          target: pos,
+          zoom: 17,
+        ),
+
+        // ✅ UX / polish
+        mapType: MapType.hybrid,
+        myLocationEnabled: true,
+        myLocationButtonEnabled: true,
+        zoomControlsEnabled: false,
+        compassEnabled: true,
+        mapToolbarEnabled: true,
+
+        // ✅ marker for current point
+        markers: {
+          Marker(
+            markerId: const MarkerId("current"),
+            position: pos,
+            infoWindow: const InfoWindow(title: "Current Location"),
+          ),
+        },
+      ),
+
+      // Optional bottom action (open in map apps, share, etc. later)
+      // bottomNavigationBar: SafeArea(
+      //   child: Padding(
+      //     padding: const EdgeInsets.all(12),
+      //     child: FilledButton.icon(
+      //       onPressed: () {},
+      //       icon: const Icon(Icons.share),
+      //       label: const Text("Share Location"),
+      //     ),
+      //   ),
+      // ),
+    );
+  }
+}

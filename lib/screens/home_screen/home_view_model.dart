@@ -1,0 +1,321 @@
+import 'dart:async';
+import 'dart:io';
+
+import 'package:flutter/material.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:intl/intl.dart';
+import 'package:logger/logger.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:stacked/stacked.dart';
+
+import '../../model/dashboard.dart';
+import '../../model/emp_data.dart';
+import '../../router.router.dart';
+import '../../services/geolocation_services.dart';
+import '../../services/home_services.dart';
+
+class HomeViewModel extends BaseViewModel {
+  final HomeServices _service = HomeServices();
+  final Logger _log = Logger();
+  final GeolocationService _geoService = GeolocationService();
+
+  // ───────────────────────────────────────── Core Data ─────────────────────────────────────────
+  DashBoard? _dashboard;
+  DashBoard get dashboard => _dashboard ?? DashBoard();
+
+  EmpData? employeeData;
+  List<String> availableDocTypes = [];
+
+  bool checkInStatusLoaded = false;
+  bool isCheckedIn = false;
+  bool isHide = false;
+
+  bool lazyDataLoaded = false;
+  bool loadingIn = false;
+  bool loadingOut = false;
+
+  MonthlySummary monthlySummary = MonthlySummary();
+  List<SalesPerson> salesList = [];
+  List<SalesPerson> weekData = [];
+
+  String greeting = "";
+
+  // ───────────────────────────────────────── Territory ─────────────────────────────────────────
+  String? selectedTerritory;
+  List<String> territoryList = [];
+
+  // ───────────────────────────────────────── Spend Hours Cache ─────────────────────────────────────────
+  String? _cachedSpendHours;
+  Timer? _spendTimer;
+
+  // ───────────────────────────────────────── Location ─────────────────────────────────────────
+  Position? currentPosition;
+  String currentAddress = "Fetching location...";
+  bool locationLoading = false;
+
+  // ───────────────────────────────────────── SharedPrefs ─────────────────────────────────────────
+  SharedPreferences? _prefs;
+
+  Future<SharedPreferences> get _prefsInstance async {
+    _prefs ??= await SharedPreferences.getInstance();
+    return _prefs!;
+  }
+
+  // ───────────────────────────────────────── Helpers ─────────────────────────────────────────
+  void _commit(VoidCallback fn) {
+    fn();
+    notifyListeners();
+  }
+
+  // ───────────────────────────────────────── INIT ─────────────────────────────────────────
+  Future<void> initialize(BuildContext context) async {
+    try {
+      final prefs = await _prefsInstance;
+
+      final results = await Future.wait([
+        _service.dashboard(),
+        _service.getEmpName(),
+        _service.fetchRoles(),
+      ]);
+
+      _commit(() {
+        _dashboard = results[0] as DashBoard?;
+        employeeData = results[1] as EmpData?;
+        availableDocTypes =
+            (results[2] as List).map((e) => e.toString()).toList();
+
+        isCheckedIn = _dashboard?.lastLogType == "IN";
+        territoryList = _dashboard?.territorylist ?? [];
+        selectedTerritory = prefs.getString("selected_territory");
+
+        if (selectedTerritory != null &&
+            !territoryList.contains(selectedTerritory)) {
+          selectedTerritory = null;
+          prefs.remove("selected_territory");
+        }
+
+        monthlySummary = _dashboard?.monthlySummary ?? MonthlySummary();
+        salesList = _dashboard?.salesPerson ?? [];
+        weekData = _weeklyData(salesList);
+
+        _updateGreeting();
+        isHide = _dashboard?.empName == null;
+        checkInStatusLoaded = true;
+      });
+
+      _startSpendTimer();
+      await _initAndSendLocation();
+    } catch (e, st) {
+      _log.e("Init failed", error: e, stackTrace: st);
+      Fluttertoast.showToast(msg: "Failed to load dashboard");
+    }
+  }
+
+  // ───────────────────────────────────────── GREETING ─────────────────────────────────────────
+  void _updateGreeting() {
+    final hour = DateTime.now().hour;
+    greeting = hour < 12
+        ? "Good Morning"
+        : hour < 17
+            ? "Good Afternoon"
+            : "Good Evening";
+  }
+
+  // ───────────────────────────────────────── WEEK DATA ─────────────────────────────────────────
+  List<SalesPerson> _weeklyData(List<SalesPerson> list) {
+    final now = DateTime.now();
+    final start = now.subtract(Duration(days: now.weekday - 1));
+    final end = start.add(const Duration(days: 6));
+
+    return list.where((e) {
+      if (e.date == null) return false;
+      final d = DateTime.parse(e.date!);
+      return d.isAfter(start.subtract(const Duration(days: 1))) &&
+          d.isBefore(end.add(const Duration(days: 1)));
+    }).toList();
+  }
+
+  bool isFormAvailableForDocType(String docType) =>
+      availableDocTypes.contains(docType);
+  // ───────────────────────────────────────── SPEND HOURS ─────────────────────────────────────────
+  String get spendHours {
+    if (_cachedSpendHours != null) return _cachedSpendHours!;
+
+    if (_dashboard?.inTime?.isEmpty ?? true) return "0 Hrs";
+
+    try {
+      final formatter = DateFormat("dd-MMM hh:mma yyyy");
+      final now = DateTime.now();
+
+      final inTime = formatter.parse("${_dashboard!.inTime} ${now.year}");
+      final outTime = (_dashboard!.outTime?.isNotEmpty ?? false)
+          ? formatter.parse("${_dashboard!.outTime} ${now.year}")
+          : now;
+
+      final hrs = outTime.difference(inTime).inMinutes / 60;
+      return _cachedSpendHours = "${hrs.toStringAsFixed(2)} Hrs";
+    } catch (_) {
+      return "0 Hrs";
+    }
+  }
+
+  void _startSpendTimer() {
+    _spendTimer?.cancel();
+    _spendTimer = Timer.periodic(const Duration(minutes: 1), (_) {
+      _cachedSpendHours = null;
+      notifyListeners();
+    });
+  }
+
+  // ───────────────────────────────────────── LOCATION ─────────────────────────────────────────
+
+  Future<void> _initAndSendLocation() async {
+    try {
+      locationLoading = true;
+      notifyListeners();
+
+      // 1) Ensure GPS/Location services are ON
+      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        await Geolocator.openLocationSettings();
+        return;
+      }
+
+      // 2) Ensure permission
+      var status = await Permission.locationWhenInUse.status;
+
+      if (status.isDenied) {
+        status = await Permission.locationWhenInUse.request();
+      }
+
+      if (status.isPermanentlyDenied ||
+          status.isRestricted ||
+          status.isLimited) {
+        await openAppSettings();
+        return;
+      }
+
+      if (!status.isGranted) {
+        // still not granted
+        return;
+      }
+
+      // 3) Cached first (fast)
+      currentPosition = await _geoService.getCachedLocation();
+
+      // 4) Fresh GPS
+      final fresh = await _geoService.determinePosition();
+      if (fresh != null) {
+        currentPosition = fresh;
+        await _geoService.cacheLocation(fresh);
+      }
+
+      // 5) Send to API only if we have a position
+      if (currentPosition != null) {
+        await _geoService.employeeLocation(currentPosition!);
+      }
+    } finally {
+      locationLoading = false;
+      notifyListeners();
+    }
+  }
+
+  // ───────────────────────────────────────── TERRITORY ─────────────────────────────────────────
+  Future<void> setSelectedTerritory(String value) async {
+    final prefs = await _prefsInstance;
+    _commit(() {
+      selectedTerritory = value;
+      prefs.setString("selected_territory", value);
+    });
+  }
+
+  Future<void> onRefresh() async {
+    try {
+      final dashboard = await _service.dashboard();
+      if (dashboard == null) return;
+
+      _dashboard = dashboard;
+      territoryList = dashboard.territorylist ?? [];
+      monthlySummary = dashboard.monthlySummary ?? MonthlySummary();
+      salesList = dashboard.salesPerson ?? [];
+      weekData = _weeklyData(salesList);
+
+      isCheckedIn = dashboard.lastLogType == "IN";
+
+      _cachedSpendHours = null;
+      notifyListeners();
+    } catch (_) {
+      Fluttertoast.showToast(msg: "Failed to refresh data");
+    }
+  }
+
+  // ───────────────────────────────────────── CHECK-IN / OUT ─────────────────────────────────────────
+  Future<bool> employeeLog(
+    String logType,
+    BuildContext context, {
+    required File photoFile,
+    required String meterReading,
+    required Position position,
+  }) async {
+    _setLoading(logType, true);
+
+    try {
+      final compressed = await FlutterImageCompress.compressAndGetFile(
+        photoFile.path,
+        "${photoFile.path}_compressed.jpg",
+        quality: 60,
+      );
+
+      final success = await _service.employeeCheckin(
+        logType: logType,
+        latitude: position.latitude.toString(),
+        longitude: position.longitude.toString(),
+        meterReading: meterReading,
+        photoFile: File(compressed?.path ?? photoFile.path),
+      );
+
+      if (!success) return false;
+
+      _commit(() {
+        isCheckedIn = logType == "IN";
+        _cachedSpendHours = null;
+      });
+
+      _dashboard = await _service.dashboard();
+      return true;
+    } catch (e) {
+      Fluttertoast.showToast(msg: "Failed to record log");
+      return false;
+    } finally {
+      _setLoading(logType, false);
+    }
+  }
+
+  void _setLoading(String type, bool v) {
+    _commit(() {
+      type == "IN" ? loadingIn = v : loadingOut = v;
+    });
+  }
+
+  // ───────────────────────────────────────── LOGOUT ─────────────────────────────────────────
+  Future<void> handleLogout(BuildContext context) async {
+    _prefs?.clear();
+    if (context.mounted) {
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        Routes.loginViewScreen,
+        (_) => false,
+      );
+    }
+  }
+
+  // ───────────────────────────────────────── DISPOSE ─────────────────────────────────────────
+  @override
+  void dispose() {
+    _spendTimer?.cancel();
+    super.dispose();
+  }
+}
