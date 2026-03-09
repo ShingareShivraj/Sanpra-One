@@ -61,7 +61,7 @@ class HomeServices {
     required String latitude,
     required String longitude,
     required File photoFile,
-    required String meterReading,
+    String? meterReading,
   }) async {
     try {
       final url =

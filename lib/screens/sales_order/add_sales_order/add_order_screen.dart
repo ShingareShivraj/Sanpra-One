@@ -327,22 +327,28 @@ class ItemsSelector extends StatelessWidget {
   }
 }
 
-class SelectedItemList extends StatelessWidget {
+class SelectedItemList extends StatefulWidget {
   final AddOrderViewModel model;
   const SelectedItemList({required this.model, super.key});
 
-  Future<bool> _confirmDelete(BuildContext context) async {
+  @override
+  State<SelectedItemList> createState() => _SelectedItemListState();
+}
+
+class _SelectedItemListState extends State<SelectedItemList> {
+  Future<bool> _confirmDelete() async {
+    if (!mounted) return false;
     return await showDialog(
           context: context,
-          builder: (_) => AlertDialog(
+          builder: (dialogContext) => AlertDialog(
             title: const Text("Delete Item?"),
             content: const Text("Are you sure you want to delete this item?"),
             actions: [
               TextButton(
-                  onPressed: () => Navigator.pop(context, false),
+                  onPressed: () => Navigator.of(dialogContext).pop(false),
                   child: const Text("No")),
               TextButton(
-                  onPressed: () => Navigator.pop(context, true),
+                  onPressed: () => Navigator.of(dialogContext).pop(true),
                   child: const Text("Yes")),
             ],
           ),
@@ -352,6 +358,7 @@ class SelectedItemList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final model = widget.model;
     if (model.selectedItems.isEmpty) {
       return Center(
         child: Container(
@@ -385,7 +392,7 @@ class SelectedItemList extends StatelessWidget {
                 color: Colors.white, size: 36),
           ),
           direction: DismissDirection.startToEnd,
-          confirmDismiss: (_) => _confirmDelete(context),
+          confirmDismiss: (_) => _confirmDelete(),
           onDismissed: (_) => model.deleteItem(index),
           child:
               SelectedItemCard(item: selectedItem, model: model, index: index),
@@ -407,69 +414,87 @@ class SelectedItemCard extends StatelessWidget {
     super.key,
   });
 
-  Widget _buildInfoText(String label, String value, {Color? color}) {
-    return Text(
-      "$label: $value",
-      style: TextStyle(
-        fontSize: 14,
+  TextStyle get _titleStyle => const TextStyle(
+        fontSize: 15,
+        fontWeight: FontWeight.w700,
+        color: Colors.black87,
+      );
+
+  TextStyle get _smallBold => const TextStyle(
+        fontSize: 13,
+        fontWeight: FontWeight.w700,
+        color: Colors.black87,
+      );
+
+  TextStyle get _smallGrey => TextStyle(
+        fontSize: 12,
         fontWeight: FontWeight.w600,
-        color: color ?? Colors.black,
-      ),
-    );
-  }
+        color: Colors.grey.shade700,
+      );
 
-  Widget _buildQtyBox(TextEditingController controller) {
-    return SizedBox(
-      width: 50,
-      height: 32,
-      child: TextField(
-        controller: controller,
-        keyboardType: TextInputType.number,
-        textAlign: TextAlign.center,
-        style: const TextStyle(fontSize: 13),
-        decoration: InputDecoration(
-          isDense: true,
-          contentPadding: const EdgeInsets.all(6),
-          filled: true,
-          fillColor: Colors.grey.shade100,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
+  Widget _statusStrip(double delivered, double pending) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              "Delivered: ${delivered.toStringAsFixed(2)}",
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: Colors.green,
+              ),
+            ),
           ),
-        ),
-        onChanged: (value) {
-          final parsed = int.tryParse(value);
-          if (parsed != null && parsed > 0) {
-            model.setItemQuantity(index, parsed);
-          }
-        },
+          Expanded(
+            child: Text(
+              "Pending: ${pending.toStringAsFixed(2)}",
+              textAlign: TextAlign.end,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: Colors.redAccent,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildRateBox(TextEditingController controller) {
+  Widget _box(
+    TextEditingController controller, {
+    required Function(String) onChanged,
+    double width = 70,
+    String? suffix,
+  }) {
     return SizedBox(
-      width: 70,
-      height: 32,
+      width: width,
+      height: 34,
       child: TextField(
         controller: controller,
         keyboardType: const TextInputType.numberWithOptions(decimal: true),
         textAlign: TextAlign.center,
-        style: const TextStyle(fontSize: 13),
+        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
         decoration: InputDecoration(
           isDense: true,
-          contentPadding: const EdgeInsets.all(6),
+          contentPadding: const EdgeInsets.symmetric(vertical: 8),
           filled: true,
-          fillColor: Colors.grey.shade100,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
+          fillColor: Colors.white,
+          suffixText: suffix,
+          suffixStyle:
+              const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: BorderSide(color: Colors.black.withOpacity(0.20)),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: const BorderSide(color: Colors.black54),
           ),
         ),
-        onChanged: (value) {
-          final parsed = double.tryParse(value);
-          if (parsed != null && parsed > 0) {
-            model.setItemRate(index, parsed);
-          }
-        },
+        onChanged: onChanged,
       ),
     );
   }
@@ -477,106 +502,158 @@ class SelectedItemCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final qtyController = model.getQuantityController(index);
-    final rateController = model.getRateController(index);
+    final discountController = model.getDiscountController(index);
 
-    final deliveredQty = item.deliveredQty ?? 0;
-    final orderedQty = item.qty ?? 0;
-    final pendingQty = (orderedQty - deliveredQty).clamp(0, double.infinity);
+    final deliveredQty = (item.deliveredQty ?? 0).toDouble();
+    final orderedQty = (item.qty ?? 0).toDouble();
+    final pendingQty =
+        (orderedQty - deliveredQty).clamp(0, double.infinity).toDouble();
+
+    final rate = (item.rate ?? 0).toDouble();
+
+    final discountAmount =
+        ((item.discountAmount ?? 0) + (item.distributedDiscountAmount ?? 0))
+            .toDouble();
+    final total = (item.netAmount ?? (item.amount));
 
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: 6),
-      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.symmetric(vertical: 10),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
         color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-              color: Colors.grey.shade300,
-              blurRadius: 6,
-              offset: const Offset(0, 3)),
-        ],
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Colors.black.withOpacity(0.10)),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          /// Top row: image + details + qty + rate
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              /// Image
-              ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: CachedNetworkImage(
-                  imageUrl: '$baseurl${item.image}',
-                  width: 60,
-                  height: 50,
-                  fit: BoxFit.cover,
-                  placeholder: (_, __) => const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
+          /// TOP STRIP
+
+          /// BODY
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                /// Image
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: CachedNetworkImage(
+                    imageUrl: '$baseurl${item.image}',
+                    width: 52,
+                    height: 52,
+                    fit: BoxFit.cover,
+                    placeholder: (_, __) => const SizedBox(
+                      width: 52,
+                      height: 52,
+                      child: Center(
+                        child: SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                      ),
+                    ),
+                    errorWidget: (_, __, ___) => Image.asset(
+                      'assets/images/image.png',
+                      width: 52,
+                      height: 52,
+                      fit: BoxFit.cover,
+                    ),
                   ),
-                  errorWidget: (_, __, ___) =>
-                      Image.asset('assets/images/image.png', scale: 5),
                 ),
-              ),
-              const SizedBox(width: 10),
+                const SizedBox(width: 12),
 
-              /// Item info
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      item.itemName ?? "N/A",
-                      style: const TextStyle(
-                          fontSize: 14, fontWeight: FontWeight.bold),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    Row(
-                      children: [
-                        const Text("Rate: ",
-                            style: TextStyle(
-                                fontSize: 12, fontWeight: FontWeight.w500)),
-                        _buildRateBox(rateController),
-                      ],
-                    ),
-                    _buildInfoText(
-                      "Amt",
-                      "₹ ${(item.amount ?? 0).toStringAsFixed(2)}",
-                      color: Colors.green,
-                    ),
-                  ],
+                /// Details
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      /// Name + Rate (same row)
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              (item.itemName ?? "N/A").toUpperCase(),
+                              style: _titleStyle,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Text(
+                            "Rate: ${rate.toStringAsFixed(2)}",
+                            style: _smallBold,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+
+                      /// Qty + Disc boxes row (like screenshot)
+                      Row(
+                        children: [
+                          Text("Qty", style: _smallGrey),
+                          const SizedBox(width: 8),
+                          _box(
+                            qtyController,
+                            width: 70,
+                            onChanged: (v) {
+                              final parsed = int.tryParse(v);
+                              if (parsed != null) {
+                                model.setItemQuantity(index, parsed);
+                              }
+                            },
+                          ),
+                          const SizedBox(width: 14),
+                          Text("Disc %", style: _smallGrey),
+                          const SizedBox(width: 8),
+                          _box(
+                            discountController,
+                            width: 80,
+                            onChanged: (v) {
+                              final parsed = double.tryParse(v);
+                              if (parsed != null) {
+                                model.setItemDiscount(index, parsed);
+                              }
+                            },
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 12),
+
+                      /// Net like screenshot (2 lines)
+                      Text(
+                        "Net: Rs.\n${total?.toStringAsFixed(2)}",
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.black87,
+                          height: 1.2,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        "Disc Amt: Rs. ${discountAmount.toStringAsFixed(2)}",
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.redAccent,
+                        ),
+                      ),
+
+                      /// (Optional) If you still want gross line:
+                      // const SizedBox(height: 6),
+                      // Text("Gross: Rs. ${gross.toStringAsFixed(2)}", style: _smallGrey),
+                    ],
+                  ),
                 ),
-              ),
-
-              /// Qty Box
-              Column(
-                children: [
-                  const Text('Qty',
-                      style:
-                          TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
-                  const SizedBox(height: 2),
-                  _buildQtyBox(qtyController),
-                ],
-              ),
-            ],
+              ],
+            ),
           ),
 
-          const SizedBox(height: 8),
-          const Divider(),
+          Divider(height: 1, color: Colors.black.withOpacity(0.10)),
 
-          /// Delivered & Pending
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              _buildInfoText("Delivered", deliveredQty.toStringAsFixed(2),
-                  color: Colors.green),
-              _buildInfoText("Pending", pendingQty.toStringAsFixed(2),
-                  color: Colors.redAccent),
-            ],
-          ),
+          /// BOTTOM STRIP (same as screenshot)
+          _statusStrip(deliveredQty, pendingQty),
         ],
       ),
     );
@@ -587,44 +664,134 @@ class BillingSection extends StatelessWidget {
   final AddOrderViewModel model;
   const BillingSection({required this.model, super.key});
 
+  String _money(num? v) => (v ?? 0).toStringAsFixed(2);
+
+  Widget _discountInput(
+    TextEditingController controller, {
+    required Function(String) onChanged,
+  }) {
+    return SizedBox(
+      width: 90,
+      height: 34,
+      child: TextField(
+        controller: controller,
+        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+        textAlign: TextAlign.center,
+        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+        decoration: InputDecoration(
+          isDense: true,
+          contentPadding: const EdgeInsets.symmetric(vertical: 8),
+          filled: true,
+          fillColor: Colors.white,
+          suffixText: "%",
+          suffixStyle:
+              const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: BorderSide(color: Colors.black.withOpacity(0.20)),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: const BorderSide(color: Colors.black54),
+          ),
+        ),
+        onChanged: onChanged,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final border = Colors.black.withOpacity(0.12);
+
     return Container(
-      padding: const EdgeInsets.all(8.0),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey),
-        borderRadius: BorderRadius.circular(8.0),
+        color: Colors.white,
+        border: Border.all(color: border),
+        borderRadius: BorderRadius.circular(10),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Tax and Discount',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18.0)),
-          const Divider(thickness: 2),
-          buildBillingRow(
-              'Subtotal :', model.orderData.netTotal?.toString() ?? '0.0'),
+          const Text(
+            "Tax and Discount",
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w800,
+              color: Colors.black87,
+            ),
+          ),
           const SizedBox(height: 10),
-          buildBillingRow('Total Tax :',
-              model.orderData.totalTaxesAndCharges?.toString() ?? '0.0'),
+          Divider(height: 1, color: border),
+          const SizedBox(height: 12),
+          _row("Subtotal :", _money(model.orderData.netTotal)),
           const SizedBox(height: 10),
-          buildBillingRow('Discount :',
-              model.orderData.discountAmount?.toString() ?? '0.0'),
-          const Divider(thickness: 2),
-          buildBillingRow(
-              'Total :', model.orderData.grandTotal?.toString() ?? '0.0'),
+          _row("Total Tax :", _money(model.orderData.totalTaxesAndCharges)),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  "Order Disc %",
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black87,
+                  ),
+                ),
+              ),
+              _discountInput(
+                model.orderDiscountController,
+                onChanged: (v) {
+                  final parsed = double.tryParse(v);
+                  if (parsed != null) model.setOrderDiscountPercent(parsed);
+                },
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          _row("Discount :", _money(model.orderData.discountAmount),
+              valueColor: Colors.redAccent),
+          const SizedBox(height: 12),
+          Divider(height: 1, color: border),
+          const SizedBox(height: 12),
+          _row(
+            "Total :",
+            _money(model.orderData.grandTotal),
+            isTotal: true,
+          ),
         ],
       ),
     );
   }
 
-  Widget buildBillingRow(String label, String value) {
+  Widget _row(
+    String label,
+    String value, {
+    bool isTotal = false,
+    Color? valueColor,
+  }) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label, style: const TextStyle(fontSize: 16.0)),
-        Text(value,
-            style:
-                const TextStyle(fontWeight: FontWeight.bold, fontSize: 16.0)),
+        Expanded(
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: isTotal ? FontWeight.w700 : FontWeight.w600,
+              color: Colors.black87,
+            ),
+          ),
+        ),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: isTotal ? 17 : 15,
+            fontWeight: FontWeight.w800,
+            color: valueColor ?? (isTotal ? Colors.black : Colors.black87),
+          ),
+        ),
       ],
     );
   }
@@ -701,21 +868,19 @@ class ActionButtons extends StatelessWidget {
                     "distributor")) // HIDE Accept for distributor
           Expanded(
             child: CTextButton(
-              text: model.isSame
-                  ? 'Submit Order'
-                  : (model.isEdit ? 'Update Order' : 'Create Order'),
+              text: (model.isEdit ? 'Update Order' : 'Create Order'),
               buttonColor: Colors.blueAccent.shade400,
               onPressed: () {
-                if (model.isSame) {
-                  _showConfirmationDialog(
-                    context: context,
-                    title: "Confirm Submit?",
-                    content: "Do you want to permanently submit this order?",
-                    onConfirm: () => model.onSubmitPressed(context),
-                  );
-                } else {
+                // if (model.isSame) {
+                //   _showConfirmationDialog(
+                //     context: context,
+                //     title: "Confirm Submit?",
+                //     content: "Do you want to permanently submit this order?",
+                //     onConfirm: () => model.onSubmitPressed(context),
+                //   );
+                // } else {
                   model.onSavePressed(context);
-                }
+                // }
               },
             ),
           ),

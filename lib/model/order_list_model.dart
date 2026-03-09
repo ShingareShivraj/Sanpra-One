@@ -2,6 +2,7 @@ class OrderList {
   String? name;
   String? customerName;
   String? transactionDate;
+  String? deliveryDate;
   double? grandTotal;
   String? status;
   String? deliveryStatus;
@@ -14,6 +15,7 @@ class OrderList {
       this.customerName,
       this.transactionDate,
       this.grandTotal,
+      this.deliveryDate,
       this.status,
       this.deliveryStatus,
       this.warehouse,
@@ -25,6 +27,7 @@ class OrderList {
     customerName = json['customer_name'];
     transactionDate = json['transaction_date'];
     grandTotal = json['grand_total'];
+    deliveryDate = json["delivery_date"];
     deliveryStatus = json['delivery_status'];
     status = json['status'];
     warehouse = json['set_warehouse'];
@@ -38,6 +41,7 @@ class OrderList {
     data['customer_name'] = customerName;
     data['transaction_date'] = transactionDate;
     data['grand_total'] = grandTotal;
+    data['delivery_date'] = deliveryDate;
     data['delivery_status'] = deliveryStatus;
     data['status'] = status;
     data["owner"] = owner;

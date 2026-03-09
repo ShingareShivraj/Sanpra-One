@@ -18,7 +18,7 @@ class TourServices {
     try {
       var dio = Dio();
       var response = await dio.request(
-        '$baseurl/api/resource/Tours?fields=["area","total_calls","date","name","description"]',
+        '$baseurl/api/resource/Tours?fields=["area","total_calls","date","name","description","owner"]',
         options: Options(
           method: 'GET',
           headers: {'Authorization': await getTocken()},

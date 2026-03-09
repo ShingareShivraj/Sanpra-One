@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:geolocation/model/dashboard.dart';
 import 'package:geolocation/screens/comp_off_screen/list_comp_off/list_comp_off_view.dart';
 import 'package:geolocation/screens/home_screen/home_view_model.dart';
+import 'package:geolocation/screens/reports/main_report_list.dart';
 import 'package:geolocation/screens/tour_forms/list_tour/list_tour_screen.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -25,6 +26,8 @@ import '../attendence_screen/attendence_view.dart';
 import '../holiday_screen/holiday_view.dart';
 import '../profile_screen/profile_screen.dart';
 import '../stock_screen/stock_screen.dart';
+import '../tracking_screen/background_service.dart';
+import '../tracking_screen/track_person_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -34,6 +37,16 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  @override
+  void initState() {
+    super.initState();
+    _ensureTrackingAlive();
+  }
+
+  Future<void> _ensureTrackingAlive() async {
+    await initializeService();
+  }
+
   @override
   Widget build(BuildContext context) {
     return ViewModelBuilder<HomeViewModel>.reactive(
@@ -45,7 +58,9 @@ class _HomePageState extends State<HomePage> {
           return const Scaffold(
               body: Center(child: CircularProgressIndicator()));
         }
-
+        if (model.dashboard.isEmployee ==false){
+          return DistributorHomePage();
+        }
         // If NOT checked in -> show full-screen lock page
         if (!model.isCheckedIn) {
           return CheckInLockScreen(model: model);
@@ -89,7 +104,19 @@ class _HomePageState extends State<HomePage> {
               ),
 
               const Spacer(),
-
+              if (model.dashboard.role.toString().toLowerCase() == "manager")
+                IconButton(
+                  tooltip: "Tracking",
+                  icon: const Icon(Icons.my_location),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const TrackPersonPage(),
+                      ),
+                    );
+                  },
+                ),
               // Profile button
               Tooltip(
                 message: 'Profile',
@@ -184,18 +211,25 @@ class _HomePageState extends State<HomePage> {
                       onPressed: () async {
                         final nextType = model.isCheckedIn ? "OUT" : "IN";
 
-                        final meterReading = await Navigator.push<String>(
-                          context,
-                          MaterialPageRoute(
-                            fullscreenDialog: true,
-                            builder: (_) => MeterReadingScreen(type: nextType),
-                          ),
-                        );
-                        if (!mounted ||
-                            meterReading == null ||
-                            meterReading.isEmpty) {
-                          _showError(context, "Meter reading required");
-                          return;
+                        String? meterReading;
+
+                        // ✅ Only require meter reading if tracking is enabled
+                        if (model.dashboard.trackingEnabled == true) {
+                          meterReading = await Navigator.push<String>(
+                            context,
+                            MaterialPageRoute(
+                              fullscreenDialog: true,
+                              builder: (_) =>
+                                  MeterReadingScreen(type: nextType),
+                            ),
+                          );
+
+                          if (!mounted ||
+                              meterReading == null ||
+                              meterReading.isEmpty) {
+                            _showError(context, "Meter reading required");
+                            return;
+                          }
                         }
 
                         final photoPath = await Navigator.push<String>(
@@ -555,18 +589,17 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ),
 
-                  // if (model.isFormAvailableForDoctype("Project Lead"))
-                  //   Padding(
-                  //     padding: const EdgeInsets.only(right: 16.0),
-                  //     child: _QuickActionCard(
-                  //       icon: Iconsax.personalcard,
-                  //       label: "Project Lead",
-                  //       onTap: () => Navigator.push(
-                  //           context,
-                  //           MaterialPageRoute(
-                  //               builder: (context) => ProjectLeadListScreen())),
-                  //     ),
-                  //   ),
+                  Padding(
+                    padding: const EdgeInsets.only(right: 16.0),
+                    child: _QuickActionCard(
+                      icon: Iconsax.receipt,
+                      label: "Report",
+                      onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => ReportsPage())),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -1024,6 +1057,7 @@ class _QuickActionGridState extends State<QuickActionGrid>
           "screen": MarketingListScreen()
         },
       {"label": "Tours", "icon": Iconsax.calendar, "screen": ListTourScreen()},
+      {"label": "Reports", "icon": Iconsax.receipt, "screen": ReportsPage()},
     ];
 
     sections = {
@@ -1306,8 +1340,6 @@ class _CheckInLockScreenState extends State<CheckInLockScreen> {
     );
   }
 
-  bool _showProcessing = false;
-
   // ================= CHECK-IN FLOW =================
 
   Future<void> _handleCheckIn(BuildContext context) async {
@@ -1319,15 +1351,20 @@ class _CheckInLockScreenState extends State<CheckInLockScreen> {
 
     try {
       // 1️⃣ Meter reading
-      final meterReading = await Navigator.push<String>(
-        context,
-        MaterialPageRoute(
-          fullscreenDialog: true,
-          builder: (_) => const MeterReadingScreen(type: "IN"),
-        ),
-      );
-      if (!mounted || meterReading == null) return _reset();
+      String? meterReading;
+      if (widget.model.dashboard.trackingEnabled == true) {
+        meterReading = await Navigator.push<String>(
+          context,
+          MaterialPageRoute(
+            fullscreenDialog: true,
+            builder: (_) => const MeterReadingScreen(type: "IN"),
+          ),
+        );
 
+        if (!mounted || meterReading == null) {
+          return _reset();
+        }
+      }
       // 2️⃣ Photo
       final photoPath = await Navigator.push<String>(
         context,
@@ -1349,9 +1386,7 @@ class _CheckInLockScreenState extends State<CheckInLockScreen> {
       if (!mounted || position == null) return _reset();
 
       // 4️⃣ Show processing overlay
-      if (mounted) {
-        setState(() => _showProcessing = true);
-      }
+      if (mounted) {}
 
       // 5️⃣ API call
       final success = await widget.model.employeeLog(
@@ -1365,7 +1400,6 @@ class _CheckInLockScreenState extends State<CheckInLockScreen> {
       if (!mounted) return;
 
       // 6️⃣ Hide overlay
-      setState(() => _showProcessing = false);
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -1376,8 +1410,6 @@ class _CheckInLockScreenState extends State<CheckInLockScreen> {
       );
     } catch (e) {
       if (mounted) {
-        setState(() => _showProcessing = false);
-
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text("Error: $e")),
         );
@@ -1826,7 +1858,7 @@ class _LocationScreenState extends State<LocationScreen> {
         ),
       ),
       bottomNavigationBar: Padding(
-        padding: const EdgeInsets.all(12.0),
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
         child: ElevatedButton(
           onPressed: pos != null ? () => Navigator.pop(context, pos) : null,
           style: ElevatedButton.styleFrom(
@@ -2347,6 +2379,529 @@ class FullMapView extends StatelessWidget {
       //     ),
       //   ),
       // ),
+    );
+  }
+}
+
+class DistributorHomePage extends StatelessWidget {
+  const DistributorHomePage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return ViewModelBuilder<HomeViewModel>.reactive(
+      viewModelBuilder: () => HomeViewModel(),
+      onViewModelReady: (vm) => vm.initialize(context),
+      builder: (context, model, child) {
+        final dashboard = model.dashboard;
+
+        return Scaffold(
+          backgroundColor: const Color(0xFFF4F6FA),
+          body: SafeArea(
+            child: RefreshIndicator(
+              onRefresh: () => model.onRefresh(),
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildHeader(context),
+                    const SizedBox(height: 18),
+
+                    _DistributorBannerCard(
+                      name: dashboard.empName ?? "Distributor",
+                      company: dashboard.company ?? "",
+                      email: dashboard.email ?? "",
+                    ),
+
+                    const SizedBox(height: 22),
+
+                    const Text(
+                      "Quick Actions",
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+
+                    GridView.count(
+                      crossAxisCount: 2,
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      crossAxisSpacing: 14,
+                      mainAxisSpacing: 14,
+                      childAspectRatio: 1.05,
+                      children: [
+                        _DistributorActionCard(
+                          icon: Iconsax.shopping_cart,
+                          label: "Sales Order",
+                          subtitle: "Create and manage orders",
+                          color: const Color(0xFF2563EB),
+                          onTap: () {
+                            Navigator.pushNamed(
+                              context,
+                              Routes.listDistributorOrderScreen,
+                            );
+                          },
+                        ),
+                        _DistributorActionCard(
+                          icon: Iconsax.box,
+                          label: "Delivery Note",
+                          subtitle: "Manage deliveries",
+                          color: const Color(0xFFF59E0B),
+                          onTap: () {
+                            Navigator.pushNamed(
+                              context,
+                              Routes.listDeliveryNoteScreen,
+                            );
+                          },
+                        ),
+                        _DistributorActionCard(
+                          icon: Iconsax.graph,
+                          label: "Actual Stock",
+                          subtitle: "View available stock",
+                          color: const Color(0xFF10B981),
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => ItemStockScreen(),
+                              ),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+
+
+                    const SizedBox(height: 14),
+
+                    const Text(
+                      "Management Shortcuts",
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            blurRadius: 14,
+                            offset: const Offset(0, 6),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        children: [
+                          _ShortcutTile(
+                            icon: Iconsax.shopping_cart,
+                            title: "Sales Orders",
+                            subtitle: "Create and track order records",
+                            onTap: () {
+                              Navigator.pushNamed(
+                                context,
+                                Routes.listDistributorOrderScreen,
+                              );
+                            },
+                          ),
+                          const Divider(height: 20),
+                          _ShortcutTile(
+                            icon: Iconsax.box,
+                            title: "Delivery Notes",
+                            subtitle: "View and manage delivery workflow",
+                            onTap: () {
+                              Navigator.pushNamed(
+                                context,
+                                Routes.listDeliveryNoteScreen,
+                              );
+                            },
+                          ),
+                          const Divider(height: 20),
+                          _ShortcutTile(
+                            icon: Iconsax.graph,
+                            title: "Stock Position",
+                            subtitle: "Check available item stock",
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => ItemStockScreen(),
+                                ),
+                              );
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildHeader(BuildContext context) {
+    return Row(
+      children: [
+        SizedBox(
+          height: 40,
+          child: Image.asset(
+            'assets/images/Logo D CMYK.png',
+            width: 120,
+            fit: BoxFit.contain,
+          ),
+        ),
+        const Spacer(),
+        InkResponse(
+          radius: 24,
+          onTap: () => Navigator.pushNamed(context, Routes.changePasswordScreen),
+          child: CircleAvatar(
+            radius: 19,
+            backgroundColor:
+            Theme.of(context).colorScheme.surfaceContainerHighest,
+            child: Icon(
+              Icons.password_outlined,
+              size: 20,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ),
+        const SizedBox(width: 10),
+        GestureDetector(
+          onTap: () {
+            showDialog(
+              context: context,
+              builder: (_) => AlertDialog(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                title: const Text('Logout'),
+                content: const Text('Are you sure you want to log out?'),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('Cancel'),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      logout(context);
+                    },
+                    child: const Text(
+                      'Logout',
+                      style: TextStyle(color: Colors.redAccent),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+          child: const Icon(Icons.logout),
+        ),
+      ],
+    );
+  }
+}
+
+class _DistributorBannerCard extends StatelessWidget {
+  final String name;
+  final String company;
+  final String email;
+
+  const _DistributorBannerCard({
+    required this.name,
+    required this.company,
+    required this.email,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(22),
+        gradient: const LinearGradient(
+          colors: [Color(0xFF1D4ED8), Color(0xFF3B82F6)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF3B82F6).withOpacity(0.22),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            height: 58,
+            width: 58,
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.18),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Iconsax.shop,
+              color: Colors.white,
+              size: 28,
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  company,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.white.withOpacity(0.92),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  email,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.white.withOpacity(0.84),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DistributorActionCard extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String subtitle;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _DistributorActionCard({
+    required this.icon,
+    required this.label,
+    required this.subtitle,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(20),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(20),
+        onTap: onTap,
+        child: Ink(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 12,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                CircleAvatar(
+                  radius: 25,
+                  backgroundColor: color.withOpacity(0.12),
+                  child: Icon(
+                    icon,
+                    color: color,
+                    size: 25,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  label,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  subtitle,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Colors.black54,
+                    height: 1.3,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _OverviewCard extends StatelessWidget {
+  final String title;
+  final String value;
+  final IconData icon;
+  final Color color;
+  final bool fullWidth;
+
+  const _OverviewCard({
+    required this.title,
+    required this.value,
+    required this.icon,
+    required this.color,
+    this.fullWidth = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: fullWidth ? double.infinity : null,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 12,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 22,
+            backgroundColor: color.withOpacity(0.12),
+            child: Icon(icon, color: color, size: 22),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  value,
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: Colors.black54,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ShortcutTile extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  const _ShortcutTile({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(14),
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Row(
+          children: [
+            CircleAvatar(
+              radius: 22,
+              backgroundColor: const Color(0xFFEEF2FF),
+              child: Icon(icon, color: const Color(0xFF2563EB), size: 22),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    subtitle,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Colors.black54,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right_rounded, color: Colors.black38),
+          ],
+        ),
+      ),
     );
   }
 }

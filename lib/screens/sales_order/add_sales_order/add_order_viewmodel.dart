@@ -19,6 +19,7 @@ class AddOrderViewModel extends BaseViewModel {
 
   final customerController = TextEditingController();
   final deliveryDateController = TextEditingController();
+  final orderDiscountController = TextEditingController();
 
   DateTime? selectedDeliveryDate;
   String orderId = "";
@@ -73,6 +74,9 @@ class AddOrderViewModel extends BaseViewModel {
       }
 
       orderData.orderType ??= "Sales";
+      _ensureOrderDiscountDefaults();
+      orderDiscountController.text =
+          (orderData.additionalDiscountPercentage ?? 0).toString();
       updateTextFieldValue();
     } catch (e) {
       _showToast("Initialization failed", isError: true);
@@ -229,6 +233,11 @@ class AddOrderViewModel extends BaseViewModel {
     notifyListeners();
   }
 
+  void _ensureOrderDiscountDefaults() {
+    orderData.applyDiscountOn = "Net Total";
+    orderData.additionalDiscountPercentage ??= 0.0;
+  }
+
   Future<void> selectDeliveryDate(BuildContext context) async {
     final picked = await showDatePicker(
       context: context,
@@ -269,17 +278,18 @@ class AddOrderViewModel extends BaseViewModel {
     isSame = false;
     selectedItems = items;
 
-    for (var item in selectedItems) {
+    for (int i = 0; i < selectedItems.length; i++) {
+      final item = selectedItems[i];
       item
         ..warehouse = orderData.setWarehouse
-        ..deliveryDate = orderData.deliveryDate
-        ..amount = (item.qty ?? 1.0) * (item.rate ?? 0.0);
+        ..deliveryDate = orderData.deliveryDate;
     }
-
+    _recalculateAllItems();
     orderData.items = selectedItems;
     updateTextFieldValue();
 
     try {
+      _ensureOrderDiscountDefaults();
       orderDetails = await _service.orderDetails(orderData);
       _updateOrderDetails(orderDetails);
     } catch (e) {
@@ -290,7 +300,8 @@ class AddOrderViewModel extends BaseViewModel {
   }
 
   Timer? _debounce;
-
+  double? discount; // percentage
+  double? discountAmount; // calculated value
   void _updateOrderDetails(List<OrderDetailsModel> details) {
     if (details.isEmpty) return;
 
@@ -307,7 +318,7 @@ class AddOrderViewModel extends BaseViewModel {
   /// Map controllers by item index
   final Map<int, TextEditingController> _quantityControllers = {};
   final Map<int, TextEditingController> _rateControllers = {};
-
+  final Map<int, TextEditingController> _discountControllers = {};
   TextEditingController getQuantityController(int index) {
     if (!_quantityControllers.containsKey(index)) {
       final item = selectedItems[index];
@@ -326,11 +337,80 @@ class AddOrderViewModel extends BaseViewModel {
     return _rateControllers[index]!;
   }
 
+  TextEditingController getDiscountController(int index) {
+    if (!_discountControllers.containsKey(index)) {
+      final item = selectedItems[index];
+      _discountControllers[index] = TextEditingController(
+          text: item.discountPercentage?.toString() ?? "0");
+    }
+    return _discountControllers[index]!;
+  }
+
+  void setItemDiscount(int index, double discountPercent) {
+    isSame = false;
+
+    if (discountPercent < 0) discountPercent = 0;
+    if (discountPercent > 100) discountPercent = 100;
+
+    final item = selectedItems[index];
+
+    item.discountPercentage = discountPercent;
+
+    _recalculateAllItems();
+
+    orderData.items = selectedItems;
+
+    _debouncedUpdate(); // keep your backend sync
+    notifyListeners();
+  }
+
+  void _recalculateAllItems() {
+    for (int i = 0; i < selectedItems.length; i++) {
+      final item = selectedItems[i];
+      final qty = item.qty ?? 0;
+      final rate = item.rate ?? 0;
+      final discountPercent = item.discountPercentage ?? 0;
+
+      final gross = qty * rate;
+      final itemDiscount = (gross * discountPercent) / 100;
+      item
+        ..amount = gross
+        ..discountAmount = itemDiscount
+        ..distributedDiscountAmount = 0
+        ..netAmount = gross - itemDiscount
+        ..netRate = qty == 0 ? 0 : (gross - itemDiscount) / qty;
+    }
+
+    _applyOrderLevelDiscountDistribution();
+  }
+
+  void _applyOrderLevelDiscountDistribution() {
+    final addlPercent = orderData.additionalDiscountPercentage ?? 0;
+    if (addlPercent <= 0) return;
+
+    final netTotal = selectedItems.fold<double>(
+      0,
+      (sum, item) => sum + (item.netAmount ?? 0),
+    );
+    if (netTotal <= 0) return;
+
+    final orderDiscountAmount = (netTotal * addlPercent) / 100;
+    for (final item in selectedItems) {
+      final base = item.netAmount ?? 0;
+      final distributed = (base / netTotal) * orderDiscountAmount;
+      item
+        ..distributedDiscountAmount = distributed
+        ..netAmount = base - distributed
+        ..netRate = (item.qty ?? 0) == 0 ? 0 : (base - distributed) / (item.qty ?? 0);
+    }
+  }
+
   /// Debounced backend update
   void _debouncedUpdate() {
     _debounce?.cancel();
     _debounce = Timer(const Duration(milliseconds: 500), () async {
       try {
+        _ensureOrderDiscountDefaults();
         orderDetails = await _service.orderDetails(orderData);
         _updateOrderDetails(orderDetails);
         notifyListeners();
@@ -348,7 +428,7 @@ class AddOrderViewModel extends BaseViewModel {
     _quantityControllers[index]?.text = newQty.toString();
 
     item.qty = newQty.toDouble();
-    item.amount = (item.qty ?? 0.0) * (item.rate ?? 0.0);
+    _recalculateAllItems();
 
     orderData.items = selectedItems;
 
@@ -362,7 +442,7 @@ class AddOrderViewModel extends BaseViewModel {
     final item = selectedItems[index];
     final newQty = ((item.qty ?? 0.0) + delta).clamp(0, double.infinity);
     item.qty = double.parse(newQty.toString());
-    item.amount = newQty * (item.rate ?? 0.0);
+    _recalculateAllItems();
 
     orderData.items = selectedItems;
 
@@ -371,9 +451,10 @@ class AddOrderViewModel extends BaseViewModel {
   }
 
   void setItemRate(int index, double rate) {
+    isSame = false;
     final item = selectedItems[index];
     item.rate = rate;
-    item.amount = rate * (item.qty ?? 1);
+    _recalculateAllItems();
 
     orderData.items = selectedItems;
 
@@ -383,13 +464,15 @@ class AddOrderViewModel extends BaseViewModel {
 
   void deleteItem(int index) {
     isSame = false;
-    final removed = selectedItems.removeAt(index);
+    selectedItems.removeAt(index);
 
     // dispose controllers to avoid leaks
     _quantityControllers[index]?.dispose();
     _rateControllers[index]?.dispose();
+    _discountControllers[index]?.dispose();
     _quantityControllers.remove(index);
     _rateControllers.remove(index);
+    _discountControllers.remove(index);
 
     orderData.items = selectedItems;
 
@@ -410,6 +493,27 @@ class AddOrderViewModel extends BaseViewModel {
       (value == null || value.isEmpty) ? 'Please select order type' : null;
 
   /// Helpers ///
+  void setOrderDiscountPercent(double discountPercent) {
+    isSame = false;
+    final original = discountPercent;
+    if (discountPercent < 0) discountPercent = 0;
+    if (discountPercent > 100) discountPercent = 100;
+
+    orderData
+      ..applyDiscountOn = "Net Total"
+      ..additionalDiscountPercentage = discountPercent;
+
+    if (original != discountPercent) {
+      orderDiscountController.text = discountPercent.toString();
+      orderDiscountController.selection = TextSelection.collapsed(
+        offset: orderDiscountController.text.length,
+      );
+    }
+
+    _debouncedUpdate();
+    notifyListeners();
+  }
+
   bool _isSubmitted() {
     if (orderStatus == 1) {
       _showToast('This document is already submitted.', isError: true);
@@ -431,6 +535,18 @@ class AddOrderViewModel extends BaseViewModel {
   void dispose() {
     customerController.dispose();
     deliveryDateController.dispose();
+    orderDiscountController.dispose();
+
+    for (var c in _quantityControllers.values) {
+      c.dispose();
+    }
+    for (var c in _rateControllers.values) {
+      c.dispose();
+    }
+    for (var c in _discountControllers.values) {
+      c.dispose();
+    }
+
     super.dispose();
   }
 }

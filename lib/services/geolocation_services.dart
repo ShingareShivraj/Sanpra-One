@@ -187,13 +187,10 @@ class GeolocationService {
         data: payload,
       );
 
-      Logger().i(response.data["message"]);
       return response.statusCode == 200;
     } on DioException catch (e) {
-      Logger().e(e.response?.data ?? e.message);
       return false;
     } catch (e) {
-      Logger().e(e);
       return false;
     }
   }

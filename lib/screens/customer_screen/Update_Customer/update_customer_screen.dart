@@ -303,53 +303,127 @@ class _UpdateCustomerState extends State<UpdateCustomer> {
     }
 
     return _sectionCard(
-      "Visit History",
+      "Visit Timeline",
       child: Column(
-        children: model.visit.map((v) {
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 12),
+        children: List.generate(model.visit.length, (index) {
+          final v = model.visit[index];
+          final isLast = index == model.visit.length - 1;
+
+          return IntrinsicHeight(
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(Icons.location_on, color: Colors.orange),
-                const SizedBox(width: 12),
+                // 🔵 Timeline Indicator
+                Column(
+                  children: [
+                    Container(
+                      width: 12,
+                      height: 12,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                    ),
+                    if (!isLast)
+                      Expanded(
+                        child: Container(
+                          width: 2,
+                          color: Colors.grey.shade300,
+                        ),
+                      ),
+                  ],
+                ),
+
+                const SizedBox(width: 14),
+
+                // 📦 Visit Card
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        v.visitId ?? "",
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        "In: ${v.visitInTime ?? "--"}",
-                        style:
-                            const TextStyle(fontSize: 12, color: Colors.grey),
-                      ),
-                      Text(
-                        "Out: ${v.visitOutTime ?? "--"}",
-                        style:
-                            const TextStyle(fontSize: 12, color: Colors.grey),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        v.visitInAddress ?? "",
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 12),
-                      ),
-                    ],
+                  child: Container(
+                    margin: const EdgeInsets.only(bottom: 14),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.grey.withOpacity(0.06),
+                          blurRadius: 6,
+                          offset: const Offset(0, 3),
+                        )
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          v.visitId ?? "",
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                        ),
+                        Text(
+                          "${v.visitInTime ?? "--"} → ${v.visitOutTime ?? "--"}",
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.grey,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+
+                        // 📍 Address
+                        if ((v.visitInAddress ?? "").isNotEmpty)
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Icon(
+                                Icons.location_on,
+                                size: 14,
+                                color: Colors.orange,
+                              ),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: Text(
+                                  v.visitInAddress ?? "",
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.black87,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+
+                        // 📝 Description
+                        if ((v.description ?? "").isNotEmpty) ...[
+                          const SizedBox(height: 6),
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade100,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              v.description ?? "",
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: Colors.black87,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
                   ),
                 ),
               ],
             ),
           );
-        }).toList(),
+        }),
       ),
     );
   }
-
   // ================= COMMENTS =================
 
   Widget _commentsTab(UpdateCustomerViewModel model) {

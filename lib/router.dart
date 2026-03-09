@@ -1,3 +1,5 @@
+import 'package:geolocation/screens/Distributor%20Sales%20Order/add_sales_order/add_distributor_order_screen.dart';
+import 'package:geolocation/screens/Distributor%20Sales%20Order/list_sales_order/list_sales_distributor_order_screen.dart';
 import 'package:geolocation/screens/Quotation/Add%20Quotation/add_quotation_screen.dart';
 import 'package:geolocation/screens/Quotation/Items/items_screen.dart';
 import 'package:geolocation/screens/Quotation/List%20Quotation/list_quotation_view.dart';
@@ -6,6 +8,7 @@ import 'package:geolocation/screens/change_password/change_password_screen.dart'
 import 'package:geolocation/screens/customer_screen/Update_Customer/update_customer_screen.dart';
 import 'package:geolocation/screens/customer_screen/add_customer/add_customer_view.dart';
 import 'package:geolocation/screens/customer_screen/customer_list/customer_list_screen.dart';
+import 'package:geolocation/screens/delivery_note.dart';
 import 'package:geolocation/screens/expense_screen/add_expense/add_expense_view.dart';
 import 'package:geolocation/screens/expense_screen/list_expense/list_expense_view.dart';
 import 'package:geolocation/screens/geolocation/geolocation_view.dart';
@@ -42,6 +45,8 @@ import 'screens/retailer_registration/add_retailer/add_retailer_screen.dart';
     MaterialRoute(page: LocationTracker),
     MaterialRoute(page: ListOrderScreen),
     MaterialRoute(page: AddOrderScreen),
+    MaterialRoute(page: ListDistributorOrderScreen),
+    MaterialRoute(page: AddDistributorOrderScreen),
     MaterialRoute(page: ItemScreen),
     MaterialRoute(page: LeadListScreen),
     MaterialRoute(page: AddLeadScreen),
@@ -64,7 +69,10 @@ import 'screens/retailer_registration/add_retailer/add_retailer_screen.dart';
     MaterialRoute(page: AddVisitScreen),
     MaterialRoute(page: UpdateVisitScreen),
     MaterialRoute(page: RetailerFormView),
-    MaterialRoute(page: ListDeliveryNoteScreen)
+    MaterialRoute(page: ListDeliveryNoteScreen),
+    MaterialRoute(page: DeliveryNoteScreen)
+
+
     // DetailedFarmerScreen
   ],
   dependencies: [

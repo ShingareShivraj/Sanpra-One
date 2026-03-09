@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:geolocation/widgets/full_screen_loader.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:stacked/stacked.dart';
 
@@ -9,103 +10,104 @@ class ItemStockScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
 
     return ViewModelBuilder<ItemStockViewModel>.reactive(
       viewModelBuilder: () => ItemStockViewModel(),
       onViewModelReady: (model) => model.fetchStock(),
       builder: (context, model, child) {
         return Scaffold(
-          body: model.isBusy
-              ? const Center(child: CircularProgressIndicator())
-              : RefreshIndicator(
+          body: RefreshIndicator(
                   onRefresh: () async => model.fetchStock(),
-                  child: CustomScrollView(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    slivers: [
-                      SliverAppBar(
-                        pinned: true,
-                        elevation: 0,
-                        title: const Text('Item Stock'),
-                        bottom: PreferredSize(
-                          preferredSize: const Size.fromHeight(112),
-                          child: Padding(
-                            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-                            child: Column(
-                              children: [
-                                // Search (in AppBar area)
-                                TextField(
-                                  onChanged: model.updateSearch,
-                                  textInputAction: TextInputAction.search,
-                                  decoration: InputDecoration(
-                                    hintText: 'Search by item name / code',
-                                    prefixIcon:
-                                        const Icon(Iconsax.search_normal_1),
-                                    filled: true,
-                                    border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(14),
-                                      borderSide: BorderSide.none,
-                                    ),
-                                    contentPadding: const EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                      vertical: 12,
+                  child: fullScreenLoader(
+                    context: context,
+                    loader: model.isBusy,
+                    child: CustomScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      slivers: [
+                        SliverAppBar(
+                          pinned: true,
+                          elevation: 0,
+                          title: const Text('Item Stock'),
+                          bottom: PreferredSize(
+                            preferredSize: const Size.fromHeight(112),
+                            child: Padding(
+                              padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                              child: Column(
+                                children: [
+                                  // Search (in AppBar area)
+                                  TextField(
+                                    onChanged: model.updateSearch,
+                                    textInputAction: TextInputAction.search,
+                                    decoration: InputDecoration(
+                                      hintText: 'Search by item name / code',
+                                      prefixIcon:
+                                          const Icon(Iconsax.search_normal_1),
+                                      filled: true,
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(14),
+                                        borderSide: BorderSide.none,
+                                      ),
+                                      contentPadding: const EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                        vertical: 12,
+                                      ),
                                     ),
                                   ),
-                                ),
-                                const SizedBox(height: 10),
+                                  const SizedBox(height: 10),
 
-                                // Summary + Filter row
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      child: _SummaryPill(
-                                        icon: Iconsax.box,
-                                        title: 'Items',
-                                        value: model.filteredItems.length
-                                            .toString(),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 10),
-                                    Expanded(
-                                      child: _FilterButton(
-                                        label: model.selectedWarehouse ??
-                                            'Warehouse',
-                                        onTap: () => _showWarehouseSheet(
-                                          context: context,
-                                          model: model,
+                                  // Summary + Filter row
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: _SummaryPill(
+                                          icon: Iconsax.box,
+                                          title: 'Items',
+                                          value: model.filteredItems.length
+                                              .toString(),
                                         ),
                                       ),
-                                    ),
-                                  ],
-                                ),
-                              ],
+                                      const SizedBox(width: 10),
+                                      Expanded(
+                                        child: _FilterButton(
+                                          label: model.selectedWarehouse ??
+                                              'Warehouse',
+                                          onTap: () => _showWarehouseSheet(
+                                            context: context,
+                                            model: model,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                      if (model.filteredItems.isEmpty)
-                        SliverFillRemaining(
-                          hasScrollBody: false,
-                          child: _EmptyInventory(
-                            warehouse: model.selectedWarehouse,
-                          ),
-                        )
-                      else
-                        SliverPadding(
-                          padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-                          sliver: SliverList.separated(
-                            itemCount: model.filteredItems.length,
-                            separatorBuilder: (_, __) => Divider(
-                              height: 16,
-                              thickness: 1,
+                        if (model.filteredItems.isEmpty)
+                          SliverFillRemaining(
+                            hasScrollBody: false,
+                            child: _EmptyInventory(
+                              warehouse: model.selectedWarehouse,
                             ),
-                            itemBuilder: (_, index) {
-                              final item = model.filteredItems[index];
-                              return _InventoryRow(item: item);
-                            },
+                          )
+                        else
+                          SliverPadding(
+                            padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+                            sliver: SliverList.separated(
+                              itemCount: model.filteredItems.length,
+                              separatorBuilder: (_, __) => Divider(
+                                height: 16,
+                                thickness: 1,
+                              ),
+                              itemBuilder: (_, index) {
+                                final item = model.filteredItems[index];
+                                return _InventoryRow(item: item);
+                              },
+                            ),
                           ),
-                        ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
         );

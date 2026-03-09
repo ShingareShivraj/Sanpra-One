@@ -1,41 +1,46 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
     <!-- 🌐 Internet -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-
     <!-- 📍 Location (Foreground) -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-
     <!-- 📍 Location (Background) -->
     <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
-
     <!-- 🚶 Foreground Service for background tracking -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <!-- Android 14+ needs this specific permission -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
-
     <!-- (Recommended) keeps GPS updates consistent -->
     <uses-permission android:name="android.permission.WAKE_LOCK" />
-
     <!-- 📷 If you capture image from camera (optional) -->
     <!-- <uses-permission android:name="android.permission.CAMERA" /> -->
-
     <!-- 🖼️ Upload images from gallery -->
     <!-- Android 13+ -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION"/>
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
-
     <!-- Android 12 and below -->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
-
    
     <application
         android:label="Durocon"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/launcher_icon">
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="AIzaSyCVZOsMk8EilxhjhdRXFfmbrnVE58_wjik"/>
+            android:value="AIzaSyD9Y1iA4_OObVLnHVWhdM6-VzIE68863xo"/>
+        <service
+            android:name="id.flutter.flutter_background_service.BackgroundService"
+            android:exported="false"
+            tools:replace="android:exported"
+            android:foregroundServiceType="location" />
+        <receiver
+            android:name="id.flutter.flutter_background_service.FlutterBackgroundServiceReceiver"
+            android:exported="false" />
         <activity
             android:name=".MainActivity"
             android:exported="true"

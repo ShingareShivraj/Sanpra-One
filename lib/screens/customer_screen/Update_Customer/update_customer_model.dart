@@ -138,6 +138,7 @@ class Visits {
   String? visitInAddress;
   String? visitOutAddress;
   String? owner;
+  String? description;
 
   Visits(
       {this.visitId,
@@ -145,6 +146,7 @@ class Visits {
       this.visitOutTime,
       this.visitInAddress,
       this.visitOutAddress,
+      this.description,
       this.owner});
 
   Visits.fromJson(Map<String, dynamic> json) {
@@ -152,6 +154,7 @@ class Visits {
     visitInTime = json['visit_in_time'];
     visitOutTime = json['visit_out_time'];
     visitInAddress = json['visit_in_address'];
+    description = json['description'];
     visitOutAddress = json['visit_out_address'];
     owner = json['owner'];
   }
@@ -163,6 +166,7 @@ class Visits {
     data['visit_out_time'] = this.visitOutTime;
     data['visit_in_address'] = this.visitInAddress;
     data['visit_out_address'] = this.visitOutAddress;
+    data['description'] = this.description;
     data['owner'] = this.owner;
     return data;
   }

@@ -63,6 +63,9 @@ class _UpdateLeadScreenState extends State<UpdateLeadScreen> {
                     Center(
                       child: Column(
                         children: [
+                          /// PROFILE IMAGE
+                          _buildLeadProfileCard(context, model.leadData.image),
+
                           ListTile(
                             contentPadding: const EdgeInsets.symmetric(
                                 horizontal: 12, vertical: 4),
@@ -92,7 +95,7 @@ class _UpdateLeadScreenState extends State<UpdateLeadScreen> {
                           _buildLeadProfileRow(model),
                           const SizedBox(height: 6),
                           Wrap(
-                            spacing: 12,
+                            spacing: 15,
                             children: [
                               _buildActionButton(
                                   Iconsax.call,
@@ -127,6 +130,7 @@ class _UpdateLeadScreenState extends State<UpdateLeadScreen> {
                       _buildInfoRow(
                           "Lead Owner", model.leadData.leadOwner ?? ""),
                       _buildInfoRow("Name", model.leadData.leadName ?? ""),
+                      _buildInfoRow("Type", model.leadData.marketSegment ?? ""),
                       _buildInfoRow(
                           "Territory", model.leadData.territory ?? ""),
                     ]),
@@ -343,7 +347,7 @@ class _UpdateLeadScreenState extends State<UpdateLeadScreen> {
     final Color statusColor = model.getStatusColor(lead.status);
 
     return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      margin: const EdgeInsets.symmetric(horizontal: 5, vertical: 8),
       elevation: 3,
       shadowColor: Colors.black.withOpacity(0.08),
       shape: RoundedRectangleBorder(
@@ -354,12 +358,11 @@ class _UpdateLeadScreenState extends State<UpdateLeadScreen> {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            /// PROFILE IMAGE
-            _buildLeadProfileCard(context, lead.image),
-
-            const SizedBox(width: 14),
-
             /// NAME + COMPANY
+            Icon(Icons.person_3),
+            SizedBox(
+              width: 10,
+            ),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -367,7 +370,7 @@ class _UpdateLeadScreenState extends State<UpdateLeadScreen> {
                 children: [
                   Text(
                     leadName,
-                    maxLines: 1,
+                    maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                       fontSize: 17,
@@ -379,7 +382,7 @@ class _UpdateLeadScreenState extends State<UpdateLeadScreen> {
                     const SizedBox(height: 6),
                     Text(
                       companyName,
-                      maxLines: 1,
+                      maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontSize: 13,
@@ -420,8 +423,8 @@ class _UpdateLeadScreenState extends State<UpdateLeadScreen> {
       child: Hero(
         tag: imageUrl ?? "lead-image",
         child: Container(
-          width: 90,
-          height: 90,
+          width: double.infinity,
+          height: 120,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(14),
             border: Border.all(

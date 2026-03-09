@@ -16,7 +16,7 @@ class OrderServices {
 
   /// Base fields used for all requests
   static const _fields =
-      '["name","customer_name","transaction_date","grand_total","status","total_qty","set_warehouse","delivery_status","owner"]';
+      '["name","customer_name","transaction_date","grand_total","status","total_qty","set_warehouse","delivery_status","owner","delivery_date"]';
 
   /// Fetch all sales orders (most recent first)
   Future<List<OrderList>> fetchSalesOrder() async {
@@ -42,6 +42,7 @@ class OrderServices {
         return [];
       }
     } catch (e, stacktrace) {
+      print(e.toString());
       _handleError(e, context: 'fetchSalesOrder', stack: stacktrace);
       return [];
     }

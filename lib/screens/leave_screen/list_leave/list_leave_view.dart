@@ -82,27 +82,17 @@ class _FilterBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         color: Colors.white,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 6,
-          ),
-        ],
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       child: Row(
         children: [
           Expanded(
             child: DropdownButtonFormField<int>(
-              value: model.selectedMonth,
+              initialValue: model.selectedMonth,
               onChanged: model.updateSelectedmonth,
-              decoration: const InputDecoration(
-                labelText: 'Month',
-                isDense: true,
-                border: OutlineInputBorder(),
-              ),
+              decoration: _inputDecoration("Month"),
               items: List.generate(
                 12,
                 (i) => DropdownMenuItem(
@@ -115,13 +105,9 @@ class _FilterBar extends StatelessWidget {
           const SizedBox(width: 12),
           Expanded(
             child: DropdownButtonFormField<int>(
-              value: model.selectedYear,
+              initialValue: model.selectedYear,
               onChanged: model.updateSelectedYear,
-              decoration: const InputDecoration(
-                labelText: 'Year',
-                isDense: true,
-                border: OutlineInputBorder(),
-              ),
+              decoration: _inputDecoration("Year"),
               items: model.availableYears
                   .map(
                     (y) => DropdownMenuItem(
@@ -136,6 +122,16 @@ class _FilterBar extends StatelessWidget {
       ),
     );
   }
+
+  InputDecoration _inputDecoration(String label) => InputDecoration(
+        labelText: label,
+        filled: true,
+        fillColor: const Color(0xFFF6F7FB),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide.none,
+        ),
+      );
 }
 
 /* ============================================================
