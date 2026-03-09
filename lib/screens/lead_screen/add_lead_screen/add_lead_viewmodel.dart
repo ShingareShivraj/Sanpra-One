@@ -11,7 +11,6 @@ import 'package:stacked/stacked.dart';
 import '../../../model/add_lead_model.dart';
 import '../../../model/lead_details_model.dart';
 import '../../../services/add_lead_services.dart';
-import '../../../services/geolocation_services.dart';
 
 class AddLeadViewModel extends BaseViewModel {
   // ───────────────────────────────────────── Controllers ─────────────────────────────────────────
@@ -44,6 +43,7 @@ class AddLeadViewModel extends BaseViewModel {
   List<String> customers = [];
   List<String> leadSources = [];
   List<String> projects = [];
+  List<String> types = ["Lead", "Project"];
 
   final List<String> states = const [
     "01-Jammu and Kashmir",
@@ -121,7 +121,10 @@ class AddLeadViewModel extends BaseViewModel {
       if (perm == LocationPermission.denied) {
         perm = await Geolocator.requestPermission();
       }
-      if (perm == LocationPermission.denied || perm == LocationPermission.deniedForever) return;
+      if (perm == LocationPermission.denied ||
+          perm == LocationPermission.deniedForever) {
+        return;
+      }
 
       // ✅ “Current” but faster than high
       final pos = await Geolocator.getCurrentPosition(
@@ -178,6 +181,21 @@ class AddLeadViewModel extends BaseViewModel {
     stateController.text = leadData.state ?? "";
   }
 
+  void _syncControllersToModel() {
+    leadData
+      ..firstName = firstnameController.text.trim()
+      ..description = lastnameController.text.trim()
+      ..mobileNo = mobileNumberController.text.trim()
+      ..emailId = emailController.text.trim()
+      ..whatsappNo = whatsappController.text.trim()
+      ..companyName = companyNameController.text.trim()
+      ..city = cityController.text.trim()
+      ..address = addressController.text.trim()
+      ..pincode = int.tryParse(pincodeController.text.trim())
+      ..gstIn = gstinController.text.trim()
+      ..state = stateController.text.trim();
+  }
+
   // ───────────────────────────────────────── Image ─────────────────────────────────────────
   Future<void> pickPhoto({bool fromCamera = true}) async {
     final picked = await ImagePicker().pickImage(
@@ -204,6 +222,7 @@ class AddLeadViewModel extends BaseViewModel {
 
     setBusy(true);
     try {
+      _syncControllersToModel();
       leadData.notes = notes;
 
       if (!isEdit) {
@@ -217,10 +236,12 @@ class AddLeadViewModel extends BaseViewModel {
       final service = AddLeadServices();
 
       final success = isEdit
-          ? await service.updateLead(leadData).timeout(const Duration(seconds: 25))
+          ? await service
+              .updateLead(leadData)
+              .timeout(const Duration(seconds: 25))
           : await service
-          .addLead(leadData, imageFile: selectedImage)
-          .timeout(const Duration(seconds: 25));
+              .addLead(leadData, imageFile: selectedImage)
+              .timeout(const Duration(seconds: 25));
 
       if (success && context.mounted) {
         Navigator.pop(context, true);
@@ -251,7 +272,8 @@ class AddLeadViewModel extends BaseViewModel {
     if (perm == LocationPermission.denied) {
       perm = await Geolocator.requestPermission();
     }
-    if (perm == LocationPermission.denied || perm == LocationPermission.deniedForever) {
+    if (perm == LocationPermission.denied ||
+        perm == LocationPermission.deniedForever) {
       Fluttertoast.showToast(msg: "Location permission required");
       throw Exception("Location permission denied");
     }
@@ -303,10 +325,13 @@ class AddLeadViewModel extends BaseViewModel {
   void setSource(String? v) => leadData.source = v;
   void setCustomer(String? v) => leadData.customer = v;
   void setProject(String? v) => leadData.customProject = v;
+  void setLeadType(String? v) => leadData.marketSegment = v;
 
   void setNote(String note) {
     noteController.text = note;
-    notes = [Notes(note: '<div class="ql-editor read-mode"><p>$note</p></div>')];
+    notes = [
+      Notes(note: '<div class="ql-editor read-mode"><p>$note</p></div>')
+    ];
     notifyListeners();
   }
 

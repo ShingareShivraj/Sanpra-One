@@ -80,6 +80,7 @@ class _LeadListScreenState extends State<LeadListScreen> {
                               return InkWell(
                                 onTap: () => model.onRowClick(context, lead),
                                 child: LeadCard(
+                                  user: lead.leadOwner ?? '',
                                   status: lead.status ?? '',
                                   name: lead.name ?? '',
                                   company: lead.companyName ?? '',
@@ -120,6 +121,7 @@ class _LeadListScreenState extends State<LeadListScreen> {
 /// LEAD CARD
 /// =======================
 class LeadCard extends StatelessWidget {
+  final String user;
   final String status;
   final String name;
   final String company;
@@ -129,6 +131,7 @@ class LeadCard extends StatelessWidget {
 
   const LeadCard({
     super.key,
+    required this.user,
     required this.status,
     required this.name,
     required this.company,
@@ -225,6 +228,17 @@ class LeadCard extends StatelessWidget {
                   icon: Icons.location_on_outlined,
                   text: location,
                   maxLines: 2,
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _IconText(
+                  icon: Icons.person,
+                  text: user,
+                  maxLines: 1,
                 ),
               ],
             ),

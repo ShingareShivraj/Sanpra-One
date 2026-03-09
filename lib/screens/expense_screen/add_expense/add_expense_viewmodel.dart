@@ -91,7 +91,12 @@ class AddExpenseViewModel extends BaseViewModel {
     if (!formKey.currentState!.validate()) return;
 
     // ✅ Create: photo required
-    if (!isEdit && selectedImageFile == null) {
+    final type = (expenseData.expenseType ?? "").toLowerCase();
+
+    if (!isEdit &&
+        selectedImageFile == null &&
+        type != "car" &&
+        type != "bike") {
       Fluttertoast.showToast(msg: "Photo is required");
       return;
     }
@@ -158,19 +163,6 @@ class AddExpenseViewModel extends BaseViewModel {
   }
 
   // -------------------- IMAGE --------------------
-  Future<File?> _captureImage() async {
-    final XFile? photo = await ImagePicker().pickImage(
-      source: ImageSource.camera,
-      imageQuality: 80,
-    );
-
-    if (photo == null) {
-      Fluttertoast.showToast(msg: 'Camera cancelled');
-      return null;
-    }
-
-    return await compressFile(fileFromXFile(photo));
-  }
 
   // -------------------- DATE --------------------
   Future<void> selectDate(BuildContext context) async {
@@ -188,7 +180,32 @@ class AddExpenseViewModel extends BaseViewModel {
 
     dateController.text = formattedDate;
     expenseData.expenseDate = formattedDate;
+// Only fetch travel data if this is a travel expense type
+    if (isTravelExpense &&
+        expenseData.expenseType != null &&
+        expenseData.expenseDate != null) {
+      setBusy(true);
+      try {
+        final travelData = await _service.getTravelExpenseData(
+          vehicleType: expenseData.expenseType!,
+          date: expenseData.expenseDate!,
+        );
 
+        if (travelData != null) {
+          km = travelData["km"];
+          ratePerKm = travelData["ratePerKm"];
+          calculatedAmount = travelData["amount"];
+          expenseData.km = km;
+          expenseData.rate = ratePerKm;
+          expenseData.amount = calculatedAmount;
+          amountController.text = calculatedAmount?.toStringAsFixed(2) ?? '';
+        }
+      } catch (e) {
+        Fluttertoast.showToast(msg: "Failed to fetch travel data");
+      } finally {
+        setBusy(false);
+      }
+    }
     notifyListeners();
   }
 

@@ -27,7 +27,7 @@ class ExpenseData {
     docstatus = json['docstatus'];
     name = json['name'];
     km = json["custom_rate"];
-    rate = json["custom_rate"];
+    rate = json["custom_km"];
     amount = json['amount'];
     if (json['attachments'] != null) {
       attachments = <Attachments>[];

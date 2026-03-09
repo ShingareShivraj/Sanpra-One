@@ -1,6 +1,6 @@
 class SalesPersonWiseTarget {
-  int? totalTarget;
-  double? totalAchieved;
+  double? totalTarget;
+  int? totalAchieved;
   double? totalVariance;
   String? salesPerson;
   String? itemGroup;

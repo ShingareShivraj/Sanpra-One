@@ -179,7 +179,7 @@ class _VisitCard extends StatelessWidget {
               ],
             ),
 
-            const SizedBox(height: 14),
+            const SizedBox(height: 10),
 
             /// ================= DATE ROW =================
             Row(
@@ -200,10 +200,20 @@ class _VisitCard extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 10),
 
             Text(
               "Description: ${visit.description}",
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: onSurface.withOpacity(0.7),
+              ),
+            ),
+            const SizedBox(height: 10),
+
+            Text(
+              "created by: ${visit.owner}",
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w500,

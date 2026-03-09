@@ -407,6 +407,7 @@ class Items {
   double? priceListRate;
   double? discountPercentage;
   double? discountAmount;
+  double? distributedDiscountAmount;
   double? baseRateWithMargin;
   double? rate;
   double? amount;
@@ -467,6 +468,7 @@ class Items {
       this.priceListRate,
       this.discountPercentage,
       this.discountAmount,
+      this.distributedDiscountAmount,
       this.baseRateWithMargin,
       this.rate,
       this.amount,
@@ -528,6 +530,7 @@ class Items {
     priceListRate = json['price_list_rate'];
     discountPercentage = json['discount_percentage'];
     discountAmount = json['discount_amount'];
+    distributedDiscountAmount = json['distributed_discount_amount'];
     baseRateWithMargin = json['base_rate_with_margin'];
     rate = json['rate'];
     amount = json['amount'];
@@ -591,6 +594,7 @@ class Items {
     data['price_list_rate'] = priceListRate;
     data['discount_percentage'] = discountPercentage;
     data['discount_amount'] = discountAmount;
+    data['distributed_discount_amount'] = distributedDiscountAmount;
     data['base_rate_with_margin'] = baseRateWithMargin;
     data['rate'] = rate;
     data['amount'] = amount;

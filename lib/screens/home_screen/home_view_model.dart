@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -11,6 +12,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:stacked/stacked.dart';
 
+import '../../constants.dart';
 import '../../model/dashboard.dart';
 import '../../model/emp_data.dart';
 import '../../router.router.dart';
@@ -107,11 +109,34 @@ class HomeViewModel extends BaseViewModel {
       });
 
       _startSpendTimer();
-      await _initAndSendLocation();
     } catch (e, st) {
       _log.e("Init failed", error: e, stackTrace: st);
-      Fluttertoast.showToast(msg: "Failed to load dashboard");
+
+      // ✅ Detect authentication error
+      if (_isAuthError(e)) {
+        logout(context);
+        return;
+      }
+
+      Fluttertoast.showToast(
+        msg: "Failed to load dashboard",
+      );
     }
+  }
+
+  bool _isAuthError(Object error) {
+    // If using Dio
+    if (error is DioException) {
+      return error.response?.statusCode == 401;
+    }
+
+    // If using http package
+    if (error.toString().contains("401") ||
+        error.toString().toLowerCase().contains("unauthorized")) {
+      return true;
+    }
+
+    return false;
   }
 
   // ───────────────────────────────────────── GREETING ─────────────────────────────────────────
@@ -170,58 +195,6 @@ class HomeViewModel extends BaseViewModel {
     });
   }
 
-  // ───────────────────────────────────────── LOCATION ─────────────────────────────────────────
-
-  Future<void> _initAndSendLocation() async {
-    try {
-      locationLoading = true;
-      notifyListeners();
-
-      // 1) Ensure GPS/Location services are ON
-      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
-      if (!serviceEnabled) {
-        await Geolocator.openLocationSettings();
-        return;
-      }
-
-      // 2) Ensure permission
-      var status = await Permission.locationWhenInUse.status;
-
-      if (status.isDenied) {
-        status = await Permission.locationWhenInUse.request();
-      }
-
-      if (status.isPermanentlyDenied ||
-          status.isRestricted ||
-          status.isLimited) {
-        await openAppSettings();
-        return;
-      }
-
-      if (!status.isGranted) {
-        // still not granted
-        return;
-      }
-
-      // 3) Cached first (fast)
-      currentPosition = await _geoService.getCachedLocation();
-
-      // 4) Fresh GPS
-      final fresh = await _geoService.determinePosition();
-      if (fresh != null) {
-        currentPosition = fresh;
-        await _geoService.cacheLocation(fresh);
-      }
-
-      // 5) Send to API only if we have a position
-      if (currentPosition != null) {
-        await _geoService.employeeLocation(currentPosition!);
-      }
-    } finally {
-      locationLoading = false;
-      notifyListeners();
-    }
-  }
 
   // ───────────────────────────────────────── TERRITORY ─────────────────────────────────────────
   Future<void> setSelectedTerritory(String value) async {
@@ -257,7 +230,7 @@ class HomeViewModel extends BaseViewModel {
     String logType,
     BuildContext context, {
     required File photoFile,
-    required String meterReading,
+    String? meterReading,
     required Position position,
   }) async {
     _setLoading(logType, true);

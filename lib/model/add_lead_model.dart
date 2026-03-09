@@ -40,6 +40,7 @@ class AddLeadModel {
   int? unsubscribed;
   int? blogSubscriber;
   String? doctype;
+  String? marketSegment;
   String? customer;
   String? status;
   String? latitude;
@@ -77,6 +78,7 @@ class AddLeadModel {
       this.companyName,
       this.noOfEmployees,
       this.annualRevenue,
+      this.marketSegment,
       this.territory,
       this.city,
       this.state,
@@ -137,6 +139,7 @@ class AddLeadModel {
     company = json['company'];
     language = json['language'];
     customCallStatus = json['custom_call_status'];
+    marketSegment = json['market_segment'];
     image = json['image'];
     title = json['title'];
     disabled = json['disabled'];
@@ -198,6 +201,7 @@ class AddLeadModel {
     data['title'] = title;
     data['custom_call_status'] = customCallStatus;
     data['disabled'] = disabled;
+    data['market_segment'] = marketSegment;
     data["customer"] = customer;
     data['unsubscribed'] = unsubscribed;
     data['blog_subscriber'] = blogSubscriber;

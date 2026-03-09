@@ -46,11 +46,11 @@ class ListOrderModel extends BaseViewModel {
     setBusy(true);
     try {
       final fetchedOrders = await _orderService.fetchSalesOrder();
-      final customers = await _addOrderService.fetchCustomer();
+      // final customers = await _addOrderService.fetchCustomer();
 
       _orderList = List.from(fetchedOrders);
       _filteredOrderList = List.from(fetchedOrders);
-      _searchCustomerList = customers;
+      // _searchCustomerList = customers;
     } catch (e) {
       debugPrint('Error in initialise: $e');
     }

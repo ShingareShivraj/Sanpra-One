@@ -220,7 +220,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
 
                         if (isEditable)
                           const Text(
-                            "📸 Camera will open automatically after clicking Create Expense",
+                            "📸 Camera will open automatically after clicking Create Expense. (Photo not required for Car or Bike expenses)",
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               fontSize: 12,

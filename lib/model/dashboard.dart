@@ -6,6 +6,7 @@ class DashBoard {
   LastLocation? lastLocation;
   List<SalesPerson>? salesPerson;
   String? role;
+  bool? trackingEnabled;
   List<String>? territorylist;
   String? empName;
   String? email;
@@ -22,6 +23,7 @@ class DashBoard {
       this.lastLocation,
       this.salesPerson,
       this.role,
+      this.trackingEnabled,
       this.territorylist,
       this.empName,
       this.email,
@@ -45,6 +47,7 @@ class DashBoard {
       });
     }
     role = json['role'];
+    trackingEnabled = json['tracking_enabled'];
     territorylist = json['territorylist'].cast<String>();
     empName = json['emp_name'];
     email = json['email'];
@@ -69,6 +72,7 @@ class DashBoard {
       data['sales_person'] = this.salesPerson!.map((v) => v.toJson()).toList();
     }
     data['role'] = this.role;
+    data['tracking_enabled'] = this.trackingEnabled;
     data['territorylist'] = this.territorylist;
     data['emp_name'] = this.empName;
     data['email'] = this.email;

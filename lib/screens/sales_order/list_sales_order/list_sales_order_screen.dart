@@ -181,30 +181,32 @@ class _OrderCard extends StatelessWidget {
     final statusText =
         model.getOrderDisplayStatus(order.status, order.deliveryStatus);
     final statusColor = getStatusColor(statusText);
+    final theme = Theme.of(context);
 
     return Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: () => model.onRowClick(context, order),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         child: Container(
-          padding: const EdgeInsets.all(18),
+          padding: const EdgeInsets.all(20),
+          margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 2),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(20),
             boxShadow: const [
               BoxShadow(
-                color: Colors.black12,
-                blurRadius: 10,
-                offset: Offset(0, 4),
+                color: Color(0x14000000),
+                blurRadius: 20,
+                offset: Offset(0, 8),
               ),
             ],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              /// 🔹 TOP SECTION
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Expanded(
@@ -213,81 +215,120 @@ class _OrderCard extends StatelessWidget {
                       children: [
                         Text(
                           order.customerName ?? "Unknown Customer",
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 18,
                           ),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 6),
                         Text(
                           order.transactionDate ?? "No Date",
-                          style: const TextStyle(
-                            color: Colors.grey,
-                            fontSize: 13,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: Colors.grey.shade600,
+                            fontSize: 14,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          "Delivery: ${order.deliveryDate ?? "N/A"}",
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: Colors.grey.shade600,
+                            fontSize: 14,
                           ),
                         ),
                       ],
                     ),
                   ),
 
-                  /// ✅ FIXED STATUS PILL
-                  Flexible(
-                    fit: FlexFit.loose,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: statusColor.withOpacity(0.1),
-                        border: Border.all(color: statusColor),
-                        borderRadius: BorderRadius.circular(50),
+                  /// 🔹 STATUS PILL
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: statusColor.withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(50),
+                      border: Border.all(
+                        color: statusColor.withOpacity(0.4),
                       ),
-                      child: Text(
-                        statusText,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: statusColor,
-                          fontSize: 13,
-                        ),
+                    ),
+                    child: Text(
+                      statusText,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13,
+                        color: statusColor,
                       ),
                     ),
                   ),
                 ],
               ),
+
+              const SizedBox(height: 16),
+
+              /// 🔹 WAREHOUSE
               Text(
                 order.warehouse ?? "",
-                style: const TextStyle(
-                  fontSize: 14,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
                   color: Colors.black87,
-                  fontWeight: FontWeight.bold,
                 ),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(height: 12),
-              const Divider(color: Colors.black12, height: 1),
-              const SizedBox(height: 12),
+
+              const SizedBox(height: 16),
+              const Divider(height: 1),
+              const SizedBox(height: 16),
+
+              /// 🔹 ORDER INFO ROW
               Row(
                 children: [
                   Expanded(
-                    flex: 3, // ✅ Warehouse gets more space
-                    child: _buildDetailBlock("Order ID", order.name ?? "N/A"),
+                    flex: 3,
+                    child: _buildDetailBlock(
+                      "Order ID",
+                      order.name ?? "N/A",
+                      labelStyle: const TextStyle(
+                        fontSize: 13,
+                        color: Colors.grey,
+                      ),
+                      valueStyle: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 16),
                   Expanded(
                     flex: 1,
-                    child: _buildDetailBlock("Items", "${order.totalQty ?? 0}"),
+                    child: _buildDetailBlock(
+                      "Items",
+                      "${order.totalQty ?? 0}",
+                      labelStyle: const TextStyle(
+                        fontSize: 13,
+                        color: Colors.grey,
+                      ),
+                      valueStyle: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 16),
                   Expanded(
                     flex: 2,
                     child: _buildDetailBlock(
                       "Amount",
                       "₹${(order.grandTotal ?? 0).toStringAsFixed(2)}",
+                      labelStyle: const TextStyle(
+                        fontSize: 13,
+                        color: Colors.grey,
+                      ),
                       valueStyle: const TextStyle(
+                        fontSize: 16,
                         fontWeight: FontWeight.bold,
                         color: Colors.green,
                       ),
@@ -295,24 +336,27 @@ class _OrderCard extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 4),
+
+              const SizedBox(height: 14),
+
+              /// 🔹 OWNER ROW
               Row(
                 children: [
-                  const Icon(
-                    Icons.person_outline,
-                    size: 16,
-                    color: Colors.grey,
+                  Icon(
+                    Icons.person_outline_rounded,
+                    size: 18,
+                    color: Colors.grey.shade600,
                   ),
-                  const SizedBox(width: 6),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       order.owner ?? "N/A",
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey.shade700,
+                      ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: Colors.grey,
-                        fontSize: 13,
-                      ),
                     ),
                   ),
                 ],
@@ -347,6 +391,7 @@ class _OrderCard extends StatelessWidget {
   Widget _buildDetailBlock(
     String label,
     String value, {
+    TextStyle? labelStyle,
     TextStyle? valueStyle,
   }) {
     final style = valueStyle ??
@@ -354,14 +399,13 @@ class _OrderCard extends StatelessWidget {
           fontSize: 13,
           fontWeight: FontWeight.w600,
         );
+    final labelstyle =
+        labelStyle ?? const TextStyle(fontSize: 12, color: Colors.grey);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: const TextStyle(fontSize: 12, color: Colors.grey),
-        ),
+        Text(label, style: labelstyle),
         const SizedBox(height: 4),
 
         // ✅ AutoSize + wrap long words (no-space strings)
