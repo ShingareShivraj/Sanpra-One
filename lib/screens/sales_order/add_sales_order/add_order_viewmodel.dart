@@ -64,7 +64,6 @@ class AddOrderViewModel extends BaseViewModel {
         final fetchedOrder = await _service.getOrder(orderId);
         if (fetchedOrder != null) {
           orderData = fetchedOrder;
-          print(orderData);
           customerController.text = orderData.customer ?? "";
           deliveryDateController.text = orderData.deliveryDate ?? "";
           selectedItems.addAll(orderData.items ?? []);
@@ -277,7 +276,9 @@ class AddOrderViewModel extends BaseViewModel {
   Future<void> setSelectedItems(List<Items> items) async {
     isSame = false;
     selectedItems = items;
-
+    for (Items i in selectedItems) {
+      _logger.i(i.toJson());
+    }
     for (int i = 0; i < selectedItems.length; i++) {
       final item = selectedItems[i];
       item
@@ -401,7 +402,8 @@ class AddOrderViewModel extends BaseViewModel {
       item
         ..distributedDiscountAmount = distributed
         ..netAmount = base - distributed
-        ..netRate = (item.qty ?? 0) == 0 ? 0 : (base - distributed) / (item.qty ?? 0);
+        ..netRate =
+            (item.qty ?? 0) == 0 ? 0 : (base - distributed) / (item.qty ?? 0);
     }
   }
 

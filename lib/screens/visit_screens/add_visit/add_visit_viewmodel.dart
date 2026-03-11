@@ -3,12 +3,14 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:geocoding/geocoding.dart';
 import 'package:geolocation/model/add_visit_model.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:stacked/stacked.dart';
-
+import 'package:image/image.dart' as img;
+import 'package:path_provider/path_provider.dart';
 import '../../../services/add_visit_services.dart';
 
 class AddVisitViewModel extends BaseViewModel {
@@ -36,6 +38,55 @@ class AddVisitViewModel extends BaseViewModel {
   // ✅ Upload UX
   bool uploading = false;
   double uploadProgress = 0.0;
+
+
+
+  //================== GEO LOCATION TAGS - ADDED BY SHIV==============
+
+  Future<File> addLocationLabel(
+      File imageFile,
+      double lat,
+      double lng,
+      ) async {
+
+    final bytes = await imageFile.readAsBytes();
+    img.Image? image = img.decodeImage(bytes);
+
+    if (image == null) return imageFile;
+
+    final time = DateTime.now();
+
+    List<Placemark> placemarks = await placemarkFromCoordinates(lat, lng);
+    Placemark place = placemarks.first;
+
+    String village = place.subLocality ?? "";
+    String taluka = place.locality ?? "";
+    String state = place.administrativeArea ?? "";
+
+    String address = "$village, $taluka, $state";
+    String label =
+        "$address\n"
+        "${time.day}-${time.month}-${time.year} ${time.hour}:${time.minute}";
+
+    img.drawString(
+      image,
+      label,
+      x: 20,
+      y: image.height - 80,
+      font: img.arial24,
+      color: img.ColorRgb8(255, 0, 0),
+    );
+
+    final dir = await getTemporaryDirectory();
+    final newPath =
+        "${dir.path}/visit_${DateTime.now().millisecondsSinceEpoch}.jpg";
+
+    final newFile = File(newPath);
+    await newFile.writeAsBytes(img.encodeJpg(image));
+
+    return newFile;
+  }
+
 
   // ================= INITIALIZATION =================
   Future<void> initialise(BuildContext context, String visitId) async {
@@ -134,7 +185,6 @@ class AddVisitViewModel extends BaseViewModel {
     notifyListeners();
   }
 
-  // ================= VISIT IN / OUT =================
   Future<void> saveVisitStep(bool isVisitIn, BuildContext context) async {
     // ✅ VISIT OUT: do NOT keep busy while opening camera
     if (!isVisitIn) {
@@ -168,10 +218,16 @@ class AddVisitViewModel extends BaseViewModel {
       notifyListeners();
 
       try {
+        File labeledImage = await addLocationLabel(
+          File(photo.path),
+          pos.latitude,
+          pos.longitude,
+        );
+
         await _saveVisitOutUpload(
           pos.latitude,
           pos.longitude,
-          File(photo.path),
+          labeledImage,
           context,
         );
       } on TimeoutException {

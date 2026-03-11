@@ -1,16 +1,36 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:stacked/stacked.dart';
 
 import '../model/add_order_model.dart';
 import 'delivery_note_viewmodel.dart';
 
+// ─── Theme Constants ───────────────────────────────────────────────────────────
+
+class _C {
+  static const primary     = Color(0xFF2563EB);
+  static const primaryDark = Color(0xFF1E3A8A);
+  static const bg          = Color(0xFFF0F4FF);
+  static const surface     = Colors.white;
+  static const border      = Color(0xFFDBEAFE);
+  static const borderLight = Color(0xFFBFDBFE);
+  static const tint        = Color(0xFFEFF6FF);
+  static const textHead    = Color(0xFF1E3A8A);
+  static const textMuted   = Color(0xFF93C5FD);
+  static const green       = Color(0xFF059669);
+  static const greenBg     = Color(0xFFD1FAE5);
+  static const greenBorder = Color(0xFF86EFAC);
+  static const red         = Color(0xFFDC2626);
+  static const redBg       = Color(0xFFFEE2E2);
+  static const redBorder   = Color(0xFFFCA5A5);
+}
+
+// ─── Screen ────────────────────────────────────────────────────────────────────
+
 class DeliveryNoteScreen extends StatefulWidget {
   final AddOrderModel orderData;
 
-  const DeliveryNoteScreen({
-    super.key,
-    required this.orderData,
-  });
+  const DeliveryNoteScreen({super.key, required this.orderData});
 
   @override
   State<DeliveryNoteScreen> createState() => _DeliveryNoteScreenState();
@@ -23,103 +43,123 @@ class _DeliveryNoteScreenState extends State<DeliveryNoteScreen> {
       viewModelBuilder: () => DeliveryNoteViewModel(),
       onViewModelReady: (vm) => vm.init(widget.orderData),
       builder: (context, vm, child) {
-        return Scaffold(
-          backgroundColor: const Color(0xFFF5F7FB),
-          appBar: AppBar(
-            title: const Text('Delivery Note'),
-            centerTitle: true,
-            elevation: 0,
-          ),
-          body: vm.isBusy
-              ? const Center(child: CircularProgressIndicator())
-              : SafeArea(
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
-              children: [
-                _DeliverySummaryCard(vm: vm),
-                const SizedBox(height: 16),
-                _SectionTitle(
-                  title: "Items",
-                  subtitle: "${vm.items.length} item(s) in delivery",
-                  icon: Icons.inventory_2_outlined,
-                ),
-                const SizedBox(height: 12),
-                if (vm.items.isEmpty)
-                  const _EmptyItemsCard()
-                else
-                  ...List.generate(
-                    vm.items.length,
-                        (index) {
-                      final item = vm.items[index];
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: _DeliveryItemCard(
-                          item: item,
-                          onQtyChanged: (val) => vm.updateQty(index, val),
-                          onRemove: () => vm.removeItem(index),
-                        ),
-                      );
-                    },
+        return AnnotatedRegion<SystemUiOverlayStyle>(
+          value: SystemUiOverlayStyle.dark
+              .copyWith(statusBarColor: Colors.transparent),
+          child: Scaffold(
+            backgroundColor: _C.bg,
+            appBar: _buildAppBar(context),
+            body: vm.isBusy
+                ? const Center(
+                child: CircularProgressIndicator(color: _C.primary))
+                : SafeArea(
+              child: ListView(
+                padding:
+                const EdgeInsets.fromLTRB(16, 12, 16, 100),
+                children: [
+                  _DeliverySummaryCard(vm: vm),
+                  const SizedBox(height: 14),
+                  _SectionHeader(
+                    title: "Items",
+                    trailing:
+                    "${vm.items.length} item(s)",
                   ),
-                const SizedBox(height: 8),
-                _BillingSummaryCard(model: vm),
-              ],
+                  const SizedBox(height: 10),
+                  if (vm.items.isEmpty)
+                    const _EmptyItems()
+                  else
+                    ...List.generate(
+                      vm.items.length,
+                          (i) => Padding(
+                        padding: const EdgeInsets.only(bottom: 10),
+                        child: _DeliveryItemCard(
+                          item: vm.items[i],
+                          onQtyChanged: (v) => vm.updateQty(i, v),
+                          onRemove: () => vm.removeItem(i),
+                        ),
+                      ),
+                    ),
+                  const SizedBox(height: 4),
+                  _BillingSummaryCard(model: vm),
+                ],
+              ),
             ),
-          ),
-          bottomNavigationBar: _BottomActionBar(
-            onCancel: () => Navigator.of(context).pop(),
-            onSubmit: () => vm.submit(context),
+            bottomNavigationBar: _BottomActionBar(
+              onCancel: () => Navigator.of(context).pop(),
+              onSubmit: () => vm.submit(context),
+            ),
           ),
         );
       },
     );
   }
+
+  PreferredSizeWidget _buildAppBar(BuildContext context) {
+    return AppBar(
+      backgroundColor: _C.bg,
+      elevation: 0,
+      scrolledUnderElevation: 0,
+      leadingWidth: 60,
+      leading: Padding(
+        padding: const EdgeInsets.only(left: 16),
+        child: GestureDetector(
+          onTap: () => Navigator.pop(context),
+          child: Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: _C.surface,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: _C.border),
+            ),
+            child: const Icon(Icons.chevron_left_rounded,
+                color: _C.primary, size: 22),
+          ),
+        ),
+      ),
+      title: const Text(
+        "Delivery note",
+        style: TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w700,
+          color: _C.textHead,
+        ),
+      ),
+      centerTitle: true,
+    );
+  }
 }
 
-class _SectionTitle extends StatelessWidget {
-  final String title;
-  final String subtitle;
-  final IconData icon;
+// ─── Section Header ────────────────────────────────────────────────────────────
 
-  const _SectionTitle({
+class _SectionHeader extends StatelessWidget {
+  final String title;
+  final String trailing;
+
+  const _SectionHeader({
     required this.title,
-    required this.subtitle,
-    required this.icon,
+    required this.trailing,
   });
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-
     return Row(
       children: [
-        CircleAvatar(
-          radius: 20,
-          backgroundColor: const Color(0xFFE8F0FE),
-          child: Icon(
-            icon,
-            color: Theme.of(context).colorScheme.primary,
+        Text(
+          title,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+            color: _C.textHead,
           ),
         ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                subtitle,
-                style: textTheme.bodySmall?.copyWith(
-                  color: Colors.black54,
-                ),
-              ),
-            ],
+        const Spacer(),
+        Text(
+          trailing,
+          style: const TextStyle(
+            fontSize: 12,
+            color: _C.textMuted,
+            fontWeight: FontWeight.w500,
           ),
         ),
       ],
@@ -127,31 +167,31 @@ class _SectionTitle extends StatelessWidget {
   }
 }
 
-class _EmptyItemsCard extends StatelessWidget {
-  const _EmptyItemsCard();
+// ─── Empty Items ───────────────────────────────────────────────────────────────
+
+class _EmptyItems extends StatelessWidget {
+  const _EmptyItems();
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(18),
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.black.withOpacity(0.05)),
+        color: _C.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _C.border),
       ),
-      child: const Column(
-        children: [
-          Icon(
-            Icons.inventory_2_outlined,
-            size: 36,
-            color: Colors.black38,
-          ),
-          SizedBox(height: 10),
+      child: Column(
+        children: const [
+          Icon(Icons.inbox_outlined, size: 36, color: _C.borderLight),
+          SizedBox(height: 8),
           Text(
             "No items available",
             style: TextStyle(
-              fontWeight: FontWeight.w600,
-              color: Colors.black54,
+              fontSize: 13.5,
+              fontWeight: FontWeight.w500,
+              color: _C.textMuted,
             ),
           ),
         ],
@@ -160,81 +200,58 @@ class _EmptyItemsCard extends StatelessWidget {
   }
 }
 
-/// ---------------- TOP SUMMARY ----------------
+// ─── Delivery Summary Card ─────────────────────────────────────────────────────
+
 class _DeliverySummaryCard extends StatelessWidget {
   final DeliveryNoteViewModel vm;
 
-  const _DeliverySummaryCard({
-    required this.vm,
-  });
+  const _DeliverySummaryCard({required this.vm});
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Container(
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        gradient: LinearGradient(
-          colors: [
-            theme.colorScheme.primary,
-            theme.colorScheme.primary.withOpacity(.82),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: theme.colorScheme.primary.withOpacity(0.20),
-            blurRadius: 16,
-            offset: const Offset(0, 8),
-          ),
-        ],
+        color: _C.primary,
+        borderRadius: BorderRadius.circular(18),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Row(
             children: [
-              Icon(Icons.local_shipping_outlined, color: Colors.white),
+              Icon(Icons.local_shipping_outlined,
+                  color: Colors.white, size: 18),
               SizedBox(width: 8),
               Text(
-                "Delivery Details",
+                "Delivery details",
                 style: TextStyle(
                   color: Colors.white,
-                  fontSize: 17,
+                  fontSize: 15,
                   fontWeight: FontWeight.w700,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 18),
-          _InfoTile(
-            icon: Icons.person_outline,
+          const SizedBox(height: 14),
+          const Divider(color: Colors.white24, height: 1),
+          const SizedBox(height: 14),
+          _SummaryRow(
+            icon: Icons.person_outline_rounded,
             label: "Customer",
-            value: vm.orderData.customer ?? "-",
-            valueColor: Colors.white,
-            iconColor: Colors.white,
-            labelColor: Colors.white70,
+            value: vm.orderData.customer ?? "—",
           ),
-          const SizedBox(height: 12),
-          _InfoTile(
+          const SizedBox(height: 10),
+          _SummaryRow(
             icon: Icons.calendar_today_outlined,
             label: "Date",
-            value: vm.orderData.deliveryDate ?? "-",
-            valueColor: Colors.white,
-            iconColor: Colors.white,
-            labelColor: Colors.white70,
+            value: vm.orderData.deliveryDate ?? "—",
           ),
-          const SizedBox(height: 12),
-          _InfoTile(
+          const SizedBox(height: 10),
+          _SummaryRow(
             icon: Icons.warehouse_outlined,
             label: "Warehouse",
-            value: vm.orderData.setWarehouse ?? "-",
-            valueColor: Colors.white,
-            iconColor: Colors.white,
-            labelColor: Colors.white70,
+            value: vm.orderData.setWarehouse ?? "—",
           ),
         ],
       ),
@@ -242,33 +259,28 @@ class _DeliverySummaryCard extends StatelessWidget {
   }
 }
 
-class _InfoTile extends StatelessWidget {
+class _SummaryRow extends StatelessWidget {
   final IconData icon;
   final String label;
   final String value;
-  final Color iconColor;
-  final Color labelColor;
-  final Color valueColor;
 
-  const _InfoTile({
+  const _SummaryRow({
     required this.icon,
     required this.label,
     required this.value,
-    required this.iconColor,
-    required this.labelColor,
-    required this.valueColor,
   });
 
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Icon(icon, size: 18, color: iconColor),
-        const SizedBox(width: 10),
+        Icon(icon, size: 15, color: Colors.white60),
+        const SizedBox(width: 8),
         Text(
           "$label: ",
-          style: TextStyle(
-            color: labelColor,
+          style: const TextStyle(
+            fontSize: 12.5,
+            color: Colors.white60,
             fontWeight: FontWeight.w500,
           ),
         ),
@@ -276,8 +288,9 @@ class _InfoTile extends StatelessWidget {
           child: Text(
             value,
             overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              color: valueColor,
+            style: const TextStyle(
+              fontSize: 12.5,
+              color: Colors.white,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -287,7 +300,7 @@ class _InfoTile extends StatelessWidget {
   }
 }
 
-/// ---------------- ITEM CARD ----------------
+// ─── Delivery Item Card ────────────────────────────────────────────────────────
 class _DeliveryItemCard extends StatelessWidget {
   final Items item;
   final ValueChanged<String> onQtyChanged;
@@ -301,211 +314,284 @@ class _DeliveryItemCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final qty = (item.qty ?? 0).toDouble();
-    final rate = (item.rate ?? 0).toDouble();
-    final total = qty * rate;
-    final actualQty = (item.actualQty ?? 0).toDouble();
-    final inStock = actualQty > 0;
+    final qty         = (item.qty ?? 0).toDouble();
+    final rate        = (item.rate ?? 0).toDouble();
+    final total       = qty * rate;
+    final actualQty   = (item.actualQty ?? 0).toDouble();
     final exceedsStock = qty > actualQty && actualQty >= 0;
 
     return Container(
-      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.black.withOpacity(0.04)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        color: _C.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _C.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          /// top row
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Text(
-                  item.itemName ?? "Item",
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 15,
-                  ),
-                ),
+
+          // ── Header: icon + name + delete ──
+          Container(
+            padding: const EdgeInsets.fromLTRB(14, 13, 14, 12),
+            decoration: const BoxDecoration(
+              border: Border(
+                bottom: BorderSide(color: Color(0xFFEFF6FF)),
               ),
-              const SizedBox(width: 8),
-              InkWell(
-                borderRadius: BorderRadius.circular(20),
-                onTap: onRemove,
-                child: Container(
-                  padding: const EdgeInsets.all(6),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Container(
+                  width: 38,
+                  height: 38,
                   decoration: BoxDecoration(
-                    color: Colors.red.withOpacity(.08),
-                    shape: BoxShape.circle,
+                    color: _C.tint,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: _C.borderLight),
                   ),
-                  child: const Icon(
-                    Icons.delete_outline,
-                    color: Colors.red,
-                    size: 20,
+                  child: const Icon(Icons.inventory_2_outlined,
+                      size: 16, color: _C.primary),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        item.itemName ?? "Item",
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: _C.textHead,
+                        ),
+                      ),
+                      if ((item.itemCode ?? "").isNotEmpty) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          item.itemCode!,
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: _C.textMuted,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                 ),
-              ),
-            ],
+                const SizedBox(width: 8),
+                GestureDetector(
+                  onTap: onRemove,
+                  child: Container(
+                    width: 30,
+                    height: 30,
+                    decoration: BoxDecoration(
+                      color: _C.redBg,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: _C.redBorder),
+                    ),
+                    child: const Icon(
+                      Icons.delete_outline_rounded,
+                      color: _C.red,
+                      size: 15,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
 
-          const SizedBox(height: 14),
-
-          /// stock + rate chips
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              _ValueChip(
-                icon: Icons.currency_rupee,
-                label: "Rate",
-                value: rate.toStringAsFixed(2),
-                color: const Color(0xFF10B981),
+          // ── Chips: rate + stock ──
+          Container(
+            padding: const EdgeInsets.symmetric(
+                horizontal: 14, vertical: 10),
+            decoration: const BoxDecoration(
+              border: Border(
+                bottom: BorderSide(color: Color(0xFFEFF6FF)),
               ),
-              _ValueChip(
-                icon: Icons.inventory_2_outlined,
-                label: "Available",
-                value: actualQty.toStringAsFixed(0),
-                color: inStock ? const Color(0xFF2563EB) : Colors.redAccent,
-              ),
-            ],
+            ),
+            child: Row(
+              children: [
+                _Chip(
+                  icon: Icons.currency_rupee_rounded,
+                  label: "Rate: ${rate.toStringAsFixed(0)}",
+                  color: _C.green,
+                  bg: _C.greenBg,
+                ),
+                const SizedBox(width: 8),
+                _Chip(
+                  icon: Icons.inventory_2_outlined,
+                  label: "Stock: ${actualQty.toStringAsFixed(0)}",
+                  color: actualQty > 0 ? _C.primary : _C.red,
+                  bg: actualQty > 0 ? _C.tint : _C.redBg,
+                ),
+              ],
+            ),
           ),
 
-          const SizedBox(height: 14),
-
-          /// qty + total
-          Row(
-            children: [
-              Expanded(
-                child: TextFormField(
-                  initialValue: qty.toStringAsFixed(2),
-                  keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
-                  textAlign: TextAlign.center,
-                  decoration: InputDecoration(
-                    labelText: "Quantity",
-                    hintText: "Enter qty",
-                    filled: true,
-                    fillColor: const Color(0xFFF8FAFC),
-                    isDense: true,
-                    contentPadding: const EdgeInsets.symmetric(
-                      vertical: 14,
-                      horizontal: 12,
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.grey.shade300),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.grey.shade300),
-                    ),
+          // ── Qty input + Amount display ──
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        "Quantity",
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: _C.textMuted,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      TextFormField(
+                        initialValue: qty.toStringAsFixed(2),
+                        keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true),
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: _C.textHead,
+                        ),
+                        decoration: InputDecoration(
+                          filled: true,
+                          fillColor: _C.tint,
+                          isDense: true,
+                          contentPadding: const EdgeInsets.symmetric(
+                              vertical: 12, horizontal: 12),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide:
+                            const BorderSide(color: _C.borderLight),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide:
+                            const BorderSide(color: _C.borderLight),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(
+                                color: _C.primary, width: 1.5),
+                          ),
+                        ),
+                        onChanged: onQtyChanged,
+                      ),
+                    ],
                   ),
-                  onChanged: onQtyChanged,
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Container(
-                  padding:
-                  const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFECFDF5),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+                const SizedBox(width: 10),
+                Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Text(
                         "Amount",
                         style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.black54,
+                          fontSize: 11,
+                          color: _C.textMuted,
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        "₹${total.toStringAsFixed(2)}",
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFF059669),
+                      const SizedBox(height: 6),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 12),
+                        decoration: BoxDecoration(
+                          color: _C.greenBg,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: _C.greenBorder),
+                        ),
+                        child: Text(
+                          "₹${total.toStringAsFixed(2)}",
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: _C.green,
+                          ),
                         ),
                       ),
                     ],
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
 
-          if (exceedsStock) ...[
-            const SizedBox(height: 10),
+          // ── Exceeds stock warning ──
+          if (exceedsStock)
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+              padding: const EdgeInsets.symmetric(
+                  horizontal: 12, vertical: 9),
               decoration: BoxDecoration(
-                color: Colors.red.withOpacity(0.08),
+                color: _C.redBg,
                 borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: _C.redBorder),
               ),
-              child: const Text(
-                "Entered quantity exceeds available stock",
-                style: TextStyle(
-                  color: Colors.red,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                ),
+              child: const Row(
+                children: [
+                  Icon(Icons.warning_amber_rounded,
+                      size: 14, color: _C.red),
+                  SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      "Quantity exceeds available stock",
+                      style: TextStyle(
+                        color: _C.red,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
-          ],
         ],
       ),
     );
   }
 }
 
-class _ValueChip extends StatelessWidget {
+class _Chip extends StatelessWidget {
   final IconData icon;
   final String label;
-  final String value;
   final Color color;
+  final Color bg;
 
-  const _ValueChip({
+  const _Chip({
     required this.icon,
     required this.label,
-    required this.value,
     required this.color,
+    required this.bg,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: color.withOpacity(.08),
+        color: bg,
         borderRadius: BorderRadius.circular(999),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 16, color: color),
-          const SizedBox(width: 6),
+          Icon(icon, size: 13, color: color),
+          const SizedBox(width: 5),
           Text(
-            "$label: $value",
+            label,
             style: TextStyle(
-              fontSize: 12.5,
+              fontSize: 12,
               fontWeight: FontWeight.w600,
               color: color,
             ),
@@ -515,70 +601,61 @@ class _ValueChip extends StatelessWidget {
     );
   }
 }
+// ─── Billing Summary ───────────────────────────────────────────────────────────
 
-/// ---------------- BILLING ----------------
 class _BillingSummaryCard extends StatelessWidget {
   final DeliveryNoteViewModel model;
 
-  const _BillingSummaryCard({
-    required this.model,
-  });
+  const _BillingSummaryCard({required this.model});
+
+  String _fmt(num? v) => (v ?? 0).toStringAsFixed(2);
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.black.withOpacity(0.04)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        color: _C.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _C.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Row(
             children: [
-              Icon(Icons.receipt_long_outlined, color: Colors.deepPurple),
+              Icon(Icons.receipt_long_outlined,
+                  size: 16, color: _C.primary),
               SizedBox(width: 8),
               Text(
-                'Billing Summary',
+                "Billing summary",
                 style: TextStyle(
+                  fontSize: 14,
                   fontWeight: FontWeight.w700,
-                  fontSize: 17,
+                  color: _C.textHead,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
+          const Divider(color: _C.tint, height: 1),
+          const SizedBox(height: 14),
+          _BillingRow(label: "Subtotal",
+              value: "₹${_fmt(model.orderData.netTotal)}"),
+          const SizedBox(height: 10),
+          _BillingRow(label: "Total Tax",
+              value: "₹${_fmt(model.orderData.totalTaxesAndCharges)}"),
+          const SizedBox(height: 10),
+          _BillingRow(label: "Discount",
+              value: "- ₹${_fmt(model.orderData.discountAmount)}",
+              valueColor: _C.red),
+          const SizedBox(height: 14),
+          const Divider(color: _C.tint, height: 1),
+          const SizedBox(height: 14),
           _BillingRow(
-            'Subtotal',
-            model.orderData.netTotal?.toString() ?? '0.0',
-          ),
-          const SizedBox(height: 12),
-          _BillingRow(
-            'Total Tax',
-            model.orderData.totalTaxesAndCharges?.toString() ?? '0.0',
-          ),
-          const SizedBox(height: 12),
-          _BillingRow(
-            'Discount',
-            model.orderData.discountAmount?.toString() ?? '0.0',
-          ),
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 14),
-            child: Divider(height: 1),
-          ),
-          _BillingRow(
-            'Grand Total',
-            model.orderData.grandTotal?.toString() ?? '0.0',
-            highlight: true,
+            label: "Grand Total",
+            value: "₹${_fmt(model.orderData.grandTotal)}",
+            isTotal: true,
           ),
         ],
       ),
@@ -589,35 +666,38 @@ class _BillingSummaryCard extends StatelessWidget {
 class _BillingRow extends StatelessWidget {
   final String label;
   final String value;
-  final bool highlight;
+  final bool isTotal;
+  final Color? valueColor;
 
-  const _BillingRow(
-      this.label,
-      this.value, {
-        this.highlight = false,
-      });
+  const _BillingRow({
+    required this.label,
+    required this.value,
+    this.isTotal = false,
+    this.valueColor,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final color = highlight ? const Color(0xFF059669) : Colors.black87;
-    final fontSize = highlight ? 18.0 : 15.0;
-
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: fontSize,
-            fontWeight: highlight ? FontWeight.w700 : FontWeight.w500,
+        Expanded(
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: isTotal ? 14.5 : 13.5,
+              fontWeight:
+              isTotal ? FontWeight.w700 : FontWeight.w500,
+              color: _C.textHead,
+            ),
           ),
         ),
         Text(
-          "₹$value",
+          value,
           style: TextStyle(
-            fontSize: fontSize,
+            fontSize: isTotal ? 16 : 13.5,
             fontWeight: FontWeight.w700,
-            color: color,
+            color: valueColor ??
+                (isTotal ? _C.green : _C.textHead),
           ),
         ),
       ],
@@ -625,7 +705,8 @@ class _BillingRow extends StatelessWidget {
   }
 }
 
-/// ---------------- BOTTOM ACTIONS ----------------
+// ─── Bottom Action Bar ─────────────────────────────────────────────────────────
+
 class _BottomActionBar extends StatelessWidget {
   final VoidCallback onCancel;
   final VoidCallback onSubmit;
@@ -637,58 +718,63 @@ class _BottomActionBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      top: false,
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          border: Border(top: BorderSide(color: Colors.grey.shade200)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 10,
-              offset: const Offset(0, -3),
-            ),
-          ],
-        ),
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+      decoration: const BoxDecoration(
+        color: _C.surface,
+        border: Border(top: BorderSide(color: _C.border)),
+      ),
+      child: SafeArea(
+        top: false,
         child: Row(
           children: [
-            Expanded(
-              child: OutlinedButton(
+            // Cancel
+            SizedBox(
+              height: 50,
+              child: OutlinedButton.icon(
                 onPressed: onCancel,
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 15),
-                  side: const BorderSide(color: Colors.redAccent),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                ),
-                child: const Text(
+                icon: const Icon(Icons.close_rounded,
+                    size: 16, color: _C.red),
+                label: const Text(
                   "Cancel",
                   style: TextStyle(
-                    color: Colors.redAccent,
+                    color: _C.red,
                     fontWeight: FontWeight.w600,
+                  ),
+                ),
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: _C.redBorder),
+                  padding:
+                  const EdgeInsets.symmetric(horizontal: 20),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
                   ),
                 ),
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 10),
+            // Submit
             Expanded(
-              child: ElevatedButton(
-                onPressed: onSubmit,
-                style: ElevatedButton.styleFrom(
-                  elevation: 0,
-                  padding: const EdgeInsets.symmetric(vertical: 15),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
+              child: SizedBox(
+                height: 50,
+                child: ElevatedButton.icon(
+                  onPressed: onSubmit,
+                  icon: const Icon(Icons.check_rounded,
+                      size: 18, color: Colors.white),
+                  label: const Text(
+                    "Submit delivery note",
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                    ),
                   ),
-                ),
-                child: const Text(
-                  "Submit Delivery Note",
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
+                  style: ElevatedButton.styleFrom(
+                    elevation: 0,
+                    backgroundColor: _C.primary,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
                   ),
                 ),
               ),

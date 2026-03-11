@@ -299,6 +299,12 @@ class _SummaryCard extends StatelessWidget {
           ),
           const SizedBox(height: 14),
           _InfoRow(
+            label: "Total Taxes & Charges",
+            value: "₹${DeliveryNoteIdScreen._formatMoney(data.totalTaxesAndCharges)}",
+            icon: Icons.account_balance_wallet_outlined,
+          ),
+          const SizedBox(height: 14),
+          _InfoRow(
             label: "Grand Total",
             value: "₹${DeliveryNoteIdScreen._formatMoney(data.grandTotal)}",
             icon: Icons.payments_outlined,

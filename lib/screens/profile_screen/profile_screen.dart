@@ -23,7 +23,6 @@ class ProfileScreen extends StatelessWidget {
         backgroundColor: const Color(0xFFF8F9FB),
         appBar: AppBar(
           elevation: 0,
-          automaticallyImplyLeading: false,
           flexibleSpace: Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(

@@ -54,7 +54,7 @@ class AddDistributorOrderViewModel extends BaseViewModel {
       role = await getUserRole();
       // customerNames = await _service.fetchCustomer();
       // warehouses = await _service.fetchWarehouse();
-      _logger.i(orderData.toJson());
+
 
       if (orderId.isNotEmpty) {
         isEdit = true;
@@ -119,6 +119,7 @@ class AddDistributorOrderViewModel extends BaseViewModel {
   }
 
   Future<void> _submitEdit(BuildContext context) async {
+    _logger.i(orderData.toJson());
     name = await _service.addOrder(orderData);
     if (name.isNotEmpty) isSame = true;
   }
@@ -277,6 +278,9 @@ class AddDistributorOrderViewModel extends BaseViewModel {
   Future<void> setSelectedItems(List<Items> items) async {
     isSame = false;
     selectedItems = items;
+    for(Items i in selectedItems){
+      _logger.i(i.toJson());
+    }
 
     for (int i = 0; i < selectedItems.length; i++) {
       final item = selectedItems[i];
@@ -287,7 +291,7 @@ class AddDistributorOrderViewModel extends BaseViewModel {
     _recalculateAllItems();
     orderData.items = selectedItems;
     updateTextFieldValue();
-
+print(selectedItems.length);
     try {
       _ensureOrderDiscountDefaults();
       orderDetails = await _service.orderDetails(orderData);

@@ -10,9 +10,8 @@ import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
 import 'package:stacked/stacked.dart';
-import 'package:stacked_services/stacked_services.dart';
 
-import '../../router.locator.dart';
+import '../../constants.dart';
 import 'company_auth.dart';
 
 class TrackPersonViewModel extends BaseViewModel {
@@ -39,7 +38,7 @@ class TrackPersonViewModel extends BaseViewModel {
   final ValueNotifier<List<LatLng>> routePoints = ValueNotifier([]);
   final ValueNotifier<double> distanceKm = ValueNotifier(0);
   final ValueNotifier<_UserInfo> userInfo =
-      ValueNotifier(const _UserInfo.empty());
+  ValueNotifier(const _UserInfo.empty());
 
   LatLng? _myLocation;
   LatLng? _lastEmployeeLocation;
@@ -47,7 +46,7 @@ class TrackPersonViewModel extends BaseViewModel {
   Timer? _pollTimer;
   bool _routeInFlight = false;
   DateTime _lastRouteUpdate =
-      DateTime.now().subtract(const Duration(minutes: 5));
+  DateTime.now().subtract(const Duration(minutes: 5));
   final ValueNotifier<String> destinationAddress = ValueNotifier<String>("");
 
   LatLng? _lastGeocodedPosition;
@@ -169,13 +168,15 @@ class TrackPersonViewModel extends BaseViewModel {
 
   Future<void> fetchUsers() async {
     try {
+      String baseurl = await geturl();
       final url = Uri.parse(
-          "https://durocon.erpkey.in/api/resource/Get%20Employee%20Location");
+          "$baseurl/api/resource/Get%20Employee%20Location");
 
       final headers = await CompanyAuth.getHeaders();
       final res = await http.get(url, headers: headers);
 
       if (res.statusCode != 200) {
+        print(res.body);
         _showToast("Failed to load users");
         return;
       }
@@ -201,7 +202,7 @@ class TrackPersonViewModel extends BaseViewModel {
     selectedUser = user;
     searchController.text = user;
     showDropdown = false;
-
+    isTrackingStarted = false;
     routePoints.value = [];
     distanceKm.value = 0;
     userInfo.value = const _UserInfo.empty();
@@ -222,8 +223,9 @@ class TrackPersonViewModel extends BaseViewModel {
     if (selectedUser.isEmpty) return;
 
     try {
+      String baseurl = await geturl();
       final url = Uri.parse(
-          "https://durocon.erpkey.in/api/resource/Get%20Employee%20Location/$selectedUser");
+          "$baseurl/api/resource/Get%20Employee%20Location/$selectedUser");
 
       final headers = await CompanyAuth.getHeaders();
       final res = await http.get(url, headers: headers);
@@ -245,6 +247,7 @@ class TrackPersonViewModel extends BaseViewModel {
         lng: lng,
         battery: (data["battery"] as num?)?.toInt() ?? 0,
       );
+      notifyListeners();
 
       // 🔥 Only reverse geocode if moved > 50 meters
       if (_lastGeocodedPosition == null ||
@@ -255,17 +258,19 @@ class TrackPersonViewModel extends BaseViewModel {
 
         destinationAddress.value = address;
       }
+      _lastEmployeeLocation = currentPosition;
+      maybeFollowGoogle();
 
-      await _fetchRoute(currentPosition);
+
     } catch (e) {
       debugPrint("Fetch location error: $e");
     }
   }
 
   Future<String> _safeReverseGeocode(
-    double lat,
-    double lng,
-  ) async {
+      double lat,
+      double lng,
+      ) async {
     try {
       final placemarks = await placemarkFromCoordinates(lat, lng);
 
@@ -291,13 +296,29 @@ class TrackPersonViewModel extends BaseViewModel {
     }
   }
 
+  // ========================= start tracking trigger=====================
+
+  bool isTrackingStarted = false;
+
+  Future<void> startTracking() async {
+    if (_lastEmployeeLocation == null || _myLocation == null) {
+      _showToast("Location not ready");
+      return;
+    }
+
+    isTrackingStarted = true;
+    notifyListeners();
+
+    await _fetchRoute(_lastEmployeeLocation!);
+  }
   // ========================= ROUTE =========================
 
   Future<void> _fetchRoute(LatLng destination) async {
     if (_routeInFlight) return;
     if (_myLocation == null) return;
 
-    if (DateTime.now().difference(_lastRouteUpdate) < _minRouteGap) return;
+    if (routePoints.value.isNotEmpty &&
+        DateTime.now().difference(_lastRouteUpdate) < _minRouteGap) return;
 
     _routeInFlight = true;
 
@@ -314,14 +335,14 @@ class TrackPersonViewModel extends BaseViewModel {
 
       final res = await http
           .post(
-            url,
-            headers: {
-              "Authorization": _orsKey,
-              "Content-Type": "application/json",
-              "Accept": "application/json",
-            },
-            body: body,
-          )
+        url,
+        headers: {
+          "Authorization": _orsKey,
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+        },
+        body: body,
+      )
           .timeout(const Duration(seconds: 20));
 
       if (res.statusCode != 200) return;
@@ -342,6 +363,10 @@ class TrackPersonViewModel extends BaseViewModel {
 
       routePoints.value =
           decodedPts.map((p) => LatLng(p.latitude, p.longitude)).toList();
+
+      notifyListeners();
+      isTrackingStarted = true;
+      notifyListeners();
     } finally {
       _routeInFlight = false;
     }

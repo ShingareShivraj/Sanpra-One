@@ -1,8 +1,32 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:stacked/stacked.dart';
 
 import '../add_marketing/add_marketing_screen.dart';
 import 'list_marketing_viewmodel.dart';
+
+class _C {
+  static const primary     = Color(0xFF2563EB);
+  static const primaryDark = Color(0xFF1E3A8A);
+  static const bg          = Color(0xFFF0F4FF);
+  static const surface     = Colors.white;
+  static const border      = Color(0xFFDBEAFE);
+  static const borderLight = Color(0xFFBFDBFE);
+  static const tint        = Color(0xFFEFF6FF);
+  static const textHead    = Color(0xFF1E3A8A);
+  static const textMuted   = Color(0xFF93C5FD);
+  static const green       = Color(0xFF059669);
+  static const greenBg     = Color(0xFFD1FAE5);
+  static const greenBorder = Color(0xFF86EFAC);
+  static const red         = Color(0xFFDC2626);
+  static const redBg       = Color(0xFFFEE2E2);
+  static const redBorder   = Color(0xFFFCA5A5);
+  static const amber       = Color(0xFFD97706);
+  static const amberBg     = Color(0xFFFEF3C7);
+  static const amberBorder = Color(0xFFFCD34D);
+}
+
+// ─── Screen ────────────────────────────────────────────────────────────────────
 
 class MarketingListScreen extends StatelessWidget {
   const MarketingListScreen({super.key});
@@ -13,76 +37,115 @@ class MarketingListScreen extends StatelessWidget {
       viewModelBuilder: () => MarketingListViewModel(),
       onViewModelReady: (vm) => vm.fetchLeads(),
       builder: (context, vm, child) {
-        return Scaffold(
-          appBar: AppBar(
-            title: const Text("Merchandise"),
-            elevation: 0,
-          ),
-          floatingActionButton: FloatingActionButton.extended(
-            onPressed: () async {
-              final result = await Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const MarketingFormScreen(Id: ''),
+        return AnnotatedRegion<SystemUiOverlayStyle>(
+          value: SystemUiOverlayStyle.dark
+              .copyWith(statusBarColor: Colors.transparent),
+          child: Scaffold(
+            backgroundColor: _C.bg,
+            appBar: _buildAppBar(),
+            floatingActionButton: FloatingActionButton.extended(
+              onPressed: () async {
+                final result = await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const MarketingFormScreen(Id: ''),
+                  ),
+                );
+                if (result == true) vm.fetchLeads();
+              },
+              backgroundColor: _C.primary,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(999)),
+              icon: const Icon(Icons.add_rounded, color: Colors.white),
+              label: const Text(
+                "Add merchandise",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
                 ),
-              );
-              if (result == true) vm.fetchLeads();
-            },
-            icon: const Icon(Icons.add),
-            label: const Text("Add Merchandise"),
+              ),
+            ),
+            body: vm.isBusy
+                ? const Center(
+                child: CircularProgressIndicator(color: _C.primary))
+                : vm.leads.isEmpty
+                ? const _EmptyState()
+                : RefreshIndicator(
+              color: _C.primary,
+              onRefresh: vm.fetchLeads,
+              child: ListView.separated(
+                padding:
+                const EdgeInsets.fromLTRB(16, 10, 16, 100),
+                itemCount: vm.leads.length,
+                separatorBuilder: (_, __) =>
+                const SizedBox(height: 10),
+                itemBuilder: (context, index) {
+                  final lead = vm.leads[index];
+                  return _MerchandiseCard(
+                    customer:
+                    lead.customer ?? "Unknown Customer",
+                    workflowState: lead.workflowState,
+                    date: lead.date ?? "—",
+                    totalQty:
+                    lead.totalQty?.toString() ?? "0",
+                    onTap: () async {
+                      final result = await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => MarketingFormScreen(
+                              Id: lead.name ?? ""),
+                        ),
+                      );
+                      if (result == true) vm.fetchLeads();
+                    },
+                    onEdit: () async {
+                      final result = await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => MarketingFormScreen(
+                              Id: lead.name ?? ""),
+                        ),
+                      );
+                      if (result == true) vm.fetchLeads();
+                    },
+                  );
+                },
+              ),
+            ),
           ),
-          body: vm.isBusy
-              ? const Center(child: CircularProgressIndicator())
-              : vm.leads.isEmpty
-                  ? _EmptyState(
-                      title: "No Merchandise Found",
-                      subtitle: "Tap “Add Merchandise” to create a new entry.",
-                    )
-                  : RefreshIndicator(
-                      onRefresh: vm.fetchLeads,
-                      child: ListView.separated(
-                        padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
-                        itemCount: vm.leads.length,
-                        separatorBuilder: (_, __) => const SizedBox(height: 10),
-                        itemBuilder: (context, index) {
-                          final lead = vm.leads[index];
-
-                          return _MerchandiseCard(
-                            customer: lead.customer ?? "Unknown Customer",
-                            workflowState: lead.workflowState,
-                            date: lead.date ?? "-",
-                            totalQty: lead.totalQty?.toString() ?? "0",
-                            onTap: () async {
-                              final result = await Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      MarketingFormScreen(Id: lead.name ?? ""),
-                                ),
-                              );
-                              if (result == true) vm.fetchLeads();
-                            },
-                            onEdit: () async {
-                              final result = await Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      MarketingFormScreen(Id: lead.name ?? ""),
-                                ),
-                              );
-                              if (result == true) vm.fetchLeads();
-                            },
-                          );
-                        },
-                      ),
-                    ),
         );
       },
     );
   }
+
+  PreferredSizeWidget _buildAppBar() {
+    return AppBar(
+      elevation: 0,
+      scrolledUnderElevation: 0,
+      centerTitle: true,
+      title: const Text(
+        "Merchandise",
+        style: TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
 }
 
+// ─── Merchandise Card ──────────────────────────────────────────────────────────
+
 class _MerchandiseCard extends StatelessWidget {
+  final String customer;
+  final String? workflowState;
+  final String date;
+  final String totalQty;
+  final VoidCallback onTap;
+  final VoidCallback onEdit;
+
   const _MerchandiseCard({
     required this.customer,
     required this.workflowState,
@@ -92,106 +155,106 @@ class _MerchandiseCard extends StatelessWidget {
     required this.onEdit,
   });
 
-  final String customer;
-  final String? workflowState;
-  final String date;
-  final String totalQty;
-  final VoidCallback onTap;
-  final VoidCallback onEdit;
-
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final cs = theme.colorScheme;
-
     return Material(
-      color: theme.colorScheme.surface,
-      borderRadius: BorderRadius.circular(14),
+      color: Colors.transparent,
       child: InkWell(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(16),
         onTap: onTap,
         child: Container(
-          margin: const EdgeInsets.only(bottom: 8),
-          padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(18),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black87.withOpacity(0.08),
-                blurRadius: 20,
-                offset: const Offset(0, 10),
-              ),
-            ],
+            color: _C.surface,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: _C.border),
           ),
-          child: Row(
+          child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Left icon
+
+              // ── Header ──
               Container(
-                height: 44,
-                width: 44,
-                decoration: BoxDecoration(
-                  color: cs.primary.withOpacity(0.12),
-                  borderRadius: BorderRadius.circular(14),
+                padding: const EdgeInsets.fromLTRB(14, 13, 8, 12),
+                decoration: const BoxDecoration(
+                  border: Border(
+                    bottom: BorderSide(color: Color(0xFFEFF6FF)),
+                  ),
                 ),
-                alignment: Alignment.center,
-                child: Icon(
-                  Icons.campaign_outlined,
-                  color: cs.primary,
-                ),
-              ),
-
-              const SizedBox(width: 12),
-
-              // Middle content
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    // Customer + status
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            customer,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        _WorkflowChip(state: workflowState),
-                      ],
+                    // Icon
+                    Container(
+                      width: 38,
+                      height: 38,
+                      decoration: BoxDecoration(
+                        color: _C.tint,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: _C.borderLight),
+                      ),
+                      child: const Icon(
+                        Icons.campaign_outlined,
+                        color: _C.primary,
+                        size: 18,
+                      ),
                     ),
-
-                    const SizedBox(height: 10),
-
-                    // Meta row
-                    Row(
-                      children: [
-                        _MetaPill(
-                          icon: Icons.calendar_today_outlined,
-                          value: date,
+                    const SizedBox(width: 10),
+                    // Customer name
+                    Expanded(
+                      child: Text(
+                        customer,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 14.5,
+                          fontWeight: FontWeight.w700,
+                          color: _C.textHead,
                         ),
-                        const SizedBox(width: 10),
-                        _MetaPill(
-                          icon: Icons.inventory_2_outlined,
-                          value: "Qty: $totalQty",
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    // Status pill
+                    _WorkflowPill(state: workflowState),
+                    // Edit button
+                    GestureDetector(
+                      onTap: onEdit,
+                      child: Container(
+                        width: 32,
+                        height: 32,
+                        margin: const EdgeInsets.only(left: 6),
+                        decoration: BoxDecoration(
+                          color: _C.tint,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: _C.borderLight),
                         ),
-                      ],
+                        child: const Icon(
+                          Icons.edit_outlined,
+                          color: _C.primary,
+                          size: 15,
+                        ),
+                      ),
                     ),
                   ],
                 ),
               ),
 
-              // Right action
-              IconButton(
-                tooltip: "Edit",
-                onPressed: onEdit,
-                icon: Icon(Icons.edit_outlined, color: cs.primary),
+              // ── Meta row ──
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 14, vertical: 11),
+                child: Row(
+                  children: [
+                    _MetaChip(
+                      icon: Icons.calendar_today_outlined,
+                      label: date,
+                    ),
+                    const SizedBox(width: 8),
+                    _MetaChip(
+                      icon: Icons.inventory_2_outlined,
+                      label: "Qty: $totalQty",
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
@@ -201,33 +264,70 @@ class _MerchandiseCard extends StatelessWidget {
   }
 }
 
-class _MetaPill extends StatelessWidget {
-  const _MetaPill({required this.icon, required this.value});
+// ─── Workflow Pill ─────────────────────────────────────────────────────────────
 
-  final IconData icon;
-  final String value;
+class _WorkflowPill extends StatelessWidget {
+  final String? state;
+
+  const _WorkflowPill({required this.state});
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final cs = theme.colorScheme;
+    final label = (state == null || state!.trim().isEmpty)
+        ? "Draft"
+        : state!.trim();
+
+    Color color;
+    Color bg;
+    Color border;
+
+    switch (label) {
+      case "Approved":
+        color  = _C.green;
+        bg     = _C.greenBg;
+        border = _C.greenBorder;
+        break;
+      case "Rejected":
+        color  = _C.red;
+        bg     = _C.redBg;
+        border = _C.redBorder;
+        break;
+      case "Pending":
+        color  = _C.amber;
+        bg     = _C.amberBg;
+        border = _C.amberBorder;
+        break;
+      default:
+        color  = _C.textMuted;
+        bg     = _C.tint;
+        border = _C.borderLight;
+    }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
       decoration: BoxDecoration(
-        color: cs.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(12),
+        color: bg,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: border),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 14, color: cs.onSurfaceVariant),
-          const SizedBox(width: 6),
+          Container(
+            width: 6,
+            height: 6,
+            decoration: BoxDecoration(
+              color: color,
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(width: 5),
           Text(
-            value,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: cs.onSurfaceVariant,
+            label,
+            style: TextStyle(
+              fontSize: 11,
               fontWeight: FontWeight.w600,
+              color: color,
             ),
           ),
         ],
@@ -236,97 +336,83 @@ class _MetaPill extends StatelessWidget {
   }
 }
 
-class _WorkflowChip extends StatelessWidget {
-  const _WorkflowChip({required this.state});
+// ─── Meta Chip ─────────────────────────────────────────────────────────────────
 
-  final String? state;
+class _MetaChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+
+  const _MetaChip({required this.icon, required this.label});
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final label =
-        (state == null || state!.trim().isEmpty) ? "Draft" : state!.trim();
-
-    late final Color bg;
-    late final Color fg;
-
-    switch (label) {
-      case "Approved":
-        bg = Colors.green.shade100;
-        fg = Colors.green.shade900;
-        break;
-      case "Rejected":
-        bg = Colors.red.shade100;
-        fg = Colors.red.shade900;
-        break;
-      case "Pending":
-        bg = Colors.orange.shade100;
-        fg = Colors.orange.shade900;
-        break;
-      default:
-        bg = cs.surfaceContainerHighest;
-        fg = cs.onSurfaceVariant;
-    }
-
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
       decoration: BoxDecoration(
-        color: bg,
+        color: _C.tint,
         borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: _C.borderLight),
       ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.w800,
-          color: fg,
-        ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12, color: _C.textMuted),
+          const SizedBox(width: 5),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 11.5,
+              fontWeight: FontWeight.w600,
+              color: _C.textHead,
+            ),
+          ),
+        ],
       ),
     );
   }
 }
 
-class _EmptyState extends StatelessWidget {
-  const _EmptyState({required this.title, required this.subtitle});
+// ─── Empty State ───────────────────────────────────────────────────────────────
 
-  final String title;
-  final String subtitle;
+class _EmptyState extends StatelessWidget {
+  const _EmptyState();
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final cs = theme.colorScheme;
-
     return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(22),
-        child: Container(
-          padding: const EdgeInsets.all(18),
-          decoration: BoxDecoration(
-            color: cs.surfaceContainerHighest,
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.campaign_outlined, size: 34, color: cs.primary),
-              const SizedBox(height: 10),
-              Text(
-                title,
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w900,
-                ),
+      child: Container(
+        margin: const EdgeInsets.all(24),
+        padding:
+        const EdgeInsets.symmetric(horizontal: 32, vertical: 28),
+        decoration: BoxDecoration(
+          color: _C.surface,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: _C.border),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: const [
+            Icon(Icons.campaign_outlined,
+                size: 38, color: _C.borderLight),
+            SizedBox(height: 10),
+            Text(
+              "No merchandise found",
+              style: TextStyle(
+                fontSize: 14.5,
+                fontWeight: FontWeight.w600,
+                color: _C.textHead,
               ),
-              const SizedBox(height: 6),
-              Text(
-                subtitle,
-                textAlign: TextAlign.center,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: cs.onSurfaceVariant,
-                ),
+            ),
+            SizedBox(height: 4),
+            Text(
+              "Tap \"Add merchandise\" to create a new entry",
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 12.5,
+                color: _C.textMuted,
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

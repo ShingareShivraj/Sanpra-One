@@ -1,3 +1,4 @@
+import 'package:android_id/android_id.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocation/constants.dart';
 import 'package:geolocation/services/login_services.dart';
@@ -61,8 +62,14 @@ class LoginViewModel extends BaseViewModel {
     baseurl = baseUrl;
 
     try {
+      /// GET ANDROID ID
+      const androidIdPlugin = AndroidId();
+      String androidId = await androidIdPlugin.getId() ?? "unknown";
+
+
+      /// LOGIN
       final bool loginSuccess =
-          await LoginServices().login(baseUrl, username, password);
+      await LoginServices().login(baseUrl, username, password, androidId);
 
       if (loginSuccess) {
         if (context.mounted) {

@@ -24,6 +24,8 @@ import 'package:geolocation/screens/profile_screen/profile_screen.dart';
 import 'package:geolocation/screens/sales_order/add_sales_order/add_order_screen.dart';
 import 'package:geolocation/screens/sales_order/items/add_items_screen.dart';
 import 'package:geolocation/screens/sales_order/list_sales_order/list_sales_order_screen.dart';
+import 'package:geolocation/screens/self_orders/items/add_self_order_screen.dart';
+import 'package:geolocation/screens/self_orders/list_sales_order/list_self_order_screen.dart';
 import 'package:geolocation/screens/splash_screen/splash_screen.dart';
 import 'package:geolocation/screens/visit_screens/add_visit/add_visit_view.dart';
 import 'package:geolocation/screens/visit_screens/update_visit/update_visit_view.dart';
@@ -70,7 +72,9 @@ import 'screens/retailer_registration/add_retailer/add_retailer_screen.dart';
     MaterialRoute(page: UpdateVisitScreen),
     MaterialRoute(page: RetailerFormView),
     MaterialRoute(page: ListDeliveryNoteScreen),
-    MaterialRoute(page: DeliveryNoteScreen)
+    MaterialRoute(page: DeliveryNoteScreen),
+    MaterialRoute(page: ListSelfOrderScreen),
+    MaterialRoute(page: CreateSelfOrderScreen)
 
 
     // DetailedFarmerScreen

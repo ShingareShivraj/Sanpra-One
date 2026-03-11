@@ -98,7 +98,7 @@ class _DeliveryNoteScreenState extends State<ListDeliveryNoteScreen> {
                       : ListView.separated(
                           physics: const AlwaysScrollableScrollPhysics(),
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 8),
+                              horizontal: 8, vertical: 8),
                           separatorBuilder: (_, __) =>
                               const SizedBox(height: 12),
                           itemCount: filteredList.length,
@@ -198,8 +198,8 @@ class _OrderCard extends StatelessWidget {
       borderRadius: BorderRadius.circular(16),
       child: Card(
         color: Colors.white, // ✅ Pure white card
-        elevation: 4,
-        shadowColor: Colors.black.withOpacity(0.1),
+        elevation:1,
+        shadowColor: Colors.black,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
         ),

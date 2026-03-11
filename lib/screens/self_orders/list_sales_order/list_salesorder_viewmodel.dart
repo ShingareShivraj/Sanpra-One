@@ -6,14 +6,15 @@ import 'package:stacked/stacked.dart';
 import '../../../model/order_list_model.dart';
 import '../../../router.router.dart';
 import '../../../services/order_services.dart';
+import '../self_order_details.dart';
 
 class ListDistributorOrderModel extends BaseViewModel {
   final _orderService = OrderServices();
+  final _addOrderService = AddOrderServices();
   final customerController = TextEditingController();
 
   List<OrderList> _orderList = []; // full list
   List<OrderList> _filteredOrderList = [];
-
   List<OrderList> get filteredOrderList => _filteredOrderList;
 
   final List<String> _searchCustomerList = [""];
@@ -45,12 +46,10 @@ class ListDistributorOrderModel extends BaseViewModel {
   Future<void> initialise(BuildContext context) async {
     setBusy(true);
     try {
-      final fetchedOrders = await _orderService.fetchDistributorOrder();
-      // final customers = await _addOrderService.fetchCustomer();
+      final fetchedOrders = await _orderService.fetchSelfOrder();
 
       _orderList = List.from(fetchedOrders);
       _filteredOrderList = List.from(fetchedOrders);
-      // _searchCustomerList = customers;
     } catch (e) {
       debugPrint('Error in initialise: $e');
     }
@@ -91,7 +90,7 @@ class ListDistributorOrderModel extends BaseViewModel {
   Future<void> refresh() async {
     setBusy(true);
     try {
-      final freshOrders = await _orderService.fetchDistributorOrder();
+      final freshOrders = await _orderService.fetchSelfOrder();
       _orderList = List.from(freshOrders);
       applyFilters(); // reapply current filters
     } catch (e) {
@@ -180,12 +179,12 @@ class ListDistributorOrderModel extends BaseViewModel {
   Future<void> onRowClick(BuildContext context, OrderList? order) async {
     if (order?.name == null) return;
 
-    final result = await Navigator.pushNamed(
-      context,
-      Routes.addDistributorOrderScreen,
-      arguments: AddDistributorOrderScreenArguments(orderId: order!.name!),
-    );
-
+    final result = Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (context) => OrderDetailsScreen(
+                  orderId: order!.name.toString(),
+                )));
     if (result == true) {
       await refresh();
     }

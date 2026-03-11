@@ -48,6 +48,55 @@ class OrderServices {
     }
   }
 
+  Future<List<OrderList>> fetchSelfOrder() async {
+    try {
+      final url = await _buildBaseUrl();
+
+      final response = await _dio.get(
+        '$url/api/method/mobile.mobile_env.order.get_self_orders_list',
+        options: Options(
+          headers: {'Authorization': await getTocken()},
+        ),
+      );
+
+      if (response.statusCode == 200 && response.data['data'] != null) {
+        return _parseOrderList(response.data['data']);
+      } else {
+        _showToast('Unable to fetch orders');
+        return [];
+      }
+    } catch (e, stacktrace) {
+      print(e.toString());
+      _handleError(e, context: 'fetchSelfOrder', stack: stacktrace);
+      return [];
+    }
+  }
+
+  Future<List<OrderList>> fetchDistributorOrder() async {
+    try {
+      final url = await _buildBaseUrl();
+
+      final response = await _dio.get(
+        '$url/api/method/mobile.mobile_env.order.get_distributor_orders_list',
+        options: Options(
+          headers: {'Authorization': await getTocken()},
+        ),
+      );
+
+      if (response.statusCode == 200 && response.data['data'] != null) {
+        return _parseOrderList(response.data['data']);
+      } else {
+        _showToast('Unable to fetch orders');
+        return [];
+      }
+    } catch (e, stacktrace) {
+      print(e.toString());
+      _handleError(e, context: 'fetchSelfOrder', stack: stacktrace);
+      return [];
+    }
+  }
+
+
   Future<DeliveryNote?> getOrder(String id) async {
     baseurl = await geturl();
     try {
@@ -76,17 +125,8 @@ class OrderServices {
   Future<List<DeliverNoteList>> filterFetchDeliveryNote() async {
     try {
       final url = await _buildBaseUrl();
-
-      final queryParams = {
-        'order_by': 'modified desc',
-        'fields':
-            '["name","customer_name","posting_date","grand_total","status","total_qty"]',
-        'limit_page_length': '999'
-      };
-
       final response = await _dio.get(
-        '$url/api/resource/Delivery Note',
-        queryParameters: queryParams,
+        '$url/api/method/mobile.mobile_env.order.get_delivery_note_list',
         options: Options(
           headers: {'Authorization': await getTocken()},
         ),

@@ -60,6 +60,29 @@ class ListTourScreen extends StatelessWidget {
     );
   }
 }
+class _C {
+  static const primary     = Color(0xFF2563EB);
+  static const primaryDark = Color(0xFF1E3A8A);
+  static const bg          = Color(0xFFF0F4FF);
+  static const surface     = Colors.white;
+  static const border      = Color(0xFFDBEAFE);
+  static const borderLight = Color(0xFFBFDBFE);
+  static const tint        = Color(0xFFEFF6FF);
+  static const textHead    = Color(0xFF1E3A8A);
+  static const textMuted   = Color(0xFF93C5FD);
+  static const green       = Color(0xFF059669);
+  static const greenBg     = Color(0xFFD1FAE5);
+  static const greenBorder = Color(0xFF86EFAC);
+  static const red         = Color(0xFFDC2626);
+  static const redBg       = Color(0xFFFEE2E2);
+  static const redBorder   = Color(0xFFFCA5A5);
+  static const amber       = Color(0xFFD97706);
+  static const amberBg     = Color(0xFFFEF3C7);
+  static const amberBorder = Color(0xFFFCD34D);
+  static const indigo      = Color(0xFF4F46E5);
+  static const indigoBg    = Color(0xFFEEF2FF);
+  static const indigoBorder= Color(0xFFC7D2FE);
+}
 
 class _VisitCard extends StatelessWidget {
   final Tour visit;
@@ -72,160 +95,167 @@ class _VisitCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final primary = theme.colorScheme.primary;
-    final onSurface = theme.colorScheme.onSurface;
-
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 2, vertical: 6),
+      margin: const EdgeInsets.symmetric(horizontal: 5, vertical: 5),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: primary.withOpacity(0.18),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 6),
-          ),
-        ],
+        color: _C.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _C.border),
       ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            /// ================= TOP ROW =================
-            Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+
+          // ── Header ──
+          Container(
+            padding: const EdgeInsets.fromLTRB(14, 13, 8, 12),
+            decoration: const BoxDecoration(
+              border: Border(
+                bottom: BorderSide(color: Color(0xFFEFF6FF)),
+              ),
+            ),
+            child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                /// LOCATION ICON
+                // Location icon box
                 Container(
-                  height: 42,
-                  width: 42,
+                  width: 38,
+                  height: 38,
                   decoration: BoxDecoration(
-                    color: primary.withOpacity(0.10),
-                    borderRadius: BorderRadius.circular(12),
+                    color: _C.tint,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: _C.borderLight),
                   ),
-                  child: Icon(
-                    Icons.location_on_rounded,
-                    color: primary,
-                    size: 22,
+                  child: const Icon(
+                    Icons.location_on_outlined,
+                    color: _C.primary,
+                    size: 18,
                   ),
                 ),
-
-                const SizedBox(width: 12),
-
-                /// AREA NAME
+                const SizedBox(width: 10),
+                // Area name
                 Expanded(
                   child: Text(
-                    visit.area ?? "-",
+                    visit.area ?? "—",
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: onSurface,
+                    style: const TextStyle(
+                      fontSize: 14.5,
+                      fontWeight: FontWeight.w700,
+                      color: _C.textHead,
                     ),
                   ),
                 ),
-
-                /// CALLS BADGE
+                const SizedBox(width: 8),
+                // Calls badge
                 _CallsBadge(count: visit.totalCalls ?? 0),
-
-                const SizedBox(width: 6),
-
-                /// DELETE
-                IconButton(
-                  tooltip: "Delete Tour",
-                  onPressed: model.isBusy
+                const SizedBox(width: 4),
+                // Delete button
+                GestureDetector(
+                  onTap: model.isBusy
                       ? null
                       : () async {
-                          final confirm = await showDialog<bool>(
-                            context: context,
-                            builder: (_) => AlertDialog(
-                              title: const Text("Delete Tour"),
-                              content: const Text(
-                                  "Are you sure you want to delete this tour?"),
-                              actions: [
-                                TextButton(
-                                  onPressed: () =>
-                                      Navigator.pop(context, false),
-                                  child: const Text("Cancel"),
-                                ),
-                                FilledButton(
-                                  style: FilledButton.styleFrom(
-                                    backgroundColor: Colors.redAccent,
-                                  ),
-                                  onPressed: () => Navigator.pop(context, true),
-                                  child: const Text("Delete"),
-                                ),
-                              ],
+                    final confirm = await showDialog<bool>(
+                      context: context,
+                      builder: (_) => AlertDialog(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        title: const Text(
+                          "Delete tour?",
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            color: _C.textHead,
+                          ),
+                        ),
+                        content: const Text(
+                          "Are you sure you want to delete this tour?",
+                          style: TextStyle(
+                            fontSize: 13.5,
+                            color: _C.textMuted,
+                          ),
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () =>
+                                Navigator.pop(context, false),
+                            child: const Text(
+                              "Cancel",
+                              style:
+                              TextStyle(color: _C.textMuted),
                             ),
-                          );
-
-                          if (confirm == true) {
-                            model.deleteTour(visit.name, context);
-                          }
-                        },
-                  icon: const Icon(
-                    Icons.delete_outline_rounded,
-                    color: Colors.redAccent,
-                    size: 22,
+                          ),
+                          TextButton(
+                            onPressed: () =>
+                                Navigator.pop(context, true),
+                            child: const Text(
+                              "Delete",
+                              style: TextStyle(
+                                color: _C.red,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                    if (confirm == true) {
+                      model.deleteTour(visit.name, context);
+                    }
+                  },
+                  child: Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      color: _C.redBg,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: _C.redBorder),
+                    ),
+                    child: const Icon(
+                      Icons.delete_outline_rounded,
+                      color: _C.red,
+                      size: 15,
+                    ),
                   ),
                 ),
               ],
             ),
+          ),
 
-            const SizedBox(height: 10),
-
-            /// ================= DATE ROW =================
-            Row(
+          // ── Meta info ──
+          Padding(
+            padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(
-                  Icons.calendar_month_rounded,
-                  size: 16,
-                  color: onSurface.withOpacity(0.6),
+                _MetaRow(
+                  icon: Icons.calendar_today_outlined,
+                  text: visit.date ?? "—",
                 ),
-                const SizedBox(width: 8),
-                Text(
-                  visit.date ?? "-",
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                    color: onSurface.withOpacity(0.7),
+                if ((visit.description ?? "").isNotEmpty) ...[
+                  const SizedBox(height: 7),
+                  _MetaRow(
+                    icon: Icons.notes_outlined,
+                    text: visit.description!,
+                    maxLines: 2,
                   ),
+                ],
+                const SizedBox(height: 7),
+                _MetaRow(
+                  icon: Icons.person_outline_rounded,
+                  text: visit.owner ?? "—",
                 ),
               ],
             ),
-            const SizedBox(height: 10),
-
-            Text(
-              "Description: ${visit.description}",
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-                color: onSurface.withOpacity(0.7),
-              ),
-            ),
-            const SizedBox(height: 10),
-
-            Text(
-              "created by: ${visit.owner}",
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-                color: onSurface.withOpacity(0.7),
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 }
+
+// ─── Calls Badge ───────────────────────────────────────────────────────────────
 
 class _CallsBadge extends StatelessWidget {
   final int count;
@@ -234,32 +264,28 @@ class _CallsBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final primary = Theme.of(context).colorScheme.primary;
-
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
       decoration: BoxDecoration(
-        color: primary.withOpacity(0.10),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: primary.withOpacity(0.25),
-        ),
+        color: _C.tint,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: _C.borderLight),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            Icons.call_rounded,
-            size: 14,
-            color: primary,
+          const Icon(
+            Icons.call_outlined,
+            size: 12,
+            color: _C.primary,
           ),
-          const SizedBox(width: 6),
+          const SizedBox(width: 5),
           Text(
-            "$count Calls",
-            style: TextStyle(
-              color: primary,
+            "$count call${count == 1 ? '' : 's'}",
+            style: const TextStyle(
+              fontSize: 11.5,
               fontWeight: FontWeight.w600,
-              fontSize: 12,
+              color: _C.primary,
             ),
           ),
         ],
@@ -268,29 +294,83 @@ class _CallsBadge extends StatelessWidget {
   }
 }
 
+// ─── Meta Row ──────────────────────────────────────────────────────────────────
+
+class _MetaRow extends StatelessWidget {
+  final IconData icon;
+  final String text;
+  final int maxLines;
+
+  const _MetaRow({
+    required this.icon,
+    required this.text,
+    this.maxLines = 1,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 14, color: _C.textMuted),
+        const SizedBox(width: 7),
+        Expanded(
+          child: Text(
+            text,
+            maxLines: maxLines,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontSize: 12.5,
+              color: _C.textHead,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ─── Empty State ───────────────────────────────────────────────────────────────
+
 class _EmptyState extends StatelessWidget {
   const _EmptyState();
 
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: const [
-          Icon(
-            Icons.tour,
-            size: 60,
-            color: Colors.grey,
-          ),
-          SizedBox(height: 12),
-          Text(
-            'No tours found',
-            style: TextStyle(
-              fontSize: 16,
-              color: Colors.grey,
+      child: Container(
+        margin: const EdgeInsets.all(24),
+        padding:
+        const EdgeInsets.symmetric(horizontal: 32, vertical: 28),
+        decoration: BoxDecoration(
+          color: _C.surface,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: _C.border),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: const [
+            Icon(Icons.map_outlined, size: 38, color: _C.borderLight),
+            SizedBox(height: 10),
+            Text(
+              "No tours found",
+              style: TextStyle(
+                fontSize: 14.5,
+                fontWeight: FontWeight.w600,
+                color: _C.textHead,
+              ),
             ),
-          ),
-        ],
+            SizedBox(height: 4),
+            Text(
+              "Create a tour to get started",
+              style: TextStyle(
+                fontSize: 12.5,
+                color: _C.textMuted,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

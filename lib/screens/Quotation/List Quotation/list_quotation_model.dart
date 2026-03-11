@@ -1,84 +1,112 @@
 import 'package:flutter/material.dart';
 import 'package:stacked/stacked.dart';
+
 import '../../../model/quotation_list_model.dart';
 import '../../../router.router.dart';
 import '../../../services/list_quotation_services.dart';
 
-
 class ListQuotationModel extends BaseViewModel {
+  final QuotationServices _service = QuotationServices();
+
   List<QuotationList> quotationlist = [];
   List<QuotationList> filterquotationlist = [];
-  List<String> customer=[""];
-  List<String> quotation=["Customer","Lead"];
-  initialise(BuildContext context) async {
+
+  List<String> customer = [];
+  final List<String> quotation = ["Customer", "Lead"];
+
+  String _searchQuery = "";
+
+  Future<void> initialise(BuildContext context) async {
     setBusy(true);
-     quotationlist = await QuotationServices().fetchquotation();
-     filterquotationlist=quotationlist;
-     customer=await QuotationServices().getcustomer();
-    setBusy(false);
+    try {
+      final results = await Future.wait([
+        _service.fetchquotation(),
+      ]);
+
+      quotationlist = List<QuotationList>.from(results[0]);
+      filterquotationlist = List<QuotationList>.from(quotationlist);
+    } catch (_) {
+      quotationlist = [];
+      filterquotationlist = [];
+    } finally {
+      setBusy(false);
+      notifyListeners();
+    }
   }
 
-  void onRowClick(BuildContext context, QuotationList? QList) {
+  void onRowClick(BuildContext context, QuotationList? qList) {
     Navigator.pushNamed(
       context,
       Routes.addQuotationView,
-     arguments: AddQuotationViewArguments(quotationid: QList?.name ?? ""),
-
+      arguments: AddQuotationViewArguments(
+        quotationid: qList?.name ?? "",
+      ),
     );
   }
 
   Color getColorForStatus(String status) {
     switch (status) {
       case 'Draft':
-        return Colors.grey[400] ??
-            Colors.grey; // Set the color for Draft status
+        return Colors.grey.shade500;
       case 'Open':
-        return Colors.orangeAccent; // Set the color for On Hold status
+        return Colors.orangeAccent;
       case 'Partially Ordered':
-        return Colors.yellow; // Set the color for To Deliver and Bill status
+        return Colors.amber;
       case 'Ordered':
-        return Colors.green; // Set the color for To Bill status
+        return Colors.green;
       case 'Lost':
-        return Colors.grey; // Set the color for To Deliver status
+        return Colors.grey;
       case 'Expired':
-        return Colors.red; // Set the color for Completed status
+        return Colors.red;
       case 'Cancelled':
-        return Colors.red; // Set the color for Cancelled status
-      // Set the color for Closed status
+        return Colors.red;
       default:
-        return Colors.grey; // Set a default color for unknown status
+        return Colors.grey;
+    }
+  }
+  Color getQuotationForStatus(String status) {
+    switch (status) {
+
+      case 'Lead':
+        return Colors.orange;
+      case 'Customer':
+        return Colors.blueAccent;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  Future<void> refresh() async {
+    try {
+      final data = await _service.fetchquotation();
+      quotationlist = List<QuotationList>.from(data);
+      _applyLocalFilters(notify: true);
+    } catch (_) {
+      notifyListeners();
     }
   }
 
 
-  Future<void> refresh() async {
-    filterquotationlist=await QuotationServices().fetchquotation();
-    notifyListeners();
+
+  void searchPartyName(String value) {
+    _searchQuery = value.trim().toLowerCase();
+    _applyLocalFilters(notify: true);
   }
 
-  String? custm;
-  String? quotationto;
+  void _applyLocalFilters({bool notify = false}) {
+    if (_searchQuery.isEmpty) {
+      filterquotationlist = List<QuotationList>.from(quotationlist);
+    } else {
+      filterquotationlist = quotationlist.where((q) {
+        final partyName = (q.customerName ?? "").toLowerCase();
+        final quotationId = (q.name ?? "").toLowerCase();
+        return partyName.contains(_searchQuery) ||
+            quotationId.contains(_searchQuery);
+      }).toList();
+    }
 
-  void setcustomer(String? customer) {
-    custm = customer ?? "";
-    notifyListeners();
+    if (notify) {
+      notifyListeners();
+    }
   }
-
-  void setquotationto(String? quotation) {
-    quotationto = quotation ?? "";
-    notifyListeners();
-  }
-
-  void setfilter(String quotaion,String customer) async {
-    filterquotationlist= await QuotationServices().fetchfilterquotation(quotaion, customer);
-    notifyListeners();
-  }
-
-  void clearfilter() async {
-    quotationto="";
-    custm="";
-    filterquotationlist= await QuotationServices().fetchquotation();
-    notifyListeners();
-  }
-
 }

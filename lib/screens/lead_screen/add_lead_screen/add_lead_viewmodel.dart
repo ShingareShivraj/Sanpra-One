@@ -1,13 +1,14 @@
 import 'dart:async';
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:logger/logger.dart';
 import 'package:stacked/stacked.dart';
-
+import 'package:image/image.dart' as img;
 import '../../../model/add_lead_model.dart';
 import '../../../model/lead_details_model.dart';
 import '../../../services/add_lead_services.dart';
@@ -138,6 +139,56 @@ class AddLeadViewModel extends BaseViewModel {
       // ignore warm failures
     }
   }
+  Future<File> addLocationLabel(File imageFile, double lat, double lng) async {
+
+    final bytes = await imageFile.readAsBytes();
+    img.Image? image = img.decodeImage(bytes);
+
+    if (image == null) return imageFile;
+
+    final time = DateTime.now();
+
+    List<Placemark> placemarks = await placemarkFromCoordinates(lat, lng);
+    Placemark place = placemarks.first;
+
+    List<String> parts = [];
+
+    if ((place.subLocality ?? "").isNotEmpty) parts.add(place.subLocality!);
+    if ((place.locality ?? "").isNotEmpty) parts.add(place.locality!);
+    if ((place.administrativeArea ?? "").isNotEmpty) parts.add(place.administrativeArea!);
+
+    String address = parts.join(", ");
+
+    String label =
+        "$address\n${time.day}-${time.month}-${time.year} ${time.hour}:${time.minute}";
+
+    img.fillRect(
+      image,
+      x1: 0,
+      y1: image.height - 120,
+      x2: image.width,
+      y2: image.height,
+      color: img.ColorRgb8(0, 0, 0),
+    );
+
+    img.drawString(
+      image,
+      label,
+      x: 20,
+      y: image.height - 90,
+      font: img.arial24,
+      color: img.ColorRgb8(255, 255, 255),
+    );
+
+    final dir = await getTemporaryDirectory();
+    final newPath =
+        "${dir.path}/lead_${DateTime.now().millisecondsSinceEpoch}.jpg";
+
+    final newFile = File(newPath);
+    await newFile.writeAsBytes(img.encodeJpg(image));
+
+    return newFile;
+  }
 
   // ───────────────────────────────────────── Init ─────────────────────────────────────────
   Future<void> initialise(BuildContext context, String leadId) async {
@@ -197,6 +248,7 @@ class AddLeadViewModel extends BaseViewModel {
   }
 
   // ───────────────────────────────────────── Image ─────────────────────────────────────────
+  // ───────────────────────────────────────── Image ─────────────────────────────────────────
   Future<void> pickPhoto({bool fromCamera = true}) async {
     final picked = await ImagePicker().pickImage(
       source: fromCamera ? ImageSource.camera : ImageSource.gallery,
@@ -206,7 +258,21 @@ class AddLeadViewModel extends BaseViewModel {
     );
 
     if (picked != null) {
-      selectedImage = File(picked.path);
+
+      File original = File(picked.path);
+
+      Position pos = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.medium,
+      );
+
+      File labeledImage = await addLocationLabel(
+        original,
+        pos.latitude,
+        pos.longitude,
+      );
+
+      selectedImage = labeledImage;
+
       notifyListeners();
     }
   }

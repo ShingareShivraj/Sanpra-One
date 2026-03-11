@@ -2,10 +2,14 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:geocoding/geocoding.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:logger/logger.dart';
 import 'package:stacked/stacked.dart';
+import 'package:image/image.dart' as img;
+import 'package:path_provider/path_provider.dart';
 
 import '../../../constants.dart';
 import '../../../model/expense_model.dart';
@@ -73,8 +77,8 @@ class AddExpenseViewModel extends BaseViewModel {
     setBusy(false);
   }
 
-  Future<void> pickOrCaptureImage(
-      {ImageSource source = ImageSource.camera}) async {
+  Future<void> pickOrCaptureImage({ImageSource source = ImageSource.camera}) async {
+
     final XFile? photo = await ImagePicker().pickImage(
       source: source,
       imageQuality: 80,
@@ -82,7 +86,20 @@ class AddExpenseViewModel extends BaseViewModel {
 
     if (photo == null) return;
 
-    selectedImageFile = await compressFile(fileFromXFile(photo));
+    File file = fileFromXFile(photo);
+
+    Position pos = await Geolocator.getCurrentPosition(
+      desiredAccuracy: LocationAccuracy.medium,
+    );
+
+    File labeledImage = await addLocationLabel(
+      file,
+      pos.latitude,
+      pos.longitude,
+    );
+
+    selectedImageFile = await compressFile(labeledImage);
+
     notifyListeners();
   }
 
@@ -160,6 +177,63 @@ class AddExpenseViewModel extends BaseViewModel {
     } catch (e, stack) {
       _logger.e('Error deleting leave', error: e, stackTrace: stack);
     }
+  }
+//---------------------------getolocator added by shivraj-----------------------------------
+
+  Future<File> addLocationLabel(
+      File imageFile,
+      double lat,
+      double lng,
+      ) async {
+
+    final bytes = await imageFile.readAsBytes();
+    img.Image? image = img.decodeImage(bytes);
+
+    if (image == null) return imageFile;
+
+    final time = DateTime.now();
+
+    List<Placemark> placemarks = await placemarkFromCoordinates(lat, lng);
+    Placemark place = placemarks.first;
+
+    List<String> parts = [];
+
+    if ((place.subLocality ?? "").isNotEmpty) parts.add(place.subLocality!);
+    if ((place.locality ?? "").isNotEmpty) parts.add(place.locality!);
+    if ((place.administrativeArea ?? "").isNotEmpty) parts.add(place.administrativeArea!);
+
+    String address = parts.join(", ");
+
+    String label =
+        "$address\n"
+        "${time.day}-${time.month}-${time.year} ${time.hour}:${time.minute}";
+
+    img.fillRect(
+      image,
+      x1: 0,
+      y1: image.height - 100,
+      x2: image.width,
+      y2: image.height,
+      color: img.ColorRgb8(0, 0, 0),
+    );
+
+    img.drawString(
+      image,
+      label,
+      x: 20,
+      y: image.height - 80,
+      font: img.arial24,
+      color: img.ColorRgb8(255, 255, 255),
+    );
+
+    final dir = await getTemporaryDirectory();
+    final newPath =
+        "${dir.path}/expense_${DateTime.now().millisecondsSinceEpoch}.jpg";
+
+    final newFile = File(newPath);
+    await newFile.writeAsBytes(img.encodeJpg(image));
+
+    return newFile;
   }
 
   // -------------------- IMAGE --------------------

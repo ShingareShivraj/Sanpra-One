@@ -1,10 +1,8 @@
 import 'dart:convert';
 import 'dart:ui';
-
 import 'package:dio/dio.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:logger/logger.dart';
-
 import '../constants.dart';
 import '../model/add_order_model.dart';
 import '../model/order_details_model.dart';
@@ -59,6 +57,23 @@ class AddOrderServices {
       return dataList.map((e) => e["name"].toString()).toList();
     } catch (e) {
       _handleError(e, "Unable to fetch warehouses");
+      return [];
+    }
+  }
+
+  Future<List<Items>> fetchSelfItems() async {
+    baseurl = await geturl();
+    try {
+      final response = await _dio.get(
+        '$baseurl/api/method/mobile.mobile_env.order.get_self_order_item_list',
+        options: Options(headers: {'Authorization': await getTocken()}),
+      );
+
+      return List<Items>.from(
+        response.data["data"].map((e) => Items.fromJson(e)),
+      );
+    } catch (e) {
+      _handleError(e, "Unable to fetch items");
       return [];
     }
   }
@@ -123,6 +138,20 @@ class AddOrderServices {
     } catch (e) {
       _handleError(e, "Failed to create order");
       return "";
+    }
+  }
+  Future<bool> addSelfOrder(AddOrderModel orderDetails) async {
+    baseurl = await geturl();
+    try {
+      final response = await _dio.post(
+        '$baseurl/api/method/mobile.mobile_env.order.create_self_order',
+        data: json.encode(orderDetails),
+        options: Options(headers: {'Authorization': await getTocken()}),
+      );
+      return true;
+    } catch (e) {
+      _handleError(e, "Failed to create order");
+      return false;
     }
   }
 
@@ -232,6 +261,7 @@ class AddOrderServices {
     }
   }
 
+
   Future<List<OrderDetailsModel>> orderDetails(
       AddOrderModel orderDetails) async {
     baseurl = await geturl();
@@ -246,6 +276,24 @@ class AddOrderServices {
         response.data["data"].map((e) => OrderDetailsModel.fromJson(e)),
       );
     } catch (e) {
+      _handleError(e, "Unable to prepare order details");
+      return [];
+    }
+  }
+  Future<List<OrderDetailsModel>> selfOrderDetails(
+      AddOrderModel orderDetails) async {
+    baseurl = await geturl();
+    try {
+      final response = await _dio.post(
+        '$baseurl/api/method/mobile.mobile_env.order.prepare_selforder_totals',
+        data: json.encode(orderDetails),
+        options: Options(headers: {'Authorization': await getTocken()}),
+      );
+
+      return List<OrderDetailsModel>.from(
+        response.data["data"].map((e) => OrderDetailsModel.fromJson(e)),
+      );
+    } on DioException catch (e) {
       _handleError(e, "Unable to prepare order details");
       return [];
     }

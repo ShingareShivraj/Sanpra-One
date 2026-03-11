@@ -7,18 +7,18 @@ import 'package:stacked/stacked.dart';
 import '../../../router.router.dart';
 import 'list_salesorder_viewmodel.dart';
 
-class ListOrderScreen extends StatelessWidget {
-  const ListOrderScreen({super.key});
+class ListSelfOrderScreen extends StatelessWidget {
+  const ListSelfOrderScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return ViewModelBuilder<ListOrderModel>.reactive(
-      viewModelBuilder: () => ListOrderModel(),
+    return ViewModelBuilder<ListDistributorOrderModel>.reactive(
+      viewModelBuilder: () => ListDistributorOrderModel(),
       onViewModelReady: (model) => model.initialise(context),
       builder: (context, model, child) => Scaffold(
         backgroundColor: Colors.grey.shade100,
         appBar: AppBar(
-          title: const Text('Sales Order'),
+          title: const Text('Self Orders'),
         ),
         body: fullScreenLoader(
           context: context,
@@ -27,9 +27,6 @@ class ListOrderScreen extends StatelessWidget {
             padding: const EdgeInsets.all(16.0),
             child: Column(
               children: [
-                // ------------------------
-                // Filters Row
-                // ------------------------
                 Column(
                   children: [
                     Row(
@@ -102,7 +99,7 @@ class ListOrderScreen extends StatelessWidget {
                                 items: model.statusList
                                     .map((s) => DropdownMenuItem(
                                   value: s,
-                                  child: Text(s,style: TextStyle(color: Colors.black),),
+                                  child: Text(s,style:TextStyle(color: Colors.black)),
                                 ))
                                     .toList(),
                                 onChanged: (v) {
@@ -182,8 +179,8 @@ class ListOrderScreen extends StatelessWidget {
           onPressed: () async {
             final result = await Navigator.pushNamed(
               context,
-              Routes.addOrderScreen,
-              arguments: const AddOrderScreenArguments(orderid: ""),
+              Routes.createSelfOrderScreen,
+              arguments: const CreateSelfOrderScreenArguments(),
             );
             if (result == true) {
               model.refresh();
@@ -219,7 +216,7 @@ class ListOrderScreen extends StatelessWidget {
 
 class _OrderCard extends StatelessWidget {
   final OrderList order;
-  final ListOrderModel model;
+  final ListDistributorOrderModel model;
 
   const _OrderCard({required this.order, required this.model});
 
@@ -427,20 +424,20 @@ class _OrderCard extends StatelessWidget {
                       value: "${order.totalQty ?? 0}",
                     ),
                   ),
-                  Container(
-                    width: 1,
-                    height: 36,
-                    margin: const EdgeInsets.symmetric(horizontal: 10),
-                    color: const Color(0xFFDBEAFE),
-                  ),
-                  Expanded(
-                    flex: 2,
-                    child: _InfoBlock(
-                      label: "Amount",
-                      value: "₹${(order.grandTotal ?? 0).toStringAsFixed(0)}",
-                      valueColor: const Color(0xFF059669),
-                    ),
-                  ),
+                  // Container(
+                  //   width: 1,
+                  //   height: 36,
+                  //   margin: const EdgeInsets.symmetric(horizontal: 10),
+                  //   color: const Color(0xFFDBEAFE),
+                  // ),
+                  // Expanded(
+                  //   flex: 2,
+                  //   child: _InfoBlock(
+                  //     label: "Amount",
+                  //     value: "₹${(order.grandTotal ?? 0).toStringAsFixed(0)}",
+                  //     valueColor: const Color(0xFF059669),
+                  //   ),
+                  // ),
                 ],
               ),
 

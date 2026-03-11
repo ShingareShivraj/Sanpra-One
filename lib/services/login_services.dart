@@ -7,11 +7,18 @@ import 'package:shared_preferences/shared_preferences.dart';
 class LoginServices {
   final Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
 
-  Future<bool> login(String url, String username, String password) async {
+  Future<bool> login(String url, String username, String password, String androidId) async {
+    print("ANDROID ID SENT TO SERVER: $androidId");
+
+
     var headers = {
       'Content-Type': 'application/x-www-form-urlencoded',
     };
-    var data = {'usr': username, 'pwd': password};
+    var data = {
+      'usr': username,
+      'pwd': password,
+      'android_id': androidId
+    };
     var dio = Dio();
 
     try {

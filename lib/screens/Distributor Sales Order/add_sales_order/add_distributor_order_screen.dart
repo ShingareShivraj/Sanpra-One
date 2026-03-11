@@ -847,15 +847,15 @@ class ActionButtons extends StatelessWidget {
           Expanded(
             child: CTextButton(
               text: model.isSame
-                  ? 'Submit Order'
+                  ? 'Accept Order'
                   : (model.isEdit ? 'Update Order' : 'Create Order'),
               buttonColor: Colors.blueAccent.shade400,
               onPressed: () {
                 if (model.isSame) {
                   _showConfirmationDialog(
                     context: context,
-                    title: "Confirm Submit?",
-                    content: "Do you want to permanently submit this order?",
+                    title: "Confirm Accept?",
+                    content: "Do you want to permanently accept this order?",
                     onConfirm: () => model.onSubmitPressed(context),
                   );
                 } else {

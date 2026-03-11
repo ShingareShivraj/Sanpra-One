@@ -120,6 +120,34 @@ class _LeadListScreenState extends State<LeadListScreen> {
 /// =======================
 /// LEAD CARD
 /// =======================
+// ─── Theme Constants ───────────────────────────────────────────────────────────
+
+class _C {
+  static const primary     = Color(0xFF2563EB);
+  static const primaryDark = Color(0xFF1E3A8A);
+  static const bg          = Color(0xFFF0F4FF);
+  static const surface     = Colors.white;
+  static const border      = Color(0xFFDBEAFE);
+  static const borderLight = Color(0xFFBFDBFE);
+  static const tint        = Color(0xFFEFF6FF);
+  static const textHead    = Color(0xFF1E3A8A);
+  static const textMuted   = Color(0xFF93C5FD);
+  static const green       = Color(0xFF059669);
+  static const greenBg     = Color(0xFFD1FAE5);
+  static const greenBorder = Color(0xFF86EFAC);
+  static const red         = Color(0xFFDC2626);
+  static const redBg       = Color(0xFFFEE2E2);
+  static const redBorder   = Color(0xFFFCA5A5);
+  static const amber       = Color(0xFFD97706);
+  static const amberBg     = Color(0xFFFEF3C7);
+  static const amberBorder = Color(0xFFFCD34D);
+  static const indigo      = Color(0xFF4F46E5);
+  static const indigoBg    = Color(0xFFEEF2FF);
+  static const indigoBorder= Color(0xFFC7D2FE);
+}
+
+// ─── Lead Card ─────────────────────────────────────────────────────────────────
+
 class LeadCard extends StatelessWidget {
   final String user;
   final String status;
@@ -142,200 +170,145 @@ class LeadCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     String formattedDate;
     try {
-      formattedDate =
-          DateFormat('dd MMM yyyy • hh:mm a').format(DateTime.parse(date));
+      formattedDate = DateFormat('dd MMM yyyy · hh:mm a')
+          .format(DateTime.parse(date));
     } catch (_) {
       formattedDate = date;
     }
 
-    _statusColor(status);
-
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      elevation: 0.8,
-      shadowColor: Colors.black12,
-      shape: RoundedRectangleBorder(
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
+      decoration: BoxDecoration(
+        color: _C.surface,
         borderRadius: BorderRadius.circular(16),
-        side: BorderSide(
-          color: theme.dividerColor.withOpacity(0.3),
-        ),
+        border: Border.all(color: _C.border),
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            /// ─── HEADER ─────────────────────────────
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+
+          // ── Header ──
+          Container(
+            padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+            decoration: const BoxDecoration(
+              border: Border(
+                bottom: BorderSide(color: Color(0xFFEFF6FF)),
+              ),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                StatusBadge(status: status),
-                Text(
-                  formattedDate,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: Colors.grey.shade600,
+                // Company initials avatar
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: _C.tint,
+                    borderRadius: BorderRadius.circular(11),
+                    border: Border.all(color: _C.borderLight),
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    company.isNotEmpty
+                        ? company[0].toUpperCase()
+                        : "?",
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: _C.primary,
+                    ),
                   ),
                 ),
-              ],
-            ),
-
-            const SizedBox(height: 12),
-
-            /// ─── COMPANY ───────────────────────────
-            Text(
-              company,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w700,
-                color: Colors.blue,
-                letterSpacing: 0.2,
-              ),
-            ),
-
-            const SizedBox(height: 2),
-
-            /// CONTACT PERSON
-            Text(
-              name,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: Colors.grey.shade700,
-              ),
-            ),
-
-            const SizedBox(height: 12),
-
-            /// ─── META INFO ─────────────────────────
-            Row(
-              children: [
-                _IconText(
-                  icon: Icons.public,
-                  text: region,
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        company,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 14.5,
+                          fontWeight: FontWeight.w700,
+                          color: _C.textHead,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: _C.textMuted,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
+                const SizedBox(width: 8),
+                StatusBadge(status: status),
               ],
             ),
-            const SizedBox(height: 6),
-            Row(
+          ),
+
+          // ── Meta info ──
+          Padding(
+            padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _IconText(
+                _MetaRow(
+                  icon: Icons.public_outlined,
+                  text: region,
+                ),
+                const SizedBox(height: 7),
+                _MetaRow(
                   icon: Icons.location_on_outlined,
                   text: location,
                   maxLines: 2,
                 ),
-              ],
-            ),
-            const SizedBox(height: 6),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _IconText(
-                  icon: Icons.person,
+                const SizedBox(height: 7),
+                _MetaRow(
+                  icon: Icons.person_outline_rounded,
                   text: user,
-                  maxLines: 1,
                 ),
               ],
             ),
-          ],
-        ),
-      ),
-    );
-  }
+          ),
 
-  Color _statusColor(String status) {
-    switch (status) {
-      case "Converted":
-        return Colors.green.shade700;
-      case "Interested":
-        return Colors.orange.shade700;
-      case "Lead":
-        return Colors.blue.shade700;
-      case "Opportunity":
-        return Colors.indigo.shade700;
-      case "Lost Quotation":
-        return Colors.red.shade700;
-      default:
-        return Colors.grey.shade700;
-    }
-  }
-}
-
-class StatusBadge extends StatelessWidget {
-  final String status;
-
-  const StatusBadge({super.key, required this.status});
-
-  @override
-  Widget build(BuildContext context) {
-    final color = _statusColor(status);
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.12),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        status.toUpperCase(),
-        style: TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 0.4,
-          color: color,
-        ),
-      ),
-    );
-  }
-
-  Color _statusColor(String status) {
-    switch (status) {
-      case "Converted":
-        return Colors.green;
-      case "Interested":
-        return Colors.orange;
-      case "Lead":
-        return Colors.blue;
-      case "Opportunity":
-        return Colors.indigo;
-      default:
-        return Colors.grey;
-    }
-  }
-}
-
-class _IconText extends StatelessWidget {
-  final IconData icon;
-  final String text;
-  final int maxLines;
-
-  const _IconText({
-    required this.icon,
-    required this.text,
-    this.maxLines = 1,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, size: 15, color: Colors.grey.shade500),
-          const SizedBox(width: 6),
-          Expanded(
-            child: Text(
-              text,
-              maxLines: maxLines,
-              overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Colors.grey.shade700,
+          // ── Footer: date ──
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(
+                horizontal: 14, vertical: 9),
+            decoration: const BoxDecoration(
+              color: Color(0xFFF8FAFF),
+              border: Border(
+                top: BorderSide(color: Color(0xFFEFF6FF)),
+              ),
+              borderRadius: BorderRadius.vertical(
+                bottom: Radius.circular(16),
+              ),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.access_time_rounded,
+                    size: 13, color: _C.textMuted),
+                const SizedBox(width: 5),
+                Text(
+                  formattedDate,
+                  style: const TextStyle(
+                    fontSize: 11.5,
+                    color: _C.textMuted,
+                    fontWeight: FontWeight.w500,
                   ),
+                ),
+              ],
             ),
           ),
         ],
@@ -344,21 +317,188 @@ class _IconText extends StatelessWidget {
   }
 }
 
-/// =======================
-/// EMPTY STATE
-/// =======================
+// ─── Meta Row ──────────────────────────────────────────────────────────────────
+
+class _MetaRow extends StatelessWidget {
+  final IconData icon;
+  final String text;
+  final int maxLines;
+
+  const _MetaRow({
+    required this.icon,
+    required this.text,
+    this.maxLines = 1,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 14, color: _C.textMuted),
+        const SizedBox(width: 7),
+        Expanded(
+          child: Text(
+            text,
+            maxLines: maxLines,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontSize: 12.5,
+              color: _C.textHead,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ─── Status Badge ──────────────────────────────────────────────────────────────
+
+class StatusBadge extends StatelessWidget {
+  final String status;
+
+  const StatusBadge({super.key, required this.status});
+
+  _StatusStyle _style(String status) {
+    switch (status) {
+      case "Converted":
+        return _StatusStyle(
+          color: _C.green,
+          bg: _C.greenBg,
+          border: _C.greenBorder,
+          dot: _C.green,
+        );
+      case "Interested":
+        return _StatusStyle(
+          color: _C.amber,
+          bg: _C.amberBg,
+          border: _C.amberBorder,
+          dot: _C.amber,
+        );
+      case "Lead":
+        return _StatusStyle(
+          color: _C.primary,
+          bg: _C.tint,
+          border: _C.borderLight,
+          dot: _C.primary,
+        );
+      case "Opportunity":
+        return _StatusStyle(
+          color: _C.indigo,
+          bg: _C.indigoBg,
+          border: _C.indigoBorder,
+          dot: _C.indigo,
+        );
+      case "Lost Quotation":
+        return _StatusStyle(
+          color: _C.red,
+          bg: _C.redBg,
+          border: _C.redBorder,
+          dot: _C.red,
+        );
+      default:
+        return _StatusStyle(
+          color: const Color(0xFF64748B),
+          bg: const Color(0xFFF1F5F9),
+          border: const Color(0xFFCBD5E1),
+          dot: const Color(0xFF64748B),
+        );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final s = _style(status);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+      decoration: BoxDecoration(
+        color: s.bg,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: s.border),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 6,
+            height: 6,
+            decoration: BoxDecoration(
+              color: s.dot,
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(width: 5),
+          Text(
+            status,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: s.color,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StatusStyle {
+  final Color color;
+  final Color bg;
+  final Color border;
+  final Color dot;
+
+  const _StatusStyle({
+    required this.color,
+    required this.bg,
+    required this.border,
+    required this.dot,
+  });
+}
+
+// ─── Empty State ───────────────────────────────────────────────────────────────
+
 class _EmptyState extends StatelessWidget {
   const _EmptyState();
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
-      child: Text(
-        'No leads available 😔',
-        style: TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.w600,
-          color: Colors.grey,
+    return Center(
+      child: Container(
+        margin: const EdgeInsets.all(24),
+        padding:
+        const EdgeInsets.symmetric(horizontal: 32, vertical: 28),
+        decoration: BoxDecoration(
+          color: _C.surface,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: _C.border),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: const [
+            Icon(Icons.inbox_outlined,
+                size: 38, color: _C.borderLight),
+            SizedBox(height: 10),
+            Text(
+              "No leads available",
+              style: TextStyle(
+                fontSize: 14.5,
+                fontWeight: FontWeight.w600,
+                color: _C.textHead,
+              ),
+            ),
+            SizedBox(height: 4),
+            Text(
+              "Try adjusting your filters",
+              style: TextStyle(
+                fontSize: 12.5,
+                color: _C.textMuted,
+              ),
+            ),
+          ],
         ),
       ),
     );

@@ -25,6 +25,7 @@ import '../attendance_request/list_attendance_request/list_attendance_request_sc
 import '../attendence_screen/attendence_view.dart';
 import '../holiday_screen/holiday_view.dart';
 import '../profile_screen/profile_screen.dart';
+import '../self_orders/list_sales_order/list_self_order_screen.dart';
 import '../stock_screen/stock_screen.dart';
 import '../tracking_screen/background_service.dart';
 import '../tracking_screen/track_person_page.dart';
@@ -58,7 +59,7 @@ class _HomePageState extends State<HomePage> {
           return const Scaffold(
               body: Center(child: CircularProgressIndicator()));
         }
-        if (model.dashboard.isEmployee ==false){
+        if (model.dashboard.isEmployee == false) {
           return DistributorHomePage();
         }
         // If NOT checked in -> show full-screen lock page
@@ -589,17 +590,17 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ),
 
-                  Padding(
-                    padding: const EdgeInsets.only(right: 16.0),
-                    child: _QuickActionCard(
-                      icon: Iconsax.receipt,
-                      label: "Report",
-                      onTap: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => ReportsPage())),
-                    ),
-                  ),
+                  // Padding(
+                  //   padding: const EdgeInsets.only(right: 16.0),
+                  //   child: _QuickActionCard(
+                  //     icon: Iconsax.receipt,
+                  //     label: "Report",
+                  //     onTap: () => Navigator.push(
+                  //         context,
+                  //         MaterialPageRoute(
+                  //             builder: (context) => ReportsPage())),
+                  //   ),
+                  // ),
                 ],
               ),
             ),
@@ -1542,97 +1543,387 @@ class _SwipeToConfirmState extends State<SwipeToConfirm> {
 // -----------------------------
 // METER READING SCREEN
 // -----------------------------
-class MeterReadingScreen extends StatelessWidget {
+
+// ─── Meter Reading Screen ─────────────────────────────────────────────────────
+
+class MeterReadingScreen extends StatefulWidget {
   final String type;
   const MeterReadingScreen({super.key, required this.type});
 
   @override
-  Widget build(BuildContext context) {
-    final controller = TextEditingController();
+  State<MeterReadingScreen> createState() => _MeterReadingScreenState();
+}
 
+class _MeterReadingScreenState extends State<MeterReadingScreen>
+    with SingleTickerProviderStateMixin {
+  final TextEditingController _controller = TextEditingController();
+  late AnimationController _animCtrl;
+  late Animation<double> _fade;
+  late Animation<Offset> _slide;
+  bool _hasValue = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller.addListener(() {
+      setState(() => _hasValue = _controller.text.isNotEmpty);
+    });
+    _animCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 500),
+    )..forward();
+    _fade = CurvedAnimation(parent: _animCtrl, curve: Curves.easeOut);
+    _slide = Tween<Offset>(
+      begin: const Offset(0, 0.07),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _animCtrl, curve: Curves.easeOutCubic));
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _animCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        title: Text(
-          "$type - Meter Reading",
-          style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+      backgroundColor: cs.surfaceContainerHighest,
+      body: Column(
+        children: [
+          _buildHeader(cs),
+          Expanded(
+            child: FadeTransition(
+              opacity: _fade,
+              child: SlideTransition(
+                position: _slide,
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(20, 28, 20, 20),
+                  child: _buildCard(cs),
+                ),
+              ),
+            ),
+          ),
+          _buildBottomBar(cs),
+        ],
+      ),
+    );
+  }
+
+  // ── Gradient header ──────────────────────────────────────────────────────────
+
+  Widget _buildHeader(ColorScheme cs) {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [cs.primary, cs.secondary],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
       ),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            children: [
-              SizedBox(height: 20),
-
-              // Center Card
-              Expanded(
-                child: Center(
-                  child: Container(
-                    padding: EdgeInsets.all(20),
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black12,
-                          blurRadius: 8,
-                          offset: Offset(0, 3),
-                        )
-                      ],
+      child: SafeArea(
+        bottom: false,
+        child: Stack(
+          children: [
+            Positioned(
+              right: -24,
+              top: -16,
+              child: Container(
+                width: 110,
+                height: 110,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.white.withOpacity(0.07),
+                ),
+              ),
+            ),
+            Positioned(
+              right: 48,
+              top: 28,
+              child: Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.white.withOpacity(0.07),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(8, 8, 16, 20),
+              child: Row(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(4),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: IconButton(
+                        icon: const Icon(
+                          Icons.arrow_back_ios_new_rounded,
+                          size: 16,
+                          color: Colors.white,
+                        ),
+                        onPressed: () => Navigator.of(context).pop(),
+                      ),
                     ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
                     child: Column(
-                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          "Meter Reading",
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w600,
+                          widget.type,
+                          style: const TextStyle(
+                            color: Colors.white60,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
-                        SizedBox(height: 10),
-                        TextField(
-                          controller: controller,
-                          keyboardType: TextInputType.number,
-                          decoration: InputDecoration(
-                            labelText: "Enter meter reading",
-                            hintText:
-                                "Please enter your vehicle meter reading.",
-                            border: OutlineInputBorder(),
+                        const Text(
+                          "Meter Reading",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: -0.3,
                           ),
                         ),
                       ],
                     ),
                   ),
-                ),
-              ),
-
-              // Next Button
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    if (controller.text.isNotEmpty) {
-                      Navigator.pop(context, controller.text);
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    padding: EdgeInsets.symmetric(vertical: 16),
-                    backgroundColor: Color(0xFF1565C0),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: const Icon(
+                      Icons.speed_rounded,
+                      color: Colors.white,
+                      size: 22,
                     ),
                   ),
-                  child: Text(
-                    "Next",
-                    style: TextStyle(fontSize: 18, color: Colors.white),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ── Main card ────────────────────────────────────────────────────────────────
+
+  Widget _buildCard(ColorScheme cs) {
+    return Container(
+      decoration: BoxDecoration(
+        color: cs.surface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: cs.outline),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Card header strip
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+            decoration: BoxDecoration(
+              color: cs.primary.withOpacity(0.05),
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(20)),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: cs.primary,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child:
+                      Icon(Icons.speed_rounded, color: cs.onPrimary, size: 18),
+                ),
+                const SizedBox(width: 12),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Current Reading",
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: cs.onSurfaceVariant,
+                        fontWeight: FontWeight.w500,
+                        letterSpacing: 0.3,
+                      ),
+                    ),
+                    Text(
+                      "Enter odometer value",
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: cs.onSurface,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+
+          // Input + helper
+          Padding(
+            padding: const EdgeInsets.all(18),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Large input
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  decoration: BoxDecoration(
+                    color: cs.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color:
+                          _hasValue ? cs.primary.withOpacity(0.5) : cs.outline,
+                      width: 1.5,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _controller,
+                          keyboardType: TextInputType.number,
+                          style: TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.w700,
+                            color: cs.onSurface,
+                            letterSpacing: -0.5,
+                          ),
+                          decoration: InputDecoration(
+                            hintText: "0",
+                            hintStyle: TextStyle(
+                              fontSize: 28,
+                              fontWeight: FontWeight.w700,
+                              color: cs.onSurfaceVariant.withOpacity(0.3),
+                            ),
+                            border: InputBorder.none,
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 16,
+                            ),
+                          ),
+                        ),
+                      ),
+                      // Unit badge
+                      Container(
+                        margin: const EdgeInsets.only(right: 12),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: cs.primary.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          "km",
+                          style: TextStyle(
+                            color: cs.primary,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ),
 
-              SizedBox(height: 20),
+                const SizedBox(height: 12),
+
+                // Helper text
+                Row(
+                  children: [
+                    Icon(
+                      Icons.info_outline_rounded,
+                      size: 13,
+                      color: cs.onSurfaceVariant.withOpacity(0.6),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      "Enter the current vehicle odometer reading",
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: cs.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Bottom bar ───────────────────────────────────────────────────────────────
+
+  Widget _buildBottomBar(ColorScheme cs) {
+    return Container(
+      padding: EdgeInsets.fromLTRB(
+        20,
+        12,
+        20,
+        MediaQuery.of(context).padding.bottom + 16,
+      ),
+      decoration: BoxDecoration(
+        color: cs.surface,
+        border: Border(top: BorderSide(color: cs.outline)),
+      ),
+      child: SizedBox(
+        width: double.infinity,
+        child: ElevatedButton(
+          onPressed:
+              _hasValue ? () => Navigator.pop(context, _controller.text) : null,
+          style: ElevatedButton.styleFrom(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            backgroundColor: cs.primary,
+            disabledBackgroundColor: cs.surfaceContainerHighest,
+            disabledForegroundColor: cs.onSurfaceVariant,
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+            ),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                "Next",
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: cs.onPrimary,
+                  letterSpacing: 0.2,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Icon(Icons.arrow_forward_rounded, color: cs.onPrimary, size: 18),
             ],
           ),
         ),
@@ -1823,55 +2114,177 @@ class _LocationScreenState extends State<LocationScreen> {
     }
   }
 
+  GoogleMapController? _mapController;
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        title: Text("${widget.type} - Location",
-            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-      ),
-      body: SafeArea(
-        child: Stack(
-          children: [
-            // Map
-            if (pos != null)
-              GoogleMap(
-                mapType: MapType.hybrid,
-                initialCameraPosition: CameraPosition(
-                  target: LatLng(pos!.latitude, pos!.longitude),
-                  zoom: 16,
-                ),
-                markers: {
-                  Marker(
-                    markerId: const MarkerId("me"),
-                    position: LatLng(pos!.latitude, pos!.longitude),
+        backgroundColor: Colors.white,
+        appBar: AppBar(
+          title: Text("${widget.type} - Location",
+              style:
+                  const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+        ),
+        body: SafeArea(
+          child: Stack(
+            children: [
+              // Map
+              if (pos != null)
+                GoogleMap(
+                  mapType: MapType.hybrid,
+                  initialCameraPosition: CameraPosition(
+                    target: LatLng(pos!.latitude, pos!.longitude),
+                    zoom: 16,
                   ),
-                },
-              ),
-            // Loading overlay
-            if (loading)
-              const Center(
-                child: CircularProgressIndicator(color: Colors.blueAccent),
-              ),
-          ],
-        ),
-      ),
-      bottomNavigationBar: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-        child: ElevatedButton(
-          onPressed: pos != null ? () => Navigator.pop(context, pos) : null,
-          style: ElevatedButton.styleFrom(
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            backgroundColor: const Color(0xFF1565C0),
+                  markers: {
+                    Marker(
+                      markerId: const MarkerId("me"),
+                      position: LatLng(pos!.latitude, pos!.longitude),
+                      icon: BitmapDescriptor.defaultMarkerWithHue(
+                        BitmapDescriptor.hueRed,
+                      ),
+                    ),
+                  },
+                  zoomControlsEnabled: false,
+                  myLocationButtonEnabled: false,
+                  onMapCreated: (controller) => _mapController = controller,
+                ),
+              // Loading overlay
+              if (loading)
+                const Center(
+                  child: CircularProgressIndicator(color: Colors.blueAccent),
+                ),
+              // Coordinates card (bottom of map)
+              if (pos != null)
+                Positioned(
+                  bottom: 16,
+                  left: 16,
+                  right: 16,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: cs.surface,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: cs.outline),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.08),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            color: cs.primary.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Icon(
+                            Icons.location_on_rounded,
+                            color: cs.primary,
+                            size: 18,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                "Current Location",
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: cs.onSurfaceVariant,
+                                  fontWeight: FontWeight.w500,
+                                  letterSpacing: 0.3,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                "${pos!.latitude.toStringAsFixed(5)}, ${pos!.longitude.toStringAsFixed(5)}",
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                  color: cs.onSurface,
+                                  letterSpacing: -0.2,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        // Accuracy badge
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.green.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            "±${pos!.accuracy.toStringAsFixed(0)}m",
+                            style: const TextStyle(
+                              color: Colors.green,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+            ],
           ),
-          child: const Text(
-            "Next",
-            style: TextStyle(fontSize: 18, color: Colors.white),
-          ),
         ),
-      ),
-    );
+        bottomNavigationBar: Container(
+          padding: EdgeInsets.fromLTRB(
+            20,
+            12,
+            20,
+            MediaQuery.of(context).padding.bottom + 16,
+          ),
+          decoration: BoxDecoration(
+            color: cs.surface,
+            border: Border(top: BorderSide(color: cs.outline)),
+          ),
+          child: SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: pos != null ? () => Navigator.pop(context, pos) : null,
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                backgroundColor: cs.primary,
+                disabledBackgroundColor: cs.surfaceContainerHighest,
+                disabledForegroundColor: cs.onSurfaceVariant,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    "Confirm Location",
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: cs.onPrimary,
+                      letterSpacing: 0.2,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Icon(Icons.check_rounded, color: cs.onPrimary, size: 18),
+                ],
+              ),
+            ),
+          ),
+        ));
   }
 }
 
@@ -2407,15 +2820,12 @@ class DistributorHomePage extends StatelessWidget {
                   children: [
                     _buildHeader(context),
                     const SizedBox(height: 18),
-
                     _DistributorBannerCard(
                       name: dashboard.empName ?? "Distributor",
                       company: dashboard.company ?? "",
                       email: dashboard.email ?? "",
                     ),
-
                     const SizedBox(height: 22),
-
                     const Text(
                       "Quick Actions",
                       style: TextStyle(
@@ -2424,7 +2834,6 @@ class DistributorHomePage extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 14),
-
                     GridView.count(
                       crossAxisCount: 2,
                       shrinkWrap: true,
@@ -2435,13 +2844,25 @@ class DistributorHomePage extends StatelessWidget {
                       children: [
                         _DistributorActionCard(
                           icon: Iconsax.shopping_cart,
-                          label: "Sales Order",
-                          subtitle: "Create and manage orders",
+                          label: "Assigned Orders",
+                          subtitle: "Orders assigned to you",
                           color: const Color(0xFF2563EB),
                           onTap: () {
                             Navigator.pushNamed(
                               context,
                               Routes.listDistributorOrderScreen,
+                            );
+                          },
+                        ),
+                        _DistributorActionCard(
+                          icon: Iconsax.shopping_cart,
+                          label: "My Orders",
+                          subtitle: "Orders created by you",
+                          color: const Color(0xFF7C3AED),
+                          onTap: () {
+                            Navigator.pushNamed(
+                              context,
+                              Routes.listSelfOrderScreen,
                             );
                           },
                         ),
@@ -2473,10 +2894,7 @@ class DistributorHomePage extends StatelessWidget {
                         ),
                       ],
                     ),
-
-
                     const SizedBox(height: 14),
-
                     const Text(
                       "Management Shortcuts",
                       style: TextStyle(
@@ -2485,7 +2903,6 @@ class DistributorHomePage extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 14),
-
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
@@ -2503,12 +2920,24 @@ class DistributorHomePage extends StatelessWidget {
                         children: [
                           _ShortcutTile(
                             icon: Iconsax.shopping_cart,
-                            title: "Sales Orders",
-                            subtitle: "Create and track order records",
+                            title: "Assigned Orders",
+                            subtitle: "Orders assigned to you",
                             onTap: () {
                               Navigator.pushNamed(
                                 context,
                                 Routes.listDistributorOrderScreen,
+                              );
+                            },
+                          ),
+                          const Divider(height: 20),
+                          _ShortcutTile(
+                            icon: Iconsax.box,
+                            title: "My Orders",
+                            subtitle: "Orders created by you",
+                            onTap: () {
+                              Navigator.pushNamed(
+                                context,
+                                Routes.listSelfOrderScreen,
                               );
                             },
                           ),
@@ -2565,11 +2994,12 @@ class DistributorHomePage extends StatelessWidget {
         const Spacer(),
         InkResponse(
           radius: 24,
-          onTap: () => Navigator.pushNamed(context, Routes.changePasswordScreen),
+          onTap: () =>
+              Navigator.pushNamed(context, Routes.changePasswordScreen),
           child: CircleAvatar(
             radius: 19,
             backgroundColor:
-            Theme.of(context).colorScheme.surfaceContainerHighest,
+                Theme.of(context).colorScheme.surfaceContainerHighest,
             child: Icon(
               Icons.password_outlined,
               size: 20,
@@ -2776,73 +3206,6 @@ class _DistributorActionCard extends StatelessWidget {
             ),
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _OverviewCard extends StatelessWidget {
-  final String title;
-  final String value;
-  final IconData icon;
-  final Color color;
-  final bool fullWidth;
-
-  const _OverviewCard({
-    required this.title,
-    required this.value,
-    required this.icon,
-    required this.color,
-    this.fullWidth = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: fullWidth ? double.infinity : null,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 12,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          CircleAvatar(
-            radius: 22,
-            backgroundColor: color.withOpacity(0.12),
-            child: Icon(icon, color: color, size: 22),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  value,
-                  style: const TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    color: Colors.black54,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
       ),
     );
   }
