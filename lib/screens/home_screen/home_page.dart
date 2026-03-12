@@ -10,6 +10,7 @@ import 'package:geolocation/screens/home_screen/home_view_model.dart';
 import 'package:geolocation/screens/reports/main_report_list.dart';
 import 'package:geolocation/screens/tour_forms/list_tour/list_tour_screen.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:image_picker/image_picker.dart';
@@ -21,6 +22,7 @@ import '../../constants.dart';
 import '../../router.router.dart';
 import '../../widgets/drop_down.dart';
 import '../Marketing Material Issue/list_marketing/list_marketing_screen.dart';
+import '../about_us.dart';
 import '../attendance_request/list_attendance_request/list_attendance_request_screen.dart';
 import '../attendence_screen/attendence_view.dart';
 import '../holiday_screen/holiday_view.dart';
@@ -37,6 +39,9 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+
+  static const String developedByCompany = "Sanpra Software Solutions";
+  static const String developedByPrefix = "Developed by";
   @override
   void initState() {
     super.initState();
@@ -58,7 +63,7 @@ class _HomePageState extends State<HomePage> {
           return const Scaffold(
               body: Center(child: CircularProgressIndicator()));
         }
-        if (model.dashboard.isEmployee ==false){
+        if (model.dashboard.isEmployee == false) {
           return DistributorHomePage();
         }
         // If NOT checked in -> show full-screen lock page
@@ -83,27 +88,58 @@ class _HomePageState extends State<HomePage> {
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           // Header
           Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // Logo (kept your fade-in, but wrapped + sized consistently)
-              SizedBox(
-                height: 40,
-                child: Image.asset(
-                  'assets/images/Logo D CMYK.png',
-                  width: 120,
-                  fit: BoxFit.contain,
-                  frameBuilder:
-                      (context, child, frame, wasSynchronouslyLoaded) {
-                    if (wasSynchronouslyLoaded) return child;
-                    return AnimatedOpacity(
-                      opacity: frame == null ? 0 : 1,
-                      duration: const Duration(milliseconds: 250),
-                      child: child,
-                    );
-                  },
+
+              /// Company Logo + Name
+              Expanded(
+                child: Row(
+                  children: [
+                    Container(
+                      height: 38,
+                      width: 38,
+                      decoration: BoxDecoration(
+                        color: Colors.redAccent.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(
+                        Icons.business,
+                        color: Colors.redAccent,
+                        size: 22,
+                      ),
+                    ),
+
+                    const SizedBox(width: 10),
+
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            model.dashboard.company ?? '',
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 1,
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            "Welcome back",
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.grey.shade600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ),
 
-              const Spacer(),
+              /// Tracking button
               if (model.dashboard.role.toString().toLowerCase() == "manager")
                 IconButton(
                   tooltip: "Tracking",
@@ -117,7 +153,8 @@ class _HomePageState extends State<HomePage> {
                     );
                   },
                 ),
-              // Profile button
+
+              /// Profile
               Tooltip(
                 message: 'Profile',
                 child: InkResponse(
@@ -127,7 +164,7 @@ class _HomePageState extends State<HomePage> {
                   child: CircleAvatar(
                     radius: 18,
                     backgroundColor:
-                        Theme.of(context).colorScheme.surfaceContainerHighest,
+                    Theme.of(context).colorScheme.surfaceContainerHighest,
                     child: Icon(
                       Icons.person_rounded,
                       size: 20,
@@ -139,7 +176,7 @@ class _HomePageState extends State<HomePage> {
 
               const SizedBox(width: 10),
 
-              // Logout button
+              /// Logout
               GestureDetector(
                 child: const Icon(Icons.logout),
                 onTap: () {
@@ -151,18 +188,20 @@ class _HomePageState extends State<HomePage> {
                             borderRadius: BorderRadius.circular(12)),
                         title: const Text('Logout'),
                         content:
-                            const Text('Are you sure you want to log out?'),
+                        const Text('Are you sure you want to log out?'),
                         actions: [
                           TextButton(
-                              onPressed: () => Navigator.of(context).pop(),
+                              onPressed: () =>
+                                  Navigator.of(context).pop(),
                               child: const Text('Cancel')),
                           TextButton(
                             onPressed: () {
                               logout(context);
-                              // implement logout
                             },
-                            child: const Text('Logout',
-                                style: TextStyle(color: Colors.redAccent)),
+                            child: const Text(
+                              'Logout',
+                              style: TextStyle(color: Colors.redAccent),
+                            ),
                           ),
                         ],
                       );
@@ -180,7 +219,7 @@ class _HomePageState extends State<HomePage> {
               borderRadius: BorderRadius.circular(16),
             ),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 /// ---- TOP ROW: Welcome + Date + Button ----
                 Row(
@@ -540,9 +579,9 @@ class _HomePageState extends State<HomePage> {
                       padding: const EdgeInsets.only(right: 16.0),
                       child: _QuickActionCard(
                         icon: Iconsax.shopping_cart,
-                        label: "Orders",
+                        label: "Quotation",
                         onTap: () => Navigator.pushNamed(
-                            context, Routes.listOrderScreen),
+                            context, Routes.listQuotationScreen),
                       ),
                     ),
                   if (model.isFormAvailableForDocType("Expense Claim"))
@@ -588,18 +627,6 @@ class _HomePageState extends State<HomePage> {
                                 builder: (context) => ItemStockScreen())),
                       ),
                     ),
-
-                  Padding(
-                    padding: const EdgeInsets.only(right: 16.0),
-                    child: _QuickActionCard(
-                      icon: Iconsax.receipt,
-                      label: "Report",
-                      onTap: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => ReportsPage())),
-                    ),
-                  ),
                 ],
               ),
             ),
@@ -720,6 +747,55 @@ class _HomePageState extends State<HomePage> {
                 );
               },
             ),
+SizedBox(height: 15,),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 20),
+              child: Center(
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(8),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const AboutUsScreen(),
+                      ),
+                    );
+                  },
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+
+                      Text(
+                        developedByPrefix,
+                        style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          color: Colors.grey,
+                        ),
+                      ),
+
+                      const SizedBox(width: 6),
+
+                      Text(
+                        developedByCompany,
+                        style: GoogleFonts.poppins(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.blue,
+                        ),
+                      ),
+
+                      const SizedBox(width: 4),
+
+                      const Icon(
+                        Icons.arrow_forward_ios,
+                        size: 12,
+                        color: Colors.grey,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            )
           ]
         ]),
       ),
@@ -985,11 +1061,11 @@ class _QuickActionGridState extends State<QuickActionGrid>
           "icon": Iconsax.activity,
           "route": Routes.leadListScreen
         },
-      if (widget.model.isFormAvailableForDocType("Sales Order"))
+      if (widget.model.isFormAvailableForDocType("Quotation"))
         {
-          "label": "Orders",
+          "label": "Quotation",
           "icon": Iconsax.shopping_cart,
-          "route": Routes.listOrderScreen
+          "route": Routes.listQuotationScreen
         },
       // if (widget.model.isFormAvailableForDocType("Delivery Note"))
       //   {
@@ -1014,12 +1090,12 @@ class _QuickActionGridState extends State<QuickActionGrid>
           "icon": Iconsax.calendar,
           "screen": AttendanceScreen()
         },
-      if (widget.model.isFormAvailableForDocType("Compensatory Leave Request"))
-        {
-          "label": "Comp off Request",
-          "icon": Iconsax.receipt_add,
-          "screen": ListCompOffView()
-        },
+      // if (widget.model.isFormAvailableForDocType("Compensatory Leave Request"))
+      //   {
+      //     "label": "Comp off Request",
+      //     "icon": Iconsax.receipt_add,
+      //     "screen": ListCompOffView()
+      //   },
       if (widget.model.isFormAvailableForDocType("Attendance Request"))
         {
           "label": "Attendance Request",
@@ -1057,7 +1133,6 @@ class _QuickActionGridState extends State<QuickActionGrid>
           "screen": MarketingListScreen()
         },
       {"label": "Tours", "icon": Iconsax.calendar, "screen": ListTourScreen()},
-      {"label": "Reports", "icon": Iconsax.receipt, "screen": ReportsPage()},
     ];
 
     sections = {
@@ -2407,15 +2482,12 @@ class DistributorHomePage extends StatelessWidget {
                   children: [
                     _buildHeader(context),
                     const SizedBox(height: 18),
-
                     _DistributorBannerCard(
                       name: dashboard.empName ?? "Distributor",
                       company: dashboard.company ?? "",
                       email: dashboard.email ?? "",
                     ),
-
                     const SizedBox(height: 22),
-
                     const Text(
                       "Quick Actions",
                       style: TextStyle(
@@ -2424,7 +2496,6 @@ class DistributorHomePage extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 14),
-
                     GridView.count(
                       crossAxisCount: 2,
                       shrinkWrap: true,
@@ -2473,10 +2544,7 @@ class DistributorHomePage extends StatelessWidget {
                         ),
                       ],
                     ),
-
-
                     const SizedBox(height: 14),
-
                     const Text(
                       "Management Shortcuts",
                       style: TextStyle(
@@ -2485,7 +2553,6 @@ class DistributorHomePage extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 14),
-
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
@@ -2565,11 +2632,12 @@ class DistributorHomePage extends StatelessWidget {
         const Spacer(),
         InkResponse(
           radius: 24,
-          onTap: () => Navigator.pushNamed(context, Routes.changePasswordScreen),
+          onTap: () =>
+              Navigator.pushNamed(context, Routes.changePasswordScreen),
           child: CircleAvatar(
             radius: 19,
             backgroundColor:
-            Theme.of(context).colorScheme.surfaceContainerHighest,
+                Theme.of(context).colorScheme.surfaceContainerHighest,
             child: Icon(
               Icons.password_outlined,
               size: 20,

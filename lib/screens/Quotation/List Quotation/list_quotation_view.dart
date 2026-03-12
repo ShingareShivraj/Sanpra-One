@@ -8,173 +8,181 @@ import '../../../widgets/drop_down.dart';
 import '../../../widgets/full_screen_loader.dart';
 import '../../../widgets/text_button.dart';
 import 'list_quotation_model.dart';
-
 class ListQuotationScreen extends StatelessWidget {
   const ListQuotationScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return ViewModelBuilder<ListQuotationModel>.reactive(
       viewModelBuilder: () => ListQuotationModel(),
       onViewModelReady: (model) => model.initialise(context),
       builder: (context, model, child) => Scaffold(
-        backgroundColor: Colors.grey.shade200,
+        backgroundColor: theme.colorScheme.surfaceContainerLowest,
+
+        /// APPBAR
         appBar: AppBar(
-          elevation: 0,
-          title: const Text('Quotations',
-              style: TextStyle(fontWeight: FontWeight.bold)),
-          leading: IconButton(
-            icon: Icon(Icons.arrow_back, color: Colors.white),
-            onPressed: () => Navigator.pop(context),
-          ),
-          actions: [
-            IconButton(
-              icon: Icon(Icons.filter_list, color: Colors.white),
-              onPressed: () => _showBottomSheet(context, model),
-            ),
-          ],
+          title: const Text("Quotations"),
+          centerTitle: true,
+
         ),
-        body: WillPopScope(
-          onWillPop: () async {
-            Navigator.pop(context);
-            return true;
-          },
-          child: fullScreenLoader(
-            context: context,
-            loader: model.isBusy,
-            child: Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
-              child: model.filterquotationlist.isNotEmpty
-                  ? RefreshIndicator(
-                      onRefresh: () => model.refresh(),
-                      child: ListView.separated(
-                        itemCount: model.filterquotationlist.length,
-                        separatorBuilder: (context, index) =>
-                            const SizedBox(height: 12),
-                        itemBuilder: (context, index) {
-                          final item = model.filterquotationlist[index];
-                          return GestureDetector(
-                            onTap: () => model.onRowClick(context, item),
-                            child: Container(
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: [Colors.white, Colors.grey.shade100],
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                ),
-                                borderRadius: BorderRadius.circular(20),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.grey.shade400,
-                                    blurRadius: 8,
-                                    offset: Offset(0, 4),
+
+        /// BODY
+        body: fullScreenLoader(
+          context: context,
+          loader: model.isBusy,
+          child: Column(
+            children: [
+
+              /// SEARCH BAR
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 6),
+                child: SearchBar(
+                  hintText: "Search by customer name",
+                  leading: const Icon(Icons.search),
+                  onChanged: model.searchPartyName,
+                  elevation: const WidgetStatePropertyAll(0),
+                  backgroundColor: WidgetStatePropertyAll(
+                    theme.colorScheme.surfaceContainerHigh,
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 6),
+
+              /// LIST
+              Expanded(
+                child: model.filterquotationlist.isNotEmpty
+                    ? RefreshIndicator(
+                  onRefresh: () => model.refresh(),
+                  child: ListView.separated(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 80),
+                    itemCount: model.filterquotationlist.length,
+                    separatorBuilder: (_, __) =>
+                    const SizedBox(height: 10),
+
+                    itemBuilder: (context, index) {
+                      final item = model.filterquotationlist[index];
+
+                      return InkWell(
+                        borderRadius: BorderRadius.circular(16),
+                        onTap: () => model.onRowClick(context, item),
+
+                        child: Container(
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                                color: theme.colorScheme.outlineVariant),
+                          ),
+
+                          child: Column(
+                            crossAxisAlignment:
+                            CrossAxisAlignment.start,
+                            children: [
+
+                              /// HEADER
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      item.name ?? "",
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 15,
+                                      ),
+                                    ),
+                                  ),
+
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 10, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: model.getQuotationForStatus(
+                                          item.quotationTo ?? ""),
+                                      borderRadius:
+                                      BorderRadius.circular(20),
+                                    ),
+                                    child: Text(
+                                      item.quotationTo ?? "",
+                                      style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w600),
+                                    ),
+                                  ),
+                                  SizedBox(width: 10,),
+                                  /// STATUS CHIP
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 10, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: model.getColorForStatus(
+                                          item.status ?? ""),
+                                      borderRadius:
+                                      BorderRadius.circular(20),
+                                    ),
+                                    child: Text(
+                                      item.status ?? "",
+                                      style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w600),
+                                    ),
                                   ),
                                 ],
                               ),
-                              child: Padding(
-                                padding: const EdgeInsets.all(16.0),
-                                child: Column(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.stretch,
-                                  children: [
-                                    Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              item.name ?? "",
-                                              style: TextStyle(
-                                                fontSize: 16.0,
-                                                fontWeight: FontWeight.bold,
-                                                color: Colors.blueAccent,
-                                              ),
-                                            ),
-                                            Text(
-                                              item.transactionDate ?? "",
-                                              style: TextStyle(
-                                                  color: Colors.grey.shade600),
-                                            ),
-                                          ],
-                                        ),
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(
-                                              vertical: 6.0, horizontal: 12.0),
-                                          decoration: BoxDecoration(
-                                            color: model.getColorForStatus(
-                                                item.status ?? ""),
-                                            borderRadius:
-                                                BorderRadius.circular(20),
-                                          ),
-                                          child: AutoSizeText(
-                                            item.status ?? "",
-                                            style: const TextStyle(
-                                              color: Colors.white,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 12),
-                                    Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        _buildColumnInfo(
-                                            'Customer', item.customerName),
-                                        _buildColumnInfo(
-                                            'Items', item.totalQty?.toString()),
-                                        _buildColumnInfo(
-                                          'Amount',
-                                          '${item.grandTotal?.toString() ?? "0.0"}',
-                                          valueColor: Colors.green,
-                                        ),
-                                      ],
-                                    ),
-                                  ],
+
+                              const SizedBox(height: 4),
+
+                              /// DATE
+                              Text(
+                                item.transactionDate ?? "",
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey.shade600,
                                 ),
                               ),
-                            ),
-                          );
-                        },
-                      ),
-                    )
-                  : Center(
-                      child: Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(20),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.grey.shade300,
-                              blurRadius: 8,
-                            ),
-                          ],
+
+                              const Divider(height: 18),
+
+                              /// INFO ROW
+                              Row(
+                                mainAxisAlignment:
+                                MainAxisAlignment.spaceBetween,
+                                children: [
+                                  _infoTile(
+                                      "Customer", item.customerName),
+                                  _infoTile(
+                                      "Items",
+                                      item.totalQty?.toString() ??
+                                          "0"),
+                                  _infoTile(
+                                    "Amount",
+                                    "₹ ${item.grandTotal ?? 0}",
+                                    color: Colors.green,
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
                         ),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.info_outline,
-                                size: 48, color: Colors.grey.shade600),
-                            const SizedBox(height: 10),
-                            const Text(
-                              'No Quotations Found',
-                              style: TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-            ),
+                      );
+                    },
+                  ),
+                )
+                    : const _EmptyState(),
+              ),
+            ],
           ),
         ),
+
+        /// CREATE BUTTON
         floatingActionButton: FloatingActionButton.extended(
+          icon: const Icon(Icons.add),
+          label: const Text("New Quote"),
           onPressed: () {
             Navigator.pushNamed(
               context,
@@ -182,85 +190,53 @@ class ListQuotationScreen extends StatelessWidget {
               arguments: const AddQuotationViewArguments(quotationid: ""),
             );
           },
-          label: const Text('Create Quote'),
-          icon: const Icon(Icons.add),
         ),
       ),
     );
   }
 
-  Widget _buildColumnInfo(String label, String? value, {Color? valueColor}) {
+  /// SMALL INFO TILE
+  Widget _infoTile(String label, String? value, {Color? color}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+        Text(
+          label,
+          style: const TextStyle(
+              fontSize: 11, color: Colors.grey, fontWeight: FontWeight.w500),
+        ),
         Text(
           value ?? "",
-          style: TextStyle(fontSize: 14, color: valueColor ?? Colors.black),
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: color ?? Colors.black,
+          ),
         ),
       ],
     );
   }
 
-  void _showBottomSheet(BuildContext context, ListQuotationModel model) {
-    SchedulerBinding.instance.addPostFrameCallback((_) {
-      showModalBottomSheet(
-        context: context,
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        builder: (BuildContext context) {
-          return Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                CustomDropdownButton2(
-                  value: model.quotationto,
-                  prefixIcon: Icons.person_2,
-                  items: model.quotation,
-                  hintText: 'Select Quotation To',
-                  labelText: 'Quotation To',
-                  onChanged: model.setquotationto,
-                ),
-                const SizedBox(height: 12.0),
-                CustomDropdownButton2(
-                  value: model.custm,
-                  prefixIcon: Icons.person_2,
-                  items: model.customer,
-                  hintText: 'Select Customer',
-                  labelText: 'Customer',
-                  onChanged: model.setcustomer,
-                ),
-                const SizedBox(height: 20.0),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    CTextButton(
-                      onPressed: () {
-                        model.clearfilter();
-                        Navigator.pop(context);
-                      },
-                      text: 'Clear Filter',
-                      buttonColor: Colors.grey,
-                    ),
-                    CTextButton(
-                      onPressed: () {
-                        model.setfilter(
-                            model.quotationto ?? "", model.custm ?? "");
-                        Navigator.pop(context);
-                      },
-                      text: 'Apply Filter',
-                      buttonColor: Colors.blueAccent,
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          );
-        },
-      );
-    });
+}
+
+class _EmptyState extends StatelessWidget {
+  const _EmptyState();
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.description_outlined,
+              size: 60, color: Colors.grey.shade500),
+          const SizedBox(height: 10),
+          const Text(
+            "No Quotations Found",
+            style: TextStyle(fontWeight: FontWeight.w600),
+          ),
+        ],
+      ),
+    );
   }
 }

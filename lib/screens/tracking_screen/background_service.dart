@@ -9,6 +9,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../constants.dart';
 import 'company_auth.dart';
 
 Timer? queueTimer;
@@ -272,7 +273,7 @@ Future<bool> sendToFrappe(
   Map<String, dynamic> body,
 ) async {
   final url = Uri.parse(
-    "https://durocon.erpkey.in/api/method/mobile.mobile.doctype.get_employee_location.get_employee_location.get_parameters",
+    "$baseurl/api/method/mobile.mobile.doctype.get_employee_location.get_employee_location.get_parameters",
   );
 
   try {

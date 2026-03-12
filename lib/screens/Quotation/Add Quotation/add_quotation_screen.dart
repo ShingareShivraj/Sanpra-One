@@ -14,6 +14,7 @@ import 'add_quotation_viewmodel.dart';
 
 class AddQuotationView extends StatefulWidget {
   final String quotationid;
+
   const AddQuotationView({super.key, required this.quotationid});
 
   @override
@@ -25,644 +26,683 @@ class _AddQuotationViewState extends State<AddQuotationView> {
   Widget build(BuildContext context) {
     return ViewModelBuilder<AddQuotationModel>.reactive(
       viewModelBuilder: () => AddQuotationModel(),
-      onViewModelReady: (model) =>
-          model.initialise(context, widget.quotationid),
-      builder: (context, model, child) => Scaffold(
-        backgroundColor: Colors.white,
-        appBar: AppBar(
-          title: model.isEdit == true
-              ? Text(model.quotationdata.name ?? "")
-              : const Text('Create Quotation'),
-        ),
-        body: fullScreenLoader(
-          loader: model.isBusy,
-          context: context,
-          child: SingleChildScrollView(
-              child: Form(
-            key: model.formKey,
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  CustomDropdownButton2(
-                    value: model.quotationdata.quotationTo,
-                    prefixIcon: Icons.person_2,
-                    items: model.quotationto,
-                    hintText: 'Select Quotation To',
-                    labelText: 'Quotation To',
-                    onChanged: model.setquotationto,
-                  ),
-                  const SizedBox(
-                    height: 15,
-                  ),
-                  CustomDropdownButton2(
-                    value: model.quotationdata.partyName,
-                    prefixIcon: Icons.person_2,
-                    items: model.searchcustomer,
-                    hintText: 'Select the customer',
-                    labelText: model.customerLabel,
-                    onChanged: model.setcustomer,
-                    validator: model.validateQuotationTo,
-                  ),
-                  const SizedBox(
-                    height: 15,
-                  ),
-                  if (model.isEdit == true)
-                    CustomSmallTextFormField(
-                        prefixIcon: Icons.person_pin,
-                        controller: model.customernamecontroller,
-                        labelText: 'Party Name',
-                        hintText: 'Enter the Party'),
-                  if (model.isEdit == true)
-                    const SizedBox(
-                      height: 15,
-                    ),
-                  Row(
-                    children: [
-                      Expanded(
-                        flex: 1,
-                        child: CustomDropdownButton2(
-                          value: model.quotationdata.orderType,
-                          items: model.ordetype,
-                          hintText: 'select order type',
-                          onChanged: model.setordertype,
-                          labelText: 'Order Type',
-                          validator: model.validateordertype,
-                        ),
-                      ),
-                      const SizedBox(
-                        width: 10,
-                      ),
-                      Expanded(
-                        flex: 1,
-                        child: TextFormField(
-                          readOnly: true,
-                          controller: model.validtilldatecontroller,
-                          onTap: () => model.selectvalidtillDate(context),
-                          decoration: InputDecoration(
-                            contentPadding: const EdgeInsets.symmetric(
-                                vertical: 10.0, horizontal: 12.0),
-                            labelText: 'Valid till Date',
-                            hintText: 'Valid till Date',
-                            prefixIcon:
-                                const Icon(Icons.calendar_today_rounded),
-                            labelStyle: const TextStyle(
-                              color:
-                                  Colors.black54, // Customize label text color
-                              fontSize: 16.0,
-                              fontWeight: FontWeight.bold,
-                            ),
-                            hintStyle: const TextStyle(
-                              color: Colors.grey, // Customize hint text color
-                            ),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(18.0),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(18.0),
-                              borderSide: const BorderSide(
-                                color: Colors
-                                    .blue, // Customize focused border color
-                              ),
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(18.0),
-                              borderSide: const BorderSide(
-                                color: Colors
-                                    .grey, // Customize enabled border color
-                              ),
-                            ),
-                          ),
-                          validator: model.validateValidTill,
-                          onChanged: model.onvalidtillDobChanged,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(
-                    height: 15,
-                  ),
-                  TextFormField(
-                    readOnly: true,
-                    key: Key(model.displayString),
-                    initialValue: model.displayString,
-                    onTap: () async {
-                      if (model.quotationdata.partyName == null) {
-                        const snackBar = SnackBar(
-                          backgroundColor: Colors.red,
-                          content: Text(
-                            'Please select the customer name',
-                            style: TextStyle(color: Colors.white, fontSize: 18),
-                          ),
-                          duration: Duration(seconds: 3),
-                        );
-                        ScaffoldMessenger.of(context).showSnackBar(snackBar);
-                        return;
-                      }
-                      final SelectedItems = await Navigator.pushNamed(
-                        context,
-                        Routes.quotationItemScreen,
-                        arguments: QuotationItemScreenArguments(
-                            items: model.selectedItems),
-                      ) as List<Items>?;
-
-                      if (SelectedItems != null) {
-                        model.selectedItems.clear();
-                        // Update the model or perform any actions with the selected items
-                        model.setSelectedItems(SelectedItems);
-                      }
-                    },
-                    decoration: InputDecoration(
-                      contentPadding: const EdgeInsets.symmetric(
-                          vertical: 10.0, horizontal: 12.0),
-                      labelText: 'Items',
-                      hintText: 'For select items click here',
-                      prefixIcon: const Icon(Icons.shopping_basket),
-                      labelStyle: const TextStyle(
-                        color: Colors.black54, // Customize label text color
-                        fontSize: 16.0,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      hintStyle: const TextStyle(
-                        color: Colors.grey, // Customize hint text color
-                      ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(18.0),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(18.0),
-                        borderSide: const BorderSide(
-                          color: Colors.blue, // Customize focused border color
-                        ),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(18.0),
-                        borderSide: const BorderSide(
-                          color: Colors.grey, // Customize enabled border color
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(
-                    height: 5,
-                  ),
-                  const Text(
-                    'Item List',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(
-                    height: 10,
-                  ),
-                  model.selectedItems.isNotEmpty
-                      ? ListView.separated(
-                          physics: const NeverScrollableScrollPhysics(),
-                          shrinkWrap: true,
-                          itemCount: model.selectedItems.length,
-                          itemBuilder: (context, index) {
-                            final selectedItem = model.selectedItems[index];
-                            return Dismissible(
-                              key: Key(selectedItem.itemCode
-                                  .toString()), // Use a unique key for each item
-                              background: Container(
-                                color: Colors.red.shade400,
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 20),
-                                alignment: Alignment.centerLeft,
-                                child: const Icon(
-                                  Icons.delete_forever_outlined,
-                                  color: Colors.white,
-                                  size: 40,
-                                ),
-                              ),
-                              confirmDismiss: (direction) async {
-                                if (direction == DismissDirection.startToEnd) {
-                                  bool dismiss = await showDialog(
-                                    context: context,
-                                    builder: (context) {
-                                      return AlertDialog(
-                                        content: const Text(
-                                            "Are you sure you want to delete the item"),
-                                        title: const Text("Delete Item ?"),
-                                        actions: [
-                                          TextButton(
-                                            onPressed: () {
-                                              Navigator.pop(context,
-                                                  false); // Dismiss without deletion
-                                            },
-                                            child: const Text("No"),
-                                          ),
-                                          TextButton(
-                                            onPressed: () {
-                                              Navigator.pop(context,
-                                                  true); // Confirm deletion
-                                            },
-                                            child: const Text("Yes"),
-                                          ),
-                                        ],
-                                      );
-                                    },
-                                  );
-                                  return dismiss;
-                                }
-                                return null;
-                              },
-                              direction: DismissDirection.startToEnd,
-                              onDismissed: (direction) {
-                                model.deleteitem(
-                                    index); // Delete the item from the model
-                              },
-                              child: Container(
-                                padding: const EdgeInsets.all(10),
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(20),
-                                  color: Colors.white,
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.grey.withOpacity(
-                                          0.5), // Customize the shadow color and opacity
-                                      // spreadRadius: 5,
-                                      blurRadius: 7,
-                                      // offset: const Offset(0, 3), // Customize the shadow offset
-                                    ),
-                                  ],
-                                ),
-                                child: Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Column(
-                                      children: [
-                                        ClipRRect(
-                                          borderRadius:
-                                              BorderRadius.circular(8.0),
-                                          child: CachedNetworkImage(
-                                            imageUrl:
-                                                '$baseurl${selectedItem.image}',
-                                            width:
-                                                70, // Set width to twice the radius for a complete circle
-                                            height: 50,
-                                            fit: BoxFit.cover,
-                                            placeholder: (context, url) =>
-                                                const Center(
-                                                    child:
-                                                        CircularProgressIndicator(
-                                                            color: Colors
-                                                                .blueAccent)),
-                                            errorWidget:
-                                                (context, url, error) => Center(
-                                                    child: Image.asset(
-                                                        'assets/images/image.png',
-                                                        scale: 5)),
-                                          ),
-                                        ),
-                                        AutoSizeText(
-                                          'UOM:${selectedItem.uom}',
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                          maxFontSize: 16.0,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      ],
-                                    ),
-
-                                    const SizedBox(width: 10),
-                                    // Product Details
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            selectedItem.itemName ?? "N/A",
-                                            style: const TextStyle(
-                                              fontSize: 16.0,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                            maxLines: 2,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                          const SizedBox(height: 5),
-                                          Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceBetween,
-                                            children: [
-                                              Column(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
-                                                children: [
-                                                  AutoSizeText(
-                                                    'Rate: ₹${selectedItem.rate?.toDouble().toStringAsFixed(2)}',
-                                                    style: const TextStyle(
-                                                        color: Colors.green,
-                                                        fontWeight:
-                                                            FontWeight.bold),
-                                                  ),
-                                                  AutoSizeText(
-                                                    'Amount: ₹${selectedItem.amount?.toDouble().toStringAsFixed(2)}',
-                                                    style: const TextStyle(
-                                                        color: Colors.green,
-                                                        fontWeight:
-                                                            FontWeight.bold),
-                                                  ),
-                                                ],
-                                              ),
-                                              Container(
-                                                height: 40,
-                                                decoration: BoxDecoration(
-                                                  borderRadius:
-                                                      BorderRadius.circular(10),
-                                                  border: Border.all(
-                                                      color: Colors
-                                                          .blueAccent.shade400,
-                                                      width: 1),
-                                                ),
-                                                child: Row(
-                                                  mainAxisSize:
-                                                      MainAxisSize.min,
-                                                  children: [
-                                                    IconButton(
-                                                      icon: const Icon(
-                                                        Icons.remove,
-                                                        color:
-                                                            Colors.blueAccent,
-                                                      ),
-                                                      onPressed: () {
-                                                        // Decrease quantity when the remove button is pressed
-                                                        if (selectedItem.qty !=
-                                                                null &&
-                                                            (selectedItem.qty ??
-                                                                    0) >
-                                                                1) {
-                                                          model.removeitem(
-                                                              index);
-                                                        }
-                                                      },
-                                                    ),
-                                                    Text(
-                                                      model
-                                                          .getQuantity(
-                                                              selectedItem)
-                                                          .toInt()
-                                                          .toString(),
-                                                      style: const TextStyle(
-                                                          fontWeight:
-                                                              FontWeight.bold),
-                                                    ),
-                                                    IconButton(
-                                                      icon: const Icon(
-                                                        Icons.add,
-                                                        color:
-                                                            Colors.blueAccent,
-                                                      ),
-                                                      onPressed: () {
-                                                        model.additem(index);
-                                                      },
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    // Quantity and Buttons
-                                  ],
-                                ),
-                              ),
-                            );
-                          },
-                          separatorBuilder: (BuildContext context, int index) {
-                            return const SizedBox(
-                              height: 10,
-                            );
-                          },
-                        )
-                      : Center(
-                          child: Container(
-                            padding: const EdgeInsets.all(16),
-                            decoration: const BoxDecoration(
-                                color: Colors.white,
-                                borderRadius:
-                                    BorderRadius.all(Radius.circular(20))),
-                            child: const Text(
-                              'Items are not selected ',
-                              textDirection: TextDirection.ltr,
-                              style: TextStyle(fontWeight: FontWeight.w700),
-                            ),
-                          ),
-                        ),
-                  const SizedBox(
-                    height: 8,
-                  ),
-                  buildbillingsection(model),
-                  const SizedBox(
-                    height: 25,
-                  ),
-                  quotationStatus == 2
-                      ? Container()
-                      : Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: [
-                            Expanded(
-                              child: CTextButton(
-                                text: 'Cancel',
-                                onPressed: () {
-                                  if (quotationStatus == 1) {
-                                    showDialog(
-                                      context: context,
-                                      builder: (BuildContext context) {
-                                        return AlertDialog(
-                                          title: const Text(
-                                              "Are you want to cancel?"),
-                                          content: const Text(
-                                              "Permanently Cancelled quotation?"),
-                                          actions: <Widget>[
-                                            TextButton(
-                                              onPressed: () {
-                                                Navigator.of(context).pop(
-                                                    false); // Return false when cancel is pressed
-                                              },
-                                              child: const Text("Cancel"),
-                                            ),
-                                            TextButton(
-                                              onPressed: () {
-                                                Navigator.of(context).pop(true);
-                                                model.onCancelPressed(
-                                                    context); // Return true when confirm is pressed
-                                              },
-                                              child: const Text("Confirm"),
-                                            ),
-                                          ],
-                                        );
-                                      },
-                                    );
-                                  } else {
-                                    Navigator.of(context).pop();
-                                  }
-                                },
-                                buttonColor: Colors.red.shade400,
-                              ),
-                            ),
-                            const SizedBox(
-                              width: 20,
-                            ),
-                            quotationStatus == 0 ||
-                                    model.quotationdata.docstatus == null
-                                ? model.isSame == false
-                                    ? Expanded(
-                                        child: CTextButton(
-                                          text: model.isEdit
-                                              ? 'Update Quotation'
-                                              : 'Create Quotation',
-                                          onPressed: () =>
-                                              model.onSavePressed(context),
-                                          buttonColor:
-                                              Colors.blueAccent.shade400,
-                                        ),
-                                      )
-                                    : Expanded(
-                                        child: CTextButton(
-                                          text: 'Submit Quotation',
-                                          onPressed: () {
-                                            showDialog(
-                                              context: context,
-                                              builder: (BuildContext context) {
-                                                return AlertDialog(
-                                                  title: const Text(
-                                                      "Confirm Submit?"),
-                                                  content: const Text(
-                                                      "Permanently submit quotation?"),
-                                                  actions: <Widget>[
-                                                    TextButton(
-                                                      onPressed: () {
-                                                        Navigator.of(context).pop(
-                                                            false); // Return false when cancel is pressed
-                                                      },
-                                                      child:
-                                                          const Text("Cancel"),
-                                                    ),
-                                                    TextButton(
-                                                      onPressed: () {
-                                                        Navigator.of(context)
-                                                            .pop(true);
-                                                        model.onSubmitPressed(
-                                                            context); // Return true when confirm is pressed
-                                                      },
-                                                      child:
-                                                          const Text("Confirm"),
-                                                    ),
-                                                  ],
-                                                );
-                                              },
-                                            );
-                                          },
-                                          buttonColor:
-                                              Colors.blueAccent.shade400,
-                                        ),
-                                      )
-                                : Container()
-                          ],
-                        )
-                ],
+      onViewModelReady: (model) => model.initialise(context, widget.quotationid),
+      builder: (context, model, child) {
+        return Scaffold(
+          backgroundColor: const Color(0xFFF5F7FB),
+          appBar: AppBar(
+            elevation: 0,
+            centerTitle: true,
+            title: Text(
+              model.isEdit ? (model.quotationdata.name ?? "Quotation") : "Create Quotation",
+            ),
+          ),
+          body: fullScreenLoader(
+            loader: model.isBusy,
+            context: context,
+            child: Form(
+              key: model.formKey,
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+                child: Column(
+                  children: [
+                    _buildHeaderCard(model),
+                    const SizedBox(height: 16),
+                    _buildPartyCard(context, model),
+                    const SizedBox(height: 16),
+                    _buildItemsSelector(context, model),
+                    const SizedBox(height: 16),
+                    _buildItemsList(model),
+                    const SizedBox(height: 16),
+                    _buildBillingSection(model),
+                    const SizedBox(height: 24),
+                    _buildBottomActions(context, model),
+                  ],
+                ),
               ),
             ),
-          )),
-        ),
-      ),
-    );
-  }
-
-  Widget buildImage(String? imageUrl) {
-    return Image.network(
-      '$baseurl$imageUrl',
-      height: 40,
-      loadingBuilder: (BuildContext context, Widget child,
-          ImageChunkEvent? loadingProgress) {
-        if (loadingProgress == null) {
-          // Image is done loading
-          return child;
-        } else {
-          // Image is still loading
-          return const Center(
-              child: CircularProgressIndicator(color: Colors.blueAccent));
-        }
-      },
-      errorBuilder:
-          (BuildContext context, Object error, StackTrace? stackTrace) {
-        // Handle the error by displaying a broken image icon
-        return const Center(
-            child: Icon(Icons.broken_image_outlined, size: 36.0));
+          ),
+        );
       },
     );
   }
 
-  Widget buildbillingsection(AddQuotationModel model) {
-    return Container(
-      padding: const EdgeInsets.all(8.0),
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey),
-        borderRadius: BorderRadius.circular(8.0),
-      ),
+  Widget _buildHeaderCard(AddQuotationModel model) {
+    return _card(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Tax and Discount',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18.0),
+          const _SectionTitle("Quotation Details"),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: CustomDropdownButton2(
+                  value: model.quotationdata.quotationTo,
+                  prefixIcon: Icons.person_2_outlined,
+                  items: model.quotationto,
+                  hintText: 'quote to',
+                  labelText: 'Quotation To',
+                  onChanged: model.setquotationto,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child:TextFormField(
+                  readOnly: true,
+                  controller: model.validtilldatecontroller,
+                  onTap: () => model.selectvalidtillDate(context),
+                  decoration: _decoration(
+                    label: 'Valid Till Date',
+                    hint: 'Select valid till date',
+                    icon: Icons.calendar_today_rounded,
+                  ),
+                  validator: model.validateValidTill,
+                  onChanged: model.onvalidtillDobChanged,
+                ),
+              ),
+            ],
           ),
-          const Divider(
-            thickness: 2,
-          ),
-          buildBillingRow(
-              'Subtotal :', model.quotationdata.netTotal?.toString() ?? '0.0'),
-          const SizedBox(
-            height: 10,
-          ),
-          buildBillingRow('Total Tax :',
-              model.quotationdata.totalTaxesAndCharges?.toString() ?? '0.0'),
-          const SizedBox(
-            height: 10,
-          ),
-          buildBillingRow('Discount :',
-              model.quotationdata.discountAmount?.toString() ?? '0.0'),
-          const Divider(
-            thickness: 2,
-          ),
-          buildBillingRow(
-              'Total :', model.quotationdata.grandTotal?.toString() ?? '0.0'),
+
         ],
       ),
     );
   }
 
-  Widget buildBillingRow(String label, String value) {
+  Widget _buildPartyCard(BuildContext context, AddQuotationModel model) {
+    return _card(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const _SectionTitle("Party Information"),
+          const SizedBox(height: 16),
+          CustomDropdownButton2(
+            value: model.quotationdata.partyName,
+            prefixIcon: Icons.groups_2_outlined,
+            items: model.searchcustomer,
+            hintText: 'Select ${model.customerLabel.toLowerCase()}',
+            labelText: model.customerLabel,
+            onChanged: model.setcustomer,
+            validator: model.validateQuotationTo,
+          ),
+          if (model.isEdit) ...[
+            const SizedBox(height: 16),
+            CustomSmallTextFormField(
+              prefixIcon: Icons.badge_outlined,
+              controller: model.customernamecontroller,
+              labelText: 'Party Name',
+              hintText: 'Enter party name',
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildItemsSelector(BuildContext context, AddQuotationModel model) {
+    return _card(
+      child: InkWell(
+        borderRadius: BorderRadius.circular(18),
+        onTap: () async {
+          if (model.quotationdata.partyName == null ||
+              model.quotationdata.partyName!.isEmpty) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                backgroundColor: Colors.red,
+                content: Text(
+                  'Please select the customer name',
+                  style: TextStyle(color: Colors.white, fontSize: 16),
+                ),
+              ),
+            );
+            return;
+          }
+
+          final result = await Navigator.pushNamed(
+            context,
+            Routes.quotationItemScreen,
+            arguments: QuotationItemScreenArguments(items: model.selectedItems),
+          ) as List<Items>?;
+
+          if (result != null) {
+            model.setSelectedItems(result);
+          }
+        },
+        child: Container(
+          padding: const EdgeInsets.all(2),
+          child: Row(
+            children: [
+              Container(
+                height: 52,
+                width: 52,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEAF2FF),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: const Icon(
+                  Icons.shopping_basket_outlined,
+                  color: Color(0xFF2563EB),
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Items',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      model.displayString,
+                      style: TextStyle(
+                        color: Colors.grey.shade700,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(Icons.arrow_forward_ios_rounded, size: 18),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildItemsList(AddQuotationModel model) {
+    return _card(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const _SectionTitle("Item List"),
+          const SizedBox(height: 8),
+
+          if (model.selectedItems.isEmpty)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.grey.shade300),
+              ),
+              child: const Text(
+                'Items are not selected',
+                style: TextStyle(fontWeight: FontWeight.w500),
+              ),
+            )
+          else
+            ListView.separated(
+              itemCount: model.selectedItems.length,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              separatorBuilder: (_, __) => const SizedBox(height: 8),
+              itemBuilder: (context, index) {
+                final selectedItem = model.selectedItems[index];
+
+                return Dismissible(
+                  key: ValueKey(selectedItem.itemCode ?? index.toString()),
+                  direction: DismissDirection.startToEnd,
+                  background: Container(
+                    alignment: Alignment.centerLeft,
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    decoration: BoxDecoration(
+                      color: Colors.red.shade400,
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: const Icon(
+                      Icons.delete,
+                      color: Colors.white,
+                      size: 28,
+                    ),
+                  ),
+                  confirmDismiss: (direction) async {
+                    if (direction != DismissDirection.startToEnd) return false;
+
+                    return await showDialog<bool>(
+                      context: context,
+                      builder: (_) => AlertDialog(
+                        title: const Text("Delete Item"),
+                        content: const Text("Remove this item?"),
+                        actions: [
+                          TextButton(
+                            onPressed: () =>
+                                Navigator.pop(context, false),
+                            child: const Text("No"),
+                          ),
+                          TextButton(
+                            onPressed: () =>
+                                Navigator.pop(context, true),
+                            child: const Text("Yes"),
+                          ),
+                        ],
+                      ),
+                    ) ??
+                        false;
+                  },
+                  onDismissed: (_) => model.deleteitem(index),
+
+                  /// Compact Card
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: Colors.grey.shade200),
+                    ),
+                    child: Row(
+                      children: [
+                        /// Image
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: CachedNetworkImage(
+                            imageUrl: '$baseurl${selectedItem.image ?? ""}',
+                            width: 46,
+                            height: 46,
+                            fit: BoxFit.cover,
+                            errorWidget: (_, __, ___) =>
+                            const Icon(Icons.image_not_supported, size: 30),
+                          ),
+                        ),
+
+                        const SizedBox(width: 10),
+
+                        /// Item info
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                selectedItem.itemName ?? "Item",
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 14,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                "₹ ${selectedItem.rate ?? 0}",
+                                style: const TextStyle(
+                                  color: Colors.green,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        /// Quantity Stepper
+                        Container(
+                          height: 28,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(8),
+                            border:
+                            Border.all(color: Colors.grey.shade300),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(),
+                                icon: const Icon(Icons.remove, size: 16),
+                                onPressed: () =>
+                                    model.removeitem(index),
+                              ),
+                              Padding(
+                                padding:
+                                const EdgeInsets.symmetric(horizontal: 6),
+                                child: Text(
+                                  model
+                                      .getQuantity(selectedItem)
+                                      .toInt()
+                                      .toString(),
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ),
+                              IconButton(
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(),
+                                icon: const Icon(Icons.add, size: 16),
+                                onPressed: () => model.additem(index),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBillingSection(AddQuotationModel model) {
+    return _card(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const _SectionTitle("Tax & Summary"),
+          const SizedBox(height: 14),
+          _billRow("Subtotal", model.quotationdata.netTotal),
+          const SizedBox(height: 10),
+          _billRow("Total Tax", model.quotationdata.totalTaxesAndCharges),
+          const SizedBox(height: 10),
+          _billRow("Discount", model.quotationdata.discountAmount),
+          const Divider(height: 24),
+          _billRow(
+            "Grand Total",
+            model.quotationdata.grandTotal,
+            isBold: true,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBottomActions(BuildContext context, AddQuotationModel model) {
+    if (quotationStatus == 2) {
+      return const SizedBox.shrink();
+    }
+
+    final canShowPrimary =
+        quotationStatus == 0 || model.quotationdata.docstatus == null;
+
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          label,
-          style: const TextStyle(fontSize: 16.0),
+        Expanded(
+          child: CTextButton(
+            text: 'Cancel',
+            onPressed: () async {
+              if (quotationStatus == 1) {
+                final confirm = await showDialog<bool>(
+                  context: context,
+                  builder: (_) => AlertDialog(
+                    title: const Text("Are you sure?"),
+                    content: const Text("Permanently cancel quotation?"),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, false),
+                        child: const Text("No"),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, true),
+                        child: const Text("Yes"),
+                      ),
+                    ],
+                  ),
+                ) ??
+                    false;
+
+                if (confirm) {
+                  model.onCancelPressed(context);
+                }
+              } else {
+                Navigator.of(context).pop();
+              }
+            },
+            buttonColor: Colors.red.shade400,
+          ),
         ),
-        Text(
-          value,
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16.0),
-        ),
+        if (canShowPrimary) ...[
+          const SizedBox(width: 14),
+          Expanded(
+            child: CTextButton(
+              text: model.isSame
+                  ? 'Submit'
+                  : (model.isEdit ? 'Update' : 'Create'),
+              onPressed: () async {
+                if (!model.isSame) {
+                  model.onSavePressed(context);
+                  return;
+                }
+
+                final confirm = await showDialog<bool>(
+                  context: context,
+                  builder: (_) => AlertDialog(
+                    title: const Text("Confirm Submit?"),
+                    content: const Text("Permanently submit quotation?"),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, false),
+                        child: const Text("Cancel"),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, true),
+                        child: const Text("Confirm"),
+                      ),
+                    ],
+                  ),
+                ) ??
+                    false;
+
+                if (confirm) {
+                  model.onSubmitPressed(context);
+                }
+              },
+              buttonColor: Colors.blueAccent.shade400,
+            ),
+          ),
+        ],
       ],
     );
   }
 
-  Widget buildItemColumn(String labelText, {required String additionalText}) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.end,
+  Widget _card({required Widget child}) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: child,
+    );
+  }
+
+  InputDecoration _decoration({
+    required String label,
+    required String hint,
+    required IconData icon,
+  }) {
+    return InputDecoration(
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+      labelText: label,
+      hintText: hint,
+      prefixIcon: Icon(icon),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(18),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(18),
+        borderSide: const BorderSide(color: Colors.grey),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(18),
+        borderSide: const BorderSide(color: Colors.blue),
+      ),
+    );
+  }
+
+  Widget _billRow(String label, num? value, {bool isBold = false}) {
+    final style = TextStyle(
+      fontSize: isBold ? 16 : 15,
+      fontWeight: isBold ? FontWeight.w700 : FontWeight.w500,
+      color: isBold ? Colors.black : Colors.grey.shade800,
+    );
+
+    return Row(
       children: [
-        AutoSizeText(labelText),
-        AutoSizeText(additionalText),
+        Text(label, style: style),
+        const Spacer(),
+        Text("₹ ${(value ?? 0).toStringAsFixed(2)}", style: style),
       ],
+    );
+  }
+}
+
+class _QuotationItemCard extends StatelessWidget {
+  final Items item;
+  final VoidCallback onAdd;
+  final VoidCallback onRemove;
+  final int quantity;
+
+  const _QuotationItemCard({
+    required this.item,
+    required this.onAdd,
+    required this.onRemove,
+    required this.quantity,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF9FBFF),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFE6ECF5)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: CachedNetworkImage(
+              imageUrl: '${baseurl}${item.image ?? ""}',
+              width: 72,
+              height: 72,
+              fit: BoxFit.cover,
+              placeholder: (_, __) => const SizedBox(
+                width: 72,
+                height: 72,
+                child: Center(
+                  child: CircularProgressIndicator(color: Colors.blueAccent),
+                ),
+              ),
+              errorWidget: (_, __, ___) => Image.asset(
+                'assets/images/image.png',
+                width: 72,
+                height: 72,
+                fit: BoxFit.cover,
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  item.itemName ?? "N/A",
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                AutoSizeText(
+                  'UOM: ${item.uom ?? "-"}',
+                  maxLines: 1,
+                  style: TextStyle(
+                    color: Colors.grey.shade700,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 14,
+                  runSpacing: 6,
+                  children: [
+                    Text(
+                      'Rate: ₹${(item.rate ?? 0).toStringAsFixed(2)}',
+                      style: const TextStyle(
+                        color: Colors.green,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    Text(
+                      'Amount: ₹${(item.amount ?? 0).toStringAsFixed(2)}',
+                      style: const TextStyle(
+                        color: Colors.green,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Container(
+                  height: 40,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.blueAccent.shade200),
+                    color: Colors.white,
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        onPressed: quantity > 1 ? onRemove : null,
+                        icon: const Icon(Icons.remove, color: Colors.blueAccent),
+                      ),
+                      Text(
+                        quantity.toString(),
+                        style: const TextStyle(fontWeight: FontWeight.w700),
+                      ),
+                      IconButton(
+                        onPressed: onAdd,
+                        icon: const Icon(Icons.add, color: Colors.blueAccent),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SectionTitle extends StatelessWidget {
+  final String title;
+
+  const _SectionTitle(this.title);
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      title,
+      style: const TextStyle(
+        fontSize: 17,
+        fontWeight: FontWeight.w700,
+      ),
     );
   }
 }

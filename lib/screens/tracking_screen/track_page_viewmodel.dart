@@ -12,6 +12,7 @@ import 'package:http/http.dart' as http;
 import 'package:stacked/stacked.dart';
 import 'package:stacked_services/stacked_services.dart';
 
+import '../../constants.dart';
 import '../../router.locator.dart';
 import 'company_auth.dart';
 
@@ -170,12 +171,13 @@ class TrackPersonViewModel extends BaseViewModel {
   Future<void> fetchUsers() async {
     try {
       final url = Uri.parse(
-          "https://durocon.erpkey.in/api/resource/Get%20Employee%20Location");
+          "$baseurl/api/resource/Get%20Employee%20Location");
 
       final headers = await CompanyAuth.getHeaders();
       final res = await http.get(url, headers: headers);
 
       if (res.statusCode != 200) {
+        print(res.body);
         _showToast("Failed to load users");
         return;
       }
@@ -223,7 +225,7 @@ class TrackPersonViewModel extends BaseViewModel {
 
     try {
       final url = Uri.parse(
-          "https://durocon.erpkey.in/api/resource/Get%20Employee%20Location/$selectedUser");
+          "$baseurl/api/resource/Get%20Employee%20Location/$selectedUser");
 
       final headers = await CompanyAuth.getHeaders();
       final res = await http.get(url, headers: headers);

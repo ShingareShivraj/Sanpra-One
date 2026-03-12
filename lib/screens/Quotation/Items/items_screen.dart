@@ -1,335 +1,361 @@
-import 'package:auto_size_text/auto_size_text.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:stacked/stacked.dart';
+
 import '../../../constants.dart';
 import '../../../model/addquotation_model.dart';
-import '../../../widgets/customtextfield.dart';
 import '../../../widgets/full_screen_loader.dart';
 import 'items_model.dart';
 
-
-
 class QuotationItemScreen extends StatelessWidget {
-
   final List<Items> items;
+
   const QuotationItemScreen({super.key, required this.items});
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return ViewModelBuilder<QuotationItemListModel>.reactive(
       viewModelBuilder: () => QuotationItemListModel(),
       onViewModelReady: (model) => model.initialise(context, items),
       builder: (context, model, child) => Scaffold(
-        backgroundColor: Colors.grey.shade200,
-          appBar: AppBar(
-            title: const Text('Select Items'),
-          ),
-          body: fullScreenLoader(
-            loader: model.isBusy,
-            context: context,
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(8),
-              scrollDirection: Axis.vertical,
-              child: Column(
-                children: [
-                  CustomSmallTextFormField(prefixIcon: Icons.search,controller: model.searchController, labelText: 'Search', hintText: 'Type here to search',onChanged: model.searchItems,),
-                  const SizedBox(height: 15),
-                  ListView.separated(
-                    physics: const NeverScrollableScrollPhysics(),
-                    scrollDirection: Axis.vertical,
-                    shrinkWrap: true,
-                    itemCount: model.filteredItems.length,
-                    itemBuilder: (context, index) {
-                      final selectedItem = model.filteredItems[index];
-                      return Container(
-                        padding: const EdgeInsets.all(12), // Increased padding for better spacing
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(20), // Smooth rounded corners
-                          color: model.isSelected(selectedItem) ? Colors.blue.shade200 : Colors.white,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.grey.withOpacity(0.2), // Lighter shadow for better contrast
-                              blurRadius: 8,
-                              spreadRadius: 2, // Slight spread for more subtle effect
-                              offset: const Offset(0, 4), // Offset the shadow slightly
-                            ),
-                          ],
-                        ),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Product Image with rounded corners
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(12),
-                              child: CachedNetworkImage(
-                                imageUrl: '$baseurl${selectedItem.image}',
-                                width: 80, // Increased size for better visibility
-                                height: 80,
-                                fit: BoxFit.cover,
-                                placeholder: (context, url) => const Center(
-                                  child: CircularProgressIndicator(color: Colors.blueAccent),
-                                ),
-                                errorWidget: (context, url, error) => const Center(
-                                  child: Icon(Icons.broken_image, size: 40, color: Colors.grey),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 16), // Increased spacing between image and text
-
-                            // Product Details
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  AutoSizeText(
-                                   selectedItem.itemName ?? "N/A",
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16, // Slightly larger font for better readability
-                                    ),
-                                    maxFontSize: 16.0,
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                  const SizedBox(height: 8), // Added more spacing for better balance
-                                  Row(
-                                    children: [
-                                      AutoSizeText(
-                                        'Rate: ${selectedItem.rate.toString()}',
-                                        style: const TextStyle(
-                                          color: Colors.green,
-                                          fontWeight: FontWeight.w500,
-                                          fontSize: 14, // Adjusted font size for rate
-                                        ),
-                                      ),
-                                      const Spacer(), // Ensures the text and qty align correctly
-                                      AutoSizeText(
-                                        'Qty: ${selectedItem.actualQty}',
-                                        style: const TextStyle(
-                                          color: Colors.green,
-                                          fontWeight: FontWeight.w500,
-                                          fontSize: 14, // Adjusted font size for quantity
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ),
-
-                            // Quantity and Buttons Section
-                            Column(
-                              children: [
-                                // Styled checkbox
-                                GestureDetector(
-                                  onTap: () {
-                                    model.toggleSelection(selectedItem);
-                                  },
-                                  child: AnimatedContainer(
-                                    duration: const Duration(milliseconds: 200),
-                                    padding: const EdgeInsets.all(8),
-                                    decoration: BoxDecoration(
-                                      color: model.isSelected(selectedItem)
-                                          ? Colors.blueAccent.shade100
-                                          : Colors.transparent,
-                                      borderRadius: BorderRadius.circular(8),
-                                      border: Border.all(
-                                        color: model.isSelected(selectedItem)
-                                            ? Colors.blueAccent
-                                            : Colors.grey,
-                                        width: 2,
-                                      ),
-                                    ),
-                                    child: Icon(
-                                      model.isSelected(selectedItem)
-                                          ? Icons.check_box
-                                          : Icons.check_box_outline_blank,
-                                      color: model.isSelected(selectedItem)
-                                          ? Colors.blueAccent
-                                          : Colors.grey,
-                                      size: 24,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(height: 10), // Added spacing between checkbox and buttons
-
-                                // Quantity control buttons with a modern design
-                                Container(
-                                  height: 40,
-                                  decoration: BoxDecoration(
-                                    borderRadius:
-                                    BorderRadius.circular(10),
-                                    border: Border.all(
-                                        color: Colors
-                                            .blueAccent.shade400,
-                                        width: 1),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize:
-                                    MainAxisSize.min,
-                                    children: [
-                                      IconButton(
-                                        icon: const Icon(
-                                          Icons.remove,
-                                          color:
-                                          Colors.blueAccent,
-                                        ),
-                                        onPressed: () {
-                                          // Decrease quantity when the remove button is pressed
-                                          if (selectedItem.qty !=
-                                              null &&
-                                              (selectedItem.qty ??
-                                                  0) >
-                                                  1) {
-                                            model.removeitem(
-                                                index);
-                                          }
-                                        },
-                                      ),
-                                      Text(
-                                        model
-                                            .getQuantity(
-                                            selectedItem)
-                                            .toInt()
-                                            .toString(),
-                                        style: const TextStyle(
-                                            fontWeight:
-                                            FontWeight.bold),
-                                      ),
-                                      IconButton(
-                                        icon: const Icon(
-                                          Icons.add,
-                                          color:
-                                          Colors.blueAccent,
-                                        ),
-                                        onPressed: () {
-                                          model.additem(index);
-                                        },
-                                      ),
-                                    ],
-                                  ),
-                                ),
-
-                              ],
-                            ),
-                          ],
-                        ),
-                      );
-
-                      // IconButton(
-                                //   icon: Icon(Icons.delete, size: 20.0),
-                                //   onPressed: () {
-                                //     // Handle delete button action
-                                //   },
-                                // ),
-                            //   ],
-                            // ),
-                          // ],
-                        // ),
-                      // );
-                    },separatorBuilder: (BuildContext context, int index) {
-                    return const Divider(thickness: 1,);
-                  },
-
-                  ),
-                ],
-              ),
-            ),
-          ),
-          bottomSheet: BottomSheetWidget(
-            model: model,
-          )),
-    );
-  }
-
-  Widget buildImage(String? imageUrl) {
-    return Image.network(
-      '$baseurl$imageUrl',
-      height: 36,
-      loadingBuilder: (BuildContext context, Widget child,
-          ImageChunkEvent? loadingProgress) {
-        if (loadingProgress == null) {
-          // Image is done loading
-          return child;
-        } else {
-          // Image is still loading
-          return const Center(
-              child: CircularProgressIndicator(color: Colors.blueAccent));
-        }
-      },
-      errorBuilder:
-          (BuildContext context, Object error, StackTrace? stackTrace) {
-        // Handle the error by displaying a broken image icon
-        return const Icon(Icons.broken_image,size: 36,);
-      },
-    );
-  }
-
-  Widget buildItemColumn(String label, {String? additionalText}) {
-    return Column(
-      children: [
-        AutoSizeText(label),
-        if (additionalText != null) AutoSizeText(additionalText),
-      ],
-    );
-  }
-}
-
-class BottomSheetWidget extends StatefulWidget {
-  final QuotationItemListModel model;
-
-  const BottomSheetWidget({super.key, required this.model});
-
-  @override
-  _BottomSheetWidgetState createState() => _BottomSheetWidgetState();
-}
-
-class _BottomSheetWidgetState extends State<BottomSheetWidget> {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(20.0),
-          topRight: Radius.circular(20.0),
+        backgroundColor: theme.colorScheme.surfaceContainerLowest,
+        appBar: AppBar(
+          title: const Text('Select Items'),
+          centerTitle: true,
+          elevation: 0,
         ),
-        color: Colors.white38,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            height: 100,
-            decoration: const BoxDecoration(
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(20.0),
-                topRight: Radius.circular(20.0),
-              ),
-              color: Colors.white38,
-            ),
-            child: Center(
-              child: MaterialButton(
-                onPressed: () {
-                  Navigator.pop(context, widget.model.isSelecteditems);
-                },
-                minWidth: 200.0,
-                height: 48.0,
-                color: Colors.blueAccent,
-                textColor: Colors.white,
-                child: const Text(
-                  "Done",
-                  style: TextStyle(
-                    fontSize: 20.0,
-                    fontWeight: FontWeight.bold,
+        body: fullScreenLoader(
+          loader: model.isBusy,
+          context: context,
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                child: SearchBar(
+                  controller: model.searchController,
+                  hintText: 'Search items',
+                  leading: const Icon(Icons.search_rounded),
+                  elevation: const WidgetStatePropertyAll(0),
+                  backgroundColor: WidgetStatePropertyAll(
+                    theme.colorScheme.surfaceContainerHigh,
                   ),
+                  side: WidgetStatePropertyAll(
+                    BorderSide(color: theme.colorScheme.outlineVariant),
+                  ),
+                  onChanged: model.searchItems,
                 ),
               ),
+              Expanded(
+                child: model.filteredItems.isEmpty
+                    ? _EmptyState(theme: theme)
+                    : ListView.separated(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 110),
+                  itemCount: model.filteredItems.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 12),
+                  itemBuilder: (context, index) {
+                    final item = model.filteredItems[index];
+                    final isSelected = model.isSelected(item);
+
+                    return _ItemCard(
+                      item: item,
+                      isSelected: isSelected,
+                      quantity: model.getQuantity(item).toInt(),
+                      onTap: () => model.toggleSelection(item),
+                      onAdd: () => model.additem(index),
+                      onRemove: () {
+                        if ((item.qty ?? 0) > 1) {
+                          model.removeitem(index);
+                        }
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+        bottomNavigationBar: _BottomActionBar(model: model),
+      ),
+    );
+  }
+}
+class _ItemCard extends StatelessWidget {
+  final Items item;
+  final bool isSelected;
+  final int quantity;
+  final VoidCallback onTap;
+  final VoidCallback onAdd;
+  final VoidCallback onRemove;
+
+  const _ItemCard({
+    required this.item,
+    required this.isSelected,
+    required this.quantity,
+    required this.onTap,
+    required this.onAdd,
+    required this.onRemove,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+
+    return InkWell(
+      borderRadius: BorderRadius.circular(14),
+      onTap: onTap,
+      child: Stack(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: isSelected
+                  ? cs.primaryContainer.withOpacity(.35)
+                  : cs.surface,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: isSelected ? cs.primary : cs.outlineVariant,
+              ),
+            ),
+            child: Row(
+              children: [
+                /// IMAGE
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: CachedNetworkImage(
+                    imageUrl: '$baseurl${item.image ?? ""}',
+                    width: 56,
+                    height: 56,
+                    fit: BoxFit.cover,
+                    errorWidget: (_, __, ___) =>
+                    const Icon(Icons.image_not_supported),
+                  ),
+                ),
+
+                const SizedBox(width: 10),
+
+                /// TEXT
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        item.itemName ?? "Item",
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      Text(
+                        item.itemCode ?? "Item",
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w200,
+                        ),
+                      ),
+
+                      const SizedBox(height: 4),
+
+                      Row(
+                        children: [
+                          Text(
+                            "₹ ${item.rate ?? 0}",
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: Colors.green,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+
+                          const SizedBox(width: 10),
+
+                          Text(
+                            "UOM ${item.uom ?? 0}",
+                            style: theme.textTheme.bodySmall,
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+
+                /// QTY STEPPER
+                Container(
+                  height: 32,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: cs.outlineVariant),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        icon: const Icon(Icons.remove, size: 18),
+                        onPressed: quantity > 1 ? onRemove : null,
+                      ),
+
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        child: Text(
+                          quantity.toString(),
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      ),
+
+                      IconButton(
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        icon: const Icon(Icons.add, size: 18),
+                        onPressed: onAdd,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          /// CHECKMARK
+          Positioned(
+            top: 6,
+            right: 6,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              height: 22,
+              width: 22,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: isSelected ? cs.primary : Colors.transparent,
+                border: Border.all(
+                  color: isSelected ? cs.primary : cs.outline,
+                  width: 2,
+                ),
+              ),
+              child: isSelected
+                  ? const Icon(
+                Icons.check,
+                size: 14,
+                color: Colors.white,
+              )
+                  : null,
             ),
           ),
         ],
       ),
     );
+  }
+}
+class _BottomActionBar extends StatelessWidget {
+  final QuotationItemListModel model;
 
+  const _BottomActionBar({required this.model});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final selectedCount = model.isSelecteditems.length;
+
+    return SafeArea(
+      top: false,
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surface,
+          border: Border(
+            top: BorderSide(color: theme.colorScheme.outlineVariant),
+          ),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Container(
+                height: 54,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surfaceContainerHigh,
+                  borderRadius: BorderRadius.circular(18),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.shopping_bag_outlined,
+                      color: theme.colorScheme.primary,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        "$selectedCount item(s) selected",
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            FilledButton.icon(
+              onPressed: () {
+                Navigator.pop(context, model.isSelecteditems);
+              },
+              icon: const Icon(Icons.check_rounded),
+              label: const Text("Done"),
+              style: FilledButton.styleFrom(
+                minimumSize: const Size(120, 54),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(18),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _EmptyState extends StatelessWidget {
+  final ThemeData theme;
+
+  const _EmptyState({required this.theme});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.search_off_rounded,
+              size: 56,
+              color: theme.colorScheme.outline,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              "No items found",
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              "Try searching with a different keyword.",
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

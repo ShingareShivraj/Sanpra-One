@@ -4,6 +4,7 @@ import 'package:iconsax/iconsax.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:stacked/stacked.dart';
 
+import '../about_us.dart';
 import 'login_model.dart';
 
 class LoginViewScreen extends StatefulWidget {
@@ -14,6 +15,9 @@ class LoginViewScreen extends StatefulWidget {
 }
 
 class _LoginViewScreenState extends State<LoginViewScreen> {
+
+  static const String developedByCompany = "Sanpra Software Solutions";
+  static const String developedByPrefix = "Developed by";
   @override
   Widget build(BuildContext context) {
     return ViewModelBuilder<LoginViewModel>.reactive(
@@ -22,125 +26,173 @@ class _LoginViewScreenState extends State<LoginViewScreen> {
       builder: (context, model, child) {
         return Scaffold(
           backgroundColor: Colors.blue.shade50,
-          body: WillPopScope(
-            onWillPop: showExitPopup,
-            child: Center(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    // Circle Logo
-                    Container(
-                      padding: const EdgeInsets.all(24),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: Colors.blueAccent,
-                          width: 3,
-                        ),
-                        gradient: LinearGradient(
-                          colors: [Colors.blue.shade100, Colors.blue.shade50],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.blueAccent.withOpacity(0.2),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: Text(
-                        "D",
-                        style: GoogleFonts.poppins(
-                          fontSize: 36,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.blueAccent.shade700,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      "Peak Performance HR",
-                      style: GoogleFonts.poppins(
-                        fontSize: 16,
-                        color: Colors.grey.shade600,
-                      ),
-                    ),
+          body:WillPopScope(
+          onWillPop: showExitPopup,
+          child: Column(
+            children: [
 
-                    const SizedBox(height: 30),
+              /// MAIN CONTENT
+              Expanded(
+                child: Center(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
 
-                    // Card with form
-                    Container(
-                      padding: const EdgeInsets.all(24),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(20),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.blueGrey.withOpacity(0.1),
-                            blurRadius: 20,
-                            offset: const Offset(0, 8),
+                        /// LOGO
+                        Container(
+                          padding: const EdgeInsets.all(24),
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: Colors.blueAccent,
+                              width: 3,
+                            ),
+                            gradient: LinearGradient(
+                              colors: [Colors.blue.shade100, Colors.blue.shade50],
+                            ),
                           ),
-                        ],
-                      ),
-                      child: Column(
-                        children: [
-                          Text(
-                            "Welcome Back",
+                          child: Text(
+                            "S",
                             style: GoogleFonts.poppins(
-                              fontSize: 22,
+                              fontSize: 36,
                               fontWeight: FontWeight.bold,
                               color: Colors.blueAccent.shade700,
                             ),
                           ),
-                          const SizedBox(height: 6),
-                          Text(
-                            "Sign in to access your dashboard.",
-                            style: GoogleFonts.poppins(
-                              fontSize: 14,
-                              color: Colors.grey.shade600,
-                            ),
-                          ),
-                          const SizedBox(height: 24),
+                        ),
 
-                          // Form
-                          Form(
-                            key: model.formGlobalKey,
-                            child: Column(
-                              children: [
-                                UsernameField(model: model),
-                                const SizedBox(height: 20),
-                                PasswordField(model: model),
-                                const SizedBox(height: 10),
-                                Align(
-                                  alignment: Alignment.centerRight,
-                                  child: TextButton(
-                                    onPressed: () {},
-                                    child: Text(
-                                      "Forgot password?",
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 14,
-                                        color: Colors.blueAccent,
+                        const SizedBox(height: 12),
+
+                        Text(
+                          "Peak Performance HR",
+                          style: GoogleFonts.poppins(
+                            fontSize: 16,
+                            color: Colors.grey.shade600,
+                          ),
+                        ),
+
+                        const SizedBox(height: 30),
+
+                        /// LOGIN CARD
+                        Container(
+                          padding: const EdgeInsets.all(24),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(20),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.blueGrey.withOpacity(0.1),
+                                blurRadius: 20,
+                                offset: const Offset(0, 8),
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            children: [
+                              Text(
+                                "Welcome Back",
+                                style: GoogleFonts.poppins(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.blueAccent.shade700,
+                                ),
+                              ),
+
+                              const SizedBox(height: 6),
+
+                              Text(
+                                "Sign in to access your dashboard.",
+                                style: GoogleFonts.poppins(
+                                  fontSize: 14,
+                                  color: Colors.grey.shade600,
+                                ),
+                              ),
+
+                              const SizedBox(height: 24),
+
+                              Form(
+                                key: model.formGlobalKey,
+                                child: Column(
+                                  children: [
+                                    UsernameField(model: model),
+                                    const SizedBox(height: 20),
+                                    PasswordField(model: model),
+
+                                    const SizedBox(height: 10),
+
+                                    Align(
+                                      alignment: Alignment.centerRight,
+                                      child: TextButton(
+                                        onPressed: () {},
+                                        child: Text(
+                                          "Forgot password?",
+                                          style: GoogleFonts.poppins(
+                                            fontSize: 14,
+                                            color: Colors.blueAccent,
+                                          ),
+                                        ),
                                       ),
                                     ),
-                                  ),
+
+                                    const SizedBox(height: 20),
+
+                                    LoginButton(model: model),
+                                  ],
                                 ),
-                                const SizedBox(height: 20),
-                                LoginButton(model: model),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               ),
-            ),
+
+              /// BOTTOM PREFIX (FOOTER)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 20),
+                child: Column(
+                  children: [
+
+                    Text(
+                      developedByPrefix,
+                      style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        color: Colors.grey,
+                      ),
+                    ),
+
+                    const SizedBox(height: 4),
+
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const AboutUsScreen(),
+                          ),
+                        );
+                      },
+                      child: Text(
+                        developedByCompany,
+                        style: GoogleFonts.poppins(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.blue,
+                          decoration: TextDecoration.underline,
+                        ),
+                      ),
+                    ),
+
+                  ],
+                ),
+              )
+            ],
           ),
+        ),
         );
       },
     );
