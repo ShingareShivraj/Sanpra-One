@@ -16,6 +16,10 @@ import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:slide_to_act/slide_to_act.dart';
 import 'package:stacked/stacked.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:geocoding/geocoding.dart';
+import 'package:image/image.dart' as img;
+import 'package:path_provider/path_provider.dart';
 
 import '../../constants.dart';
 import '../../router.router.dart';
@@ -1678,9 +1682,21 @@ class _PhotoCaptureScreenState extends State<PhotoCaptureScreen> {
       if (!mounted) return;
 
       if (picked != null) {
-        photo = File(picked.path);
-        // Return path to previous screen
-        Navigator.pop(context, picked.path);
+        File original = File(picked.path);
+
+        Position pos = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.medium,
+        );
+
+        File labeledImage = await addLocationLabel(
+          original,
+          pos.latitude,
+          pos.longitude,
+        );
+
+        photo = labeledImage;
+
+        Navigator.pop(context, labeledImage.path);
       }
     } catch (e) {
       if (!mounted) return;
@@ -1732,6 +1748,60 @@ class _PhotoCaptureScreenState extends State<PhotoCaptureScreen> {
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
+}
+
+
+/////---------------------------- geolocation label added by shivraj------------------------------------------------
+
+Future<File> addLocationLabel(File imageFile, double lat, double lng) async {
+
+  final bytes = await imageFile.readAsBytes();
+  img.Image? image = img.decodeImage(bytes);
+
+  if (image == null) return imageFile;
+
+  final time = DateTime.now();
+
+  List<Placemark> placemarks = await placemarkFromCoordinates(lat, lng);
+  Placemark place = placemarks.first;
+
+  List<String> parts = [];
+
+  if ((place.subLocality ?? "").isNotEmpty) parts.add(place.subLocality!);
+  if ((place.locality ?? "").isNotEmpty) parts.add(place.locality!);
+  if ((place.administrativeArea ?? "").isNotEmpty) parts.add(place.administrativeArea!);
+
+  String address = parts.join(", ");
+
+  String label =
+      "$address\n${time.day}-${time.month}-${time.year} ${time.hour}:${time.minute}";
+
+  img.fillRect(
+    image,
+    x1: 0,
+    y1: image.height - 120,
+    x2: image.width,
+    y2: image.height,
+    color: img.ColorRgb8(0, 0, 0),
+  );
+
+  img.drawString(
+    image,
+    label,
+    x: 20,
+    y: image.height - 90,
+    font: img.arial24,
+    color: img.ColorRgb8(255, 255, 255),
+  );
+
+  final dir = await getTemporaryDirectory();
+  final newPath =
+      "${dir.path}/photo_${DateTime.now().millisecondsSinceEpoch}.jpg";
+
+  final newFile = File(newPath);
+  await newFile.writeAsBytes(img.encodeJpg(image));
+
+  return newFile;
 }
 
 // -----------------------------

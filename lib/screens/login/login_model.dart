@@ -3,6 +3,7 @@ import 'package:geolocation/constants.dart';
 import 'package:geolocation/services/login_services.dart';
 import 'package:logger/logger.dart';
 import 'package:stacked/stacked.dart';
+import 'package:android_id/android_id.dart';
 
 import '../../router.router.dart';
 
@@ -46,6 +47,7 @@ class LoginViewModel extends BaseViewModel {
 
   /// Handles user login logic
   Future<void> loginWithUsernamePassword(BuildContext context) async {
+
     if (!formGlobalKey.currentState!.validate()) {
       return;
     }
@@ -57,33 +59,48 @@ class LoginViewModel extends BaseViewModel {
     final username = usernameController.text.trim();
     final password = passwordController.text;
 
-    // Update global baseurl if needed
     baseurl = baseUrl;
 
     try {
+
+      /// GET ANDROID ID
+      const androidIdPlugin = AndroidId();
+      String androidId = await androidIdPlugin.getId() ?? "unknown";
+
+
+      /// LOGIN
       final bool loginSuccess =
-          await LoginServices().login(baseUrl, username, password);
+      await LoginServices().login(baseUrl, username, password, androidId);
 
       if (loginSuccess) {
+
         if (context.mounted) {
           Navigator.popAndPushNamed(context, Routes.homePage);
         }
+
       } else {
+
         Logger().i('Invalid credentials');
-        // Show feedback to user here, e.g. using a Snackbar or Toast
-        // ScaffoldMessenger.of(context).showSnackBar(
-        //   SnackBar(content: Text("Invalid Credentials")),
-        // );
+
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Invalid Credentials")),
+          );
+        }
+
       }
+
     } catch (e, stacktrace) {
+
       Logger().e("Login error $stacktrace");
-      // Show error to user if needed
+
     } finally {
+
       isLoading = false;
       notifyListeners();
+
     }
   }
-
   /// Dispose controllers and focus nodes when ViewModel is destroyed
   @override
   void dispose() {
