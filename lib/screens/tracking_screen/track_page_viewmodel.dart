@@ -170,6 +170,7 @@ class TrackPersonViewModel extends BaseViewModel {
 
   Future<void> fetchUsers() async {
     try {
+      String baseurl = await geturl();
       final url = Uri.parse(
           "$baseurl/api/resource/Get%20Employee%20Location");
 
@@ -224,6 +225,7 @@ class TrackPersonViewModel extends BaseViewModel {
     if (selectedUser.isEmpty) return;
 
     try {
+      String baseurl = await geturl();
       final url = Uri.parse(
           "$baseurl/api/resource/Get%20Employee%20Location/$selectedUser");
 

@@ -272,6 +272,7 @@ Future<void> processQueue() async {
 Future<bool> sendToFrappe(
   Map<String, dynamic> body,
 ) async {
+  String baseurl = await geturl();
   final url = Uri.parse(
     "$baseurl/api/method/mobile.mobile.doctype.get_employee_location.get_employee_location.get_parameters",
   );
