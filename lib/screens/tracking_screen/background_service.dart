@@ -5,6 +5,7 @@ import 'package:android_id/android_id.dart';
 import 'package:battery_plus/battery_plus.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:flutter_background_service_android/flutter_background_service_android.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -88,6 +89,7 @@ void onStart(ServiceInstance service) async {
 
     final Battery battery = Battery();
     const androidIdPlugin = AndroidId();
+
 
     String deviceId = await androidIdPlugin.getId() ?? "Unknown";
 
