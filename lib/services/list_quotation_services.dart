@@ -4,6 +4,8 @@ import 'package:logger/logger.dart';
 import '../constants.dart';
 import '../model/addquotation_model.dart';
 import '../model/quotation_list_model.dart';
+import 'dart:io';
+import 'package:path_provider/path_provider.dart';
 
 class QuotationServices {
 
@@ -50,6 +52,29 @@ class QuotationServices {
       Fluttertoast.showToast(msg: "Unauthorized Quotation!");
       return [];
     }
+  }
+
+  //----------------- Quatation download--------------------
+  Future<File> downloadQuotationPDF(String quotationName) async {
+
+    final baseurl = await _baseUrl();
+
+    final url =
+        "$baseurl/api/method/frappe.utils.print_format.download_pdf"
+        "?doctype=Quotation"
+        "&name=$quotationName"
+        "&format=Standard";
+
+    final dir = await getTemporaryDirectory();
+    final filePath = "${dir.path}/$quotationName.pdf";
+
+    await _dio.download(
+      url,
+      filePath,
+      options: Options(headers: await _headers()),
+    );
+
+    return File(filePath);
   }
 
   /// ---------------- Filter Quotations ----------------

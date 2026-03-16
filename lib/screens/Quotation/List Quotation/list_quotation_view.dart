@@ -86,6 +86,7 @@ class ListQuotationScreen extends StatelessWidget {
                               /// HEADER
                               Row(
                                 children: [
+
                                   Expanded(
                                     child: Text(
                                       item.name ?? "",
@@ -96,6 +97,12 @@ class ListQuotationScreen extends StatelessWidget {
                                     ),
                                   ),
 
+                                  IconButton(
+                                    icon: const Icon(Icons.share),
+                                    onPressed: () {
+                                      model.shareQuotation(item);
+                                    },
+                                  ),
                                   Container(
                                     padding: const EdgeInsets.symmetric(
                                         horizontal: 10, vertical: 4),

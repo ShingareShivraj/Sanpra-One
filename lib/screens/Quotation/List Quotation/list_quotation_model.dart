@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:stacked/stacked.dart';
+import 'package:share_plus/share_plus.dart';
+import 'dart:io';
+import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../model/quotation_list_model.dart';
 import '../../../router.router.dart';
 import '../../../services/list_quotation_services.dart';
+
 
 class ListQuotationModel extends BaseViewModel {
   final QuotationServices _service = QuotationServices();
@@ -33,6 +38,31 @@ class ListQuotationModel extends BaseViewModel {
       notifyListeners();
     }
   }
+
+  //======================= share quatation adeed by shivraj===============
+  Future<void> shareQuotation(QuotationList quotation) async {
+    try {
+      setBusy(true);
+
+      // Step 1: Download quotation PDF from ERPNext
+      File file = await _service.downloadQuotationPDF(
+        quotation.name ?? "",
+      );
+
+      setBusy(false);
+
+      // Step 2: Open Share Sheet
+      await Share.shareXFiles(
+        [XFile(file.path)],
+        text: "Please find your quotation attached.",
+      );
+    } catch (e) {
+      setBusy(false);
+      print(e);
+    }
+  }
+
+
 
   void onRowClick(BuildContext context, QuotationList? qList) {
     Navigator.pushNamed(
