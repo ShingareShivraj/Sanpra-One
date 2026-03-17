@@ -144,7 +144,7 @@ class ProjectLeadService {
 
     try {
       final response = await _dio.get(
-        '$baseurl/api/resource/Marketing Material Issue',
+        '$baseurl/api/method/mobile.mobile_env.app.get_marketing_issue_list',
         queryParameters: {
           'fields': '["name","customer","date","total_qty","workflow_state"]',
           'limit': 999,

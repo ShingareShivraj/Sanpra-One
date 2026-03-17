@@ -10,40 +10,47 @@ import 'package:logger/logger.dart';
 class UpdateLeadServices{
 
 
-    Future<List<NotesList>> getnotes(String leadname) async {
-    baseurl =  await geturl();
-    var data = {'doc_name': leadname};
+  Future<List<NotesList>> getnotes(String leadname) async {
+    baseurl = await geturl();
 
     try {
       var dio = Dio();
-      var response = await dio.request(
+
+      var response = await dio.get(
         '$baseurl/api/method/mobile.mobile_env.app.get_data_from_notes',
+        queryParameters: {
+          'doc_name': leadname,   // ✅ THIS IS CRITICAL
+        },
         options: Options(
-          method: 'GET',
           headers: {'Authorization': await getTocken()},
         ),
-        data: data,
       );
 
       if (response.statusCode == 200) {
-        Map<String, dynamic> jsonData = json.decode(json.encode(response.data));
+        Map<String, dynamic> jsonData = response.data;
+
         List<NotesList> caneList = List.from(jsonData['data'])
             .map<NotesList>((data) => NotesList.fromJson(data))
             .toList();
+
         return caneList;
       } else {
         Fluttertoast.showToast(msg: "UNABLE TO get notes!");
         return [];
       }
     } on DioException catch (e) {
-      Fluttertoast.showToast(gravity:ToastGravity.BOTTOM,msg: 'Error: ${e.response!.data["exception"].toString().split(":").elementAt(1).trim()} ',textColor:Color(0xFFFFFFFF),backgroundColor: Color(0xFFBA1A1A),);
-      Logger().e(e.response!.data["exception"].toString());
+      print("FULL ERROR: ${e.response?.data}");
+
+      Fluttertoast.showToast(
+        msg: e.response?.data["exception"] ?? "Something went wrong",
+      );
+
+      return [];
     }
-    return [];
   }
 
 
-  
+
     Future<bool> deletenotes(String leadname,int index) async {
     baseurl =  await geturl();
     var data = {'doc_name': leadname,'row_id':index.toString()};
@@ -60,7 +67,7 @@ class UpdateLeadServices{
       );
 
       if (response.statusCode == 200) {
-   
+
    Logger().i(response.data["data"].toString());
    Fluttertoast.showToast(msg: response.data["message"].toString());
         return true;
@@ -75,7 +82,7 @@ class UpdateLeadServices{
     return false;
   }
 
-  
+
     Future<bool> addnotes(String leadname,dynamic note) async {
     baseurl =  await geturl();
     var data = {'doc_name': leadname,'note':note};
