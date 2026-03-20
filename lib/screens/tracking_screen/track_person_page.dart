@@ -268,6 +268,18 @@ class TrackPersonPage extends StatelessWidget {
     );
   }
 
+
+
+  //==========================adding the new feature============================
+
+
+
+
+
+
+
+
+
   Widget _miniMetric(ThemeData theme, IconData icon, String value) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),

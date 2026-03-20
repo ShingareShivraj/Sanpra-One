@@ -4,6 +4,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:logger/logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'notification_service.dart';
 class LoginServices {
   final Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
 
@@ -52,6 +53,8 @@ class LoginServices {
           textColor: Color(0xFFFFFFFF),
           backgroundColor: Color.fromARGB(255, 26, 186, 82),
         );
+        final notificationService = NotificationService();
+        await notificationService.handleAfterLogin();
         return true;
       } else {
         Fluttertoast.showToast(

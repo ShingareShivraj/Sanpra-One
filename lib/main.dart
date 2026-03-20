@@ -8,12 +8,16 @@ import 'package:geolocation/screens/splash_screen/splash_screen.dart';
 import 'package:geolocation/themes/color_schemes.g.dart';
 import 'package:geolocation/themes/custom_color.g.dart';
 import 'package:stacked_services/stacked_services.dart';
+import 'package:firebase_core/firebase_core.dart';
 
 import 'router.router.dart';
+import 'services/notification_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
   setupLocator();
+  await NotificationService().init();
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,

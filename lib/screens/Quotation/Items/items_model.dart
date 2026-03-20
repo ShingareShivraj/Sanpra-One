@@ -68,4 +68,21 @@ class QuotationItemListModel extends BaseViewModel {
   double getQuantity(Items item) {
     return item.qty ?? 1.0;
   }
+
+  //added by shivraj
+  void updateQuantity(int index, int value) {
+    filteredItems[index].qty = value.toDouble(); // ✅ FIX
+
+    if (isSelected(filteredItems[index])) {
+      final selectedIndex = isSelecteditems.indexWhere(
+            (e) => e.itemCode == filteredItems[index].itemCode,
+      );
+
+      if (selectedIndex != -1) {
+        isSelecteditems[selectedIndex].qty = value.toDouble(); // ✅ FIX
+      }
+    }
+
+    notifyListeners();
+  }
 }

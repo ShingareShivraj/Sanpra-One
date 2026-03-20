@@ -1,6 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:stacked/stacked.dart';
+import 'package:flutter/services.dart';
 
 import '../../../constants.dart';
 import '../../../model/addquotation_model.dart';
@@ -53,7 +54,8 @@ class QuotationItemScreen extends StatelessWidget {
                     : ListView.separated(
                   padding: const EdgeInsets.fromLTRB(16, 8, 16, 110),
                   itemCount: model.filteredItems.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 12),
+                  separatorBuilder: (_, __) =>
+                  const SizedBox(height: 12),
                   itemBuilder: (context, index) {
                     final item = model.filteredItems[index];
                     final isSelected = model.isSelected(item);
@@ -61,13 +63,18 @@ class QuotationItemScreen extends StatelessWidget {
                     return _ItemCard(
                       item: item,
                       isSelected: isSelected,
-                      quantity: model.getQuantity(item).toInt(),
-                      onTap: () => model.toggleSelection(item),
+                      quantity:
+                      model.getQuantity(item).toInt(),
+                      onTap: () =>
+                          model.toggleSelection(item),
                       onAdd: () => model.additem(index),
                       onRemove: () {
                         if ((item.qty ?? 0) > 1) {
                           model.removeitem(index);
                         }
+                      },
+                      onQuantityChanged: (val) {
+                        model.updateQuantity(index, val);
                       },
                     );
                   },
@@ -81,6 +88,7 @@ class QuotationItemScreen extends StatelessWidget {
     );
   }
 }
+
 class _ItemCard extends StatelessWidget {
   final Items item;
   final bool isSelected;
@@ -88,6 +96,7 @@ class _ItemCard extends StatelessWidget {
   final VoidCallback onTap;
   final VoidCallback onAdd;
   final VoidCallback onRemove;
+  final Function(int)? onQuantityChanged;
 
   const _ItemCard({
     required this.item,
@@ -96,6 +105,7 @@ class _ItemCard extends StatelessWidget {
     required this.onTap,
     required this.onAdd,
     required this.onRemove,
+    this.onQuantityChanged,
   });
 
   @override
@@ -139,13 +149,15 @@ class _ItemCard extends StatelessWidget {
                 /// TEXT
                 Expanded(
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    crossAxisAlignment:
+                    CrossAxisAlignment.start,
                     children: [
                       Text(
                         item.itemName ?? "Item",
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.titleSmall?.copyWith(
+                        style: theme.textTheme.titleSmall
+                            ?.copyWith(
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -153,28 +165,28 @@ class _ItemCard extends StatelessWidget {
                         item.itemCode ?? "Item",
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.titleSmall?.copyWith(
+                        style: theme.textTheme.titleSmall
+                            ?.copyWith(
                           fontWeight: FontWeight.w200,
                         ),
                       ),
-
                       const SizedBox(height: 4),
-
                       Row(
                         children: [
                           Text(
                             "₹ ${item.rate ?? 0}",
-                            style: theme.textTheme.bodySmall?.copyWith(
+                            style: theme.textTheme.bodySmall
+                                ?.copyWith(
                               color: Colors.green,
-                              fontWeight: FontWeight.w600,
+                              fontWeight:
+                              FontWeight.w600,
                             ),
                           ),
-
                           const SizedBox(width: 10),
-
                           Text(
                             "UOM ${item.uom ?? 0}",
-                            style: theme.textTheme.bodySmall,
+                            style:
+                            theme.textTheme.bodySmall,
                           ),
                         ],
                       ),
@@ -186,31 +198,62 @@ class _ItemCard extends StatelessWidget {
                 Container(
                   height: 32,
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: cs.outlineVariant),
+                    borderRadius:
+                    BorderRadius.circular(8),
+                    border: Border.all(
+                        color: cs.outlineVariant),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       IconButton(
                         padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(),
-                        icon: const Icon(Icons.remove, size: 18),
-                        onPressed: quantity > 1 ? onRemove : null,
+                        constraints:
+                        const BoxConstraints(),
+                        icon: const Icon(Icons.remove,
+                            size: 18),
+                        onPressed:
+                        quantity > 1 ? onRemove : null,
                       ),
-
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8),
-                        child: Text(
+                      SizedBox(
+                        width: 50,
+                        child: TextFormField(
+                          initialValue:
                           quantity.toString(),
-                          style: const TextStyle(fontWeight: FontWeight.bold),
+                          textAlign:
+                          TextAlign.center,
+                          keyboardType:
+                          TextInputType.number,
+                          inputFormatters: [
+                            FilteringTextInputFormatter
+                                .digitsOnly,
+                          ],
+                          decoration:
+                          const InputDecoration(
+                            border: InputBorder.none,
+                            isDense: true,
+                            contentPadding:
+                            EdgeInsets.zero,
+                          ),
+                          onChanged: (value) {
+                            if (value.isEmpty) return;
+
+                            int? val =
+                            int.tryParse(value);
+                            if (val != null &&
+                                val > 0) {
+                              onQuantityChanged
+                                  ?.call(val);
+                            }
+                          },
                         ),
                       ),
-
                       IconButton(
                         padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(),
-                        icon: const Icon(Icons.add, size: 18),
+                        constraints:
+                        const BoxConstraints(),
+                        icon: const Icon(Icons.add,
+                            size: 18),
                         onPressed: onAdd,
                       ),
                     ],
@@ -225,14 +268,19 @@ class _ItemCard extends StatelessWidget {
             top: 6,
             right: 6,
             child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
+              duration:
+              const Duration(milliseconds: 200),
               height: 22,
               width: 22,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: isSelected ? cs.primary : Colors.transparent,
+                color: isSelected
+                    ? cs.primary
+                    : Colors.transparent,
                 border: Border.all(
-                  color: isSelected ? cs.primary : cs.outline,
+                  color: isSelected
+                      ? cs.primary
+                      : cs.outline,
                   width: 2,
                 ),
               ),
@@ -250,6 +298,7 @@ class _ItemCard extends StatelessWidget {
     );
   }
 }
+
 class _BottomActionBar extends StatelessWidget {
   final QuotationItemListModel model;
 
@@ -258,16 +307,20 @@ class _BottomActionBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final selectedCount = model.isSelecteditems.length;
+    final selectedCount =
+        model.isSelecteditems.length;
 
     return SafeArea(
       top: false,
       child: Container(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+        padding:
+        const EdgeInsets.fromLTRB(16, 12, 16, 16),
         decoration: BoxDecoration(
           color: theme.colorScheme.surface,
           border: Border(
-            top: BorderSide(color: theme.colorScheme.outlineVariant),
+            top: BorderSide(
+                color:
+                theme.colorScheme.outlineVariant),
           ),
         ),
         child: Row(
@@ -275,23 +328,29 @@ class _BottomActionBar extends StatelessWidget {
             Expanded(
               child: Container(
                 height: 54,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
+                padding:
+                const EdgeInsets.symmetric(
+                    horizontal: 16),
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.surfaceContainerHigh,
-                  borderRadius: BorderRadius.circular(18),
+                  color: theme.colorScheme
+                      .surfaceContainerHigh,
+                  borderRadius:
+                  BorderRadius.circular(18),
                 ),
                 child: Row(
                   children: [
-                    Icon(
-                      Icons.shopping_bag_outlined,
-                      color: theme.colorScheme.primary,
-                    ),
+                    Icon(Icons.shopping_bag_outlined,
+                        color:
+                        theme.colorScheme.primary),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
                         "$selectedCount item(s) selected",
-                        style: theme.textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.w700,
+                        style: theme
+                            .textTheme.titleSmall
+                            ?.copyWith(
+                          fontWeight:
+                          FontWeight.w700,
                         ),
                       ),
                     ),
@@ -302,16 +361,12 @@ class _BottomActionBar extends StatelessWidget {
             const SizedBox(width: 12),
             FilledButton.icon(
               onPressed: () {
-                Navigator.pop(context, model.isSelecteditems);
+                Navigator.pop(
+                    context, model.isSelecteditems);
               },
-              icon: const Icon(Icons.check_rounded),
+              icon:
+              const Icon(Icons.check_rounded),
               label: const Text("Done"),
-              style: FilledButton.styleFrom(
-                minimumSize: const Size(120, 54),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(18),
-                ),
-              ),
             ),
           ],
         ),
@@ -329,19 +384,19 @@ class _EmptyState extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding:
+        const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              Icons.search_off_rounded,
-              size: 56,
-              color: theme.colorScheme.outline,
-            ),
+            Icon(Icons.search_off_rounded,
+                size: 56,
+                color: theme.colorScheme.outline),
             const SizedBox(height: 12),
             Text(
               "No items found",
-              style: theme.textTheme.titleMedium?.copyWith(
+              style: theme.textTheme.titleMedium
+                  ?.copyWith(
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -349,8 +404,10 @@ class _EmptyState extends StatelessWidget {
             Text(
               "Try searching with a different keyword.",
               textAlign: TextAlign.center,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
+              style: theme.textTheme.bodyMedium
+                  ?.copyWith(
+                color: theme.colorScheme
+                    .onSurfaceVariant,
               ),
             ),
           ],
