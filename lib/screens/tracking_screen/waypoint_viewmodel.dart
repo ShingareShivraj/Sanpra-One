@@ -13,16 +13,31 @@ import 'package:intl/intl.dart';
 import 'company_auth.dart';
 import '../../../constants.dart';
 
+
+class WaypointData {
+  final LatLng position;
+  final String referenceType;
+  final String referenceName;
+  final String description;
+
+  WaypointData({
+    required this.position,
+    required this.referenceType,
+    required this.referenceName,
+    required this.description,
+  });
+}
+
 class WaypointViewModel extends BaseViewModel {
   final String user;
 
   WaypointViewModel(this.user);
 
-  List<LatLng> points = [];
+  List<WaypointData> points = [];
   List<Marker> markers = [];
   MapController mapController = MapController();
   LatLng? currentPosition;
-  List<LatLng> waypoints = [];   // from Frappe
+  List<WaypointData> waypoints = [];   // from Frappe
   List<LatLng> routePoints = [];
   Marker? movingMarker;
   List<Marker> staticMarkers = [];
@@ -30,7 +45,7 @@ class WaypointViewModel extends BaseViewModel {
   bool isAnimating=false;
   bool stopAnimation=false;
   DateTime selectedDate = DateTime.now();
-  double animationSpeed = 2.0;
+  double animationSpeed = 2.5;
   LatLng initialPosition = const LatLng(16.8512, 74.6126);
   bool isMapReady = false;
   // ================= INIT =================
@@ -62,37 +77,44 @@ class WaypointViewModel extends BaseViewModel {
       final data = decoded["data"];
 
       final list = data["location_table"] as List;
+
+// distance
       if (list.isNotEmpty) {
         final lastRow = list.last;
-
         totalDistance =
             double.tryParse(lastRow["distance_km"]?.toString() ?? "0") ?? 0;
       }
-      // 1. get waypoints
-      waypoints = list.map<LatLng>((e) {
-        return LatLng(
-          double.tryParse(e["latitude"].toString()) ?? 0,
-          double.tryParse(e["longitude"].toString()) ?? 0,
 
+// waypoints
+      waypoints = list.map<WaypointData>((e) {
+        return WaypointData(
+          position: LatLng(
+            double.tryParse(e["latitude"].toString()) ?? 0,
+            double.tryParse(e["longitude"].toString()) ?? 0,
+          ),
+          referenceType: e["reference_type"]?.toString() ?? "",
+          referenceName: e["reference_name"]?.toString() ?? "",
+          description: e["description"]?.toString() ?? "",
         );
       }).toList();
 
-      waypoints = waypoints.where((p) => p.latitude != 0 && p.longitude != 0).toList();
+      waypoints = waypoints
+          .where((w) => w.position.latitude != 0 && w.position.longitude != 0)
+          .toList();
 
-// 2. get route (smooth path)
+// route
       if (waypoints.length >= 2) {
-        routePoints = await getRoadRoute(waypoints);
+        routePoints = await getRoadRoute(
+          waypoints.map((w) => w.position).toList(),
+        );
       } else {
-        routePoints = waypoints;
+        routePoints = waypoints.map((w) => w.position).toList();
       }
 
-// 3. initial position
+// initial position
       if (waypoints.isNotEmpty) {
-        initialPosition = waypoints.first;
+        initialPosition = waypoints.first.position;
       }
-
-// 4. build markers ONLY from waypoints
-      _buildStaticMarkers();
 
       notifyListeners();
     } catch (e) {
@@ -103,56 +125,13 @@ class WaypointViewModel extends BaseViewModel {
   }
 
   // ================= MARKERS =================
-  void _buildStaticMarkers() {
-    staticMarkers.clear();
 
-    for (int i = 0; i < waypoints.length; i++) {
-      Color color;
-
-      if (i == 0) {
-        color = Colors.green;
-      } else if (i == waypoints.length - 1) {
-        color = Colors.red;
-      } else {
-        color = Colors.blue;
-      }
-
-      staticMarkers.add(
-        Marker(
-          point: waypoints[i],
-          width: 40,
-          height: 40,
-          child: Container(
-            decoration: BoxDecoration(
-              color: color,
-              shape: BoxShape.circle,
-            ),
-            alignment: Alignment.center,
-            child: Text(
-              "${i + 1}", // 🔢 NUMBER
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        ),
-      );
-    }
-  }
-
-  /// markers
-
-  List<Marker> get allMarkers {
-    if (movingMarker != null) {
-      return [...staticMarkers, movingMarker!];
-    }
-    return staticMarkers;
-  }
 
   //=================================fit map====================================
   LatLngBounds getBounds() {
-    final source = routePoints.isNotEmpty ? routePoints : waypoints;
+    final source = routePoints.isNotEmpty
+        ? routePoints
+        : waypoints.map((w) => w.position).toList();
 
     final latitudes = source.map((p) => p.latitude);
     final longitudes = source.map((p) => p.longitude);
@@ -251,7 +230,7 @@ class WaypointViewModel extends BaseViewModel {
       return;
     }
 
-    for (int i = 0; i < routePoints.length - 1; i++) {
+    for (int i = 0; i < routePoints.length - 1; i += 4) {
       if (stopAnimation) break;
 
       final start = routePoints[i];
@@ -259,7 +238,7 @@ class WaypointViewModel extends BaseViewModel {
 
       final bearing = getBearing(start, end);
 
-      const steps = 10;
+      const steps = 4;
 
       for (int j = 0; j <= steps; j++) {
         if (stopAnimation) break;
@@ -279,7 +258,7 @@ class WaypointViewModel extends BaseViewModel {
           child: Transform.rotate(
             angle: bearing,
             child: const Icon(
-              Icons.directions_bike,
+              Icons.directions_walk,
               color: Colors.black,
               size: 35,
             ),
@@ -289,7 +268,7 @@ class WaypointViewModel extends BaseViewModel {
         notifyListeners();
 
         await Future.delayed(
-          Duration(milliseconds: (30 / animationSpeed).toInt()),
+          Duration(milliseconds: (10 / animationSpeed).toInt()),
         );
       }
     }

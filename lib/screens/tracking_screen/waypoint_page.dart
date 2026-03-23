@@ -82,7 +82,78 @@ class WaypointPage extends StatelessWidget {
                     ),
 
                   MarkerLayer(
-                    markers: model.allMarkers,
+                    markers: model.waypoints.asMap().entries.map((entry) {
+                      int i = entry.key;
+                      final wp = entry.value;
+
+                      Color color;
+
+                      if (i == 0) {
+                        color = Colors.green;
+                      } else if (i == model.waypoints.length - 1) {
+                        color = Colors.red;
+                      } else {
+                        color = Colors.blue;
+                      }
+
+                      return Marker(
+                        point: wp.position,
+                        width: 50,
+                        height: 50,
+                        child: GestureDetector(
+                          onTap: () {
+                            showDialog(
+                              context: context,
+                              builder: (_) {
+                                return AlertDialog(
+                                  title: const Text("Details"),
+                                  content: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        "Reference Type: ${wp.referenceType}",
+                                        style: const TextStyle(
+                                          color: Colors.orange,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        "Reference Name: ${wp.referenceName}",
+                                        style: const TextStyle(
+                                          color: Colors.green,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        "Description: ${wp.description}",
+                                        style: const TextStyle(color: Colors.black),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              },
+                            );
+                          },
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: color,
+                              shape: BoxShape.circle,
+                            ),
+                            alignment: Alignment.center,
+                            child: Text(
+                              "${i + 1}",
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    }).toList(),
                   ),
                 ],
               ),
