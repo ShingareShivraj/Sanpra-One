@@ -27,9 +27,10 @@ class WaypointViewModel extends BaseViewModel {
   Marker? movingMarker;
   List<Marker> staticMarkers = [];
   double totalDistance = 0;
-
+  bool isAnimating=false;
+  bool stopAnimation=false;
   DateTime selectedDate = DateTime.now();
-
+  double animationSpeed = 2.0;
   LatLng initialPosition = const LatLng(16.8512, 74.6126);
   bool isMapReady = false;
   // ================= INIT =================
@@ -236,14 +237,23 @@ class WaypointViewModel extends BaseViewModel {
 
   // ================= ANIMATION =================
   Future<void> startAnimation() async {
-    if (!isMapReady) {
-      print("Map not ready ❌");
+    // 🛑 stop previous animation if running
+    if (isAnimating) {
+      stopAnimation = true;
+      await Future.delayed(const Duration(milliseconds: 100));
+    }
+
+    stopAnimation = false;
+    isAnimating = true;
+
+    if (routePoints.length < 2) {
+      isAnimating = false;
       return;
     }
 
-    if (routePoints.length < 2) return;
-
     for (int i = 0; i < routePoints.length - 1; i++) {
+      if (stopAnimation) break;
+
       final start = routePoints[i];
       final end = routePoints[i + 1];
 
@@ -252,6 +262,8 @@ class WaypointViewModel extends BaseViewModel {
       const steps = 10;
 
       for (int j = 0; j <= steps; j++) {
+        if (stopAnimation) break;
+
         final lat = start.latitude +
             (end.latitude - start.latitude) * (j / steps);
 
@@ -274,12 +286,14 @@ class WaypointViewModel extends BaseViewModel {
           ),
         );
 
-        mapController.move(position, mapController.camera.zoom);
-
         notifyListeners();
 
-        await Future.delayed(const Duration(milliseconds: 5));
+        await Future.delayed(
+          Duration(milliseconds: (30 / animationSpeed).toInt()),
+        );
       }
     }
+
+    isAnimating = false;
   }
 }
