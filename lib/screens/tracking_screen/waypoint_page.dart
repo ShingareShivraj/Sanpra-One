@@ -133,14 +133,14 @@ class WaypointPage extends StatelessWidget {
                                         children: [
 
                                           const Text(
-                                            "Details",
+                                            "Details:",
                                             style: TextStyle(
-                                              fontSize: 14,
+                                              fontSize: 12,
                                               fontWeight: FontWeight.bold,
                                             ),
                                           ),
 
-                                          const SizedBox(height: 8),
+                                          const SizedBox(height: 4),
 
                                           Text(
                                             "Type: ${wp.referenceType}",
@@ -162,7 +162,7 @@ class WaypointPage extends StatelessWidget {
                                             ),
                                           ),
 
-                                          const SizedBox(height: 4),
+
 
                                           Text(
                                             "Desc: ${wp.description}",
@@ -171,11 +171,14 @@ class WaypointPage extends StatelessWidget {
                                             ),
                                           ),
 
-                                          const SizedBox(height: 6),
+
 
                                           Text(
                                             "Date: $formattedDate",
-                                            style: const TextStyle(fontSize: 11),
+                                            style: const TextStyle(
+                                                fontSize: 11,
+                                                 color: Colors.grey,
+                                            ),
                                           ),
 
                                           Text(

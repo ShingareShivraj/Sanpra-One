@@ -144,42 +144,32 @@ class TrackPersonPage extends StatelessWidget {
           height: mapHeight,
           child: ClipRRect(
             borderRadius: BorderRadius.circular(18),
-            child: ValueListenableBuilder<List<LatLng>>(
-              valueListenable: model.routePoints,
-              builder: (_, pts, __) {
+            child: Builder(
+              builder: (_) {
+                final user = model.userInfo.value;
+                final pts = model.routePoints.value;
+
+                if (user.lat == 0 || user.lng == 0) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
                 return GoogleMap(
                   mapType: MapType.hybrid,
                   initialCameraPosition: CameraPosition(
-                    target: LatLng(
-                        model.userInfo.value.lat, model.userInfo.value.lng),
+                    target: LatLng(user.lat, user.lng),
                     zoom: 15,
                   ),
                   onMapCreated: (c) => model.gMapController = c,
-                  onCameraMoveStarted: () {
-                    model.autoFollowEnabled = false;
-                    model.cameraIdleTimer?.cancel();
-                  },
-                  onCameraIdle: () {
-                    model.cameraIdleTimer?.cancel();
-                    model.cameraIdleTimer =
-                        Timer(const Duration(seconds: 5), () {
-                      model.autoFollowEnabled = true;
-                      model.maybeFollowGoogle();
-                    });
-                  },
+
                   markers: {
-                    if (model.userInfo.value.lat != 0)
-                      Marker(
-                        markerId: const MarkerId("user"),
-                        position: LatLng(
-                          model.userInfo.value.lat,
-                          model.userInfo.value.lng,
-                        ),
-                        infoWindow: InfoWindow(title: model.selectedUser),
-                      ),
+                    Marker(
+                      markerId: const MarkerId("user"),
+                      position: LatLng(user.lat, user.lng),
+                    ),
                   },
+
                   polylines: {
-                    if (pts.length >= 2)
+                    if (model.isTrackingStarted && pts.length >= 2)
                       Polyline(
                         polylineId: const PolylineId("route"),
                         points: pts,
@@ -191,6 +181,63 @@ class TrackPersonPage extends StatelessWidget {
               },
             ),
           ),
+        ),
+        const SizedBox(height: 12),
+
+// 🔥 NEW BUTTON ROW (ADD HERE)
+        Row(
+          children: [
+            // ▶ START TRACK BUTTON
+            if (!model.isTrackingStarted)
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: model.userInfo.value.lat == 0
+                      ? null
+                      : model.startTracking,
+                  icon: const Icon(Icons.play_arrow),
+                  label: Text(
+                    model.userInfo.value.lat == 0
+                        ? "Loading..."
+                        : "Start Tracking",
+                  ),
+                ),
+              ),
+
+            if (model.isTrackingStarted)
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: Colors.green.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Text(
+                    "Tracking Started",
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+
+            const SizedBox(width: 10),
+
+            // 📍 WAYPOINT BUTTON
+            Expanded(
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) =>
+                          WaypointPage(user: model.selectedUser),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.route),
+                label: const Text("Waypoints"),
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 12),
         _buildInfoBelowMap(context, theme, model),
@@ -247,11 +294,11 @@ class TrackPersonPage extends StatelessWidget {
                 Expanded(
                   child: ValueListenableBuilder(
                     valueListenable: model.userInfo,
-                    builder: (_, u, __) {
+                    builder: (_, user, __) {
                       return _miniMetric(
                         theme,
                         Icons.battery_full,
-                        u.battery == 0 ? "--" : "${u.battery}%",
+                        user.battery == 0 ? "--" : "${user.battery}%",
                       );
                     },
                   ),
@@ -273,22 +320,6 @@ class TrackPersonPage extends StatelessWidget {
               },
             ),
 
-            const SizedBox(height: 12),
-
-            // ✅ BUTTON
-            ElevatedButton.icon(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) =>
-                        WaypointPage(user: model.selectedUser),
-                  ),
-                );
-              },
-              icon: const Icon(Icons.route),
-              label: const Text("View Travel History"),
-            ),
           ],
         ),
       ),

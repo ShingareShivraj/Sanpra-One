@@ -204,7 +204,7 @@ class TrackPersonViewModel extends BaseViewModel {
     selectedUser = user;
     searchController.text = user;
     showDropdown = false;
-
+    isTrackingStarted = false;
     routePoints.value = [];
     distanceKm.value = 0;
     userInfo.value = const _UserInfo.empty();
@@ -249,6 +249,7 @@ class TrackPersonViewModel extends BaseViewModel {
         lng: lng,
         battery: (data["battery"] as num?)?.toInt() ?? 0,
       );
+      notifyListeners();
 
       // 🔥 Only reverse geocode if moved > 50 meters
       if (_lastGeocodedPosition == null ||
@@ -259,8 +260,10 @@ class TrackPersonViewModel extends BaseViewModel {
 
         destinationAddress.value = address;
       }
+      _lastEmployeeLocation = currentPosition;
+      maybeFollowGoogle();
 
-      await _fetchRoute(currentPosition);
+
     } catch (e) {
       debugPrint("Fetch location error: $e");
     }
@@ -295,13 +298,29 @@ class TrackPersonViewModel extends BaseViewModel {
     }
   }
 
+  // ========================= start tracking trigger=====================
+
+  bool isTrackingStarted = false;
+
+  Future<void> startTracking() async {
+    if (_lastEmployeeLocation == null || _myLocation == null) {
+      _showToast("Location not ready");
+      return;
+    }
+
+    isTrackingStarted = true;
+    notifyListeners();
+
+    await _fetchRoute(_lastEmployeeLocation!);
+  }
   // ========================= ROUTE =========================
 
   Future<void> _fetchRoute(LatLng destination) async {
     if (_routeInFlight) return;
     if (_myLocation == null) return;
 
-    if (DateTime.now().difference(_lastRouteUpdate) < _minRouteGap) return;
+    if (routePoints.value.isNotEmpty &&
+        DateTime.now().difference(_lastRouteUpdate) < _minRouteGap) return;
 
     _routeInFlight = true;
 
@@ -346,6 +365,10 @@ class TrackPersonViewModel extends BaseViewModel {
 
       routePoints.value =
           decodedPts.map((p) => LatLng(p.latitude, p.longitude)).toList();
+
+      notifyListeners();
+      isTrackingStarted = true;
+      notifyListeners();
     } finally {
       _routeInFlight = false;
     }
