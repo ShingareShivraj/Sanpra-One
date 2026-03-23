@@ -195,68 +195,39 @@ class _ItemCard extends StatelessWidget {
                 ),
 
                 /// QTY STEPPER
+                /// QTY INPUT ONLY (NO + -)
                 Container(
                   height: 32,
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
                   decoration: BoxDecoration(
-                    borderRadius:
-                    BorderRadius.circular(8),
-                    border: Border.all(
-                        color: cs.outlineVariant),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: cs.outlineVariant),
                   ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        padding: EdgeInsets.zero,
-                        constraints:
-                        const BoxConstraints(),
-                        icon: const Icon(Icons.remove,
-                            size: 18),
-                        onPressed:
-                        quantity > 1 ? onRemove : null,
-                      ),
-                      SizedBox(
-                        width: 50,
-                        child: TextFormField(
-                          initialValue:
-                          quantity.toString(),
-                          textAlign:
-                          TextAlign.center,
-                          keyboardType:
-                          TextInputType.number,
-                          inputFormatters: [
-                            FilteringTextInputFormatter
-                                .digitsOnly,
-                          ],
-                          decoration:
-                          const InputDecoration(
-                            border: InputBorder.none,
-                            isDense: true,
-                            contentPadding:
-                            EdgeInsets.zero,
-                          ),
-                          onChanged: (value) {
-                            if (value.isEmpty) return;
-
-                            int? val =
-                            int.tryParse(value);
-                            if (val != null &&
-                                val > 0) {
-                              onQuantityChanged
-                                  ?.call(val);
-                            }
-                          },
+                  child: Center(
+                    child: SizedBox(
+                      width: 50,
+                      child: TextFormField(
+                        initialValue: quantity.toString(),
+                        textAlign: TextAlign.center,
+                        keyboardType: TextInputType.number,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                        ],
+                        decoration: const InputDecoration(
+                          border: InputBorder.none,
+                          isDense: true,
+                          contentPadding: EdgeInsets.zero,
                         ),
+                        onChanged: (value) {
+                          if (value.isEmpty) return;
+
+                          int? val = int.tryParse(value);
+                          if (val != null && val > 0) {
+                            onQuantityChanged?.call(val);
+                          }
+                        },
                       ),
-                      IconButton(
-                        padding: EdgeInsets.zero,
-                        constraints:
-                        const BoxConstraints(),
-                        icon: const Icon(Icons.add,
-                            size: 18),
-                        onPressed: onAdd,
-                      ),
-                    ],
+                    ),
                   ),
                 ),
               ],

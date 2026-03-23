@@ -6,6 +6,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:stacked/stacked.dart';
 
 import 'track_page_viewmodel.dart';
+import 'waypoint_page.dart';
 
 class TrackPersonPage extends StatelessWidget {
   const TrackPersonPage({super.key});
@@ -192,13 +193,17 @@ class TrackPersonPage extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 12),
-        _buildInfoBelowMap(theme, model),
+        _buildInfoBelowMap(context, theme, model),
       ],
     );
   }
 
   // 📊 INFO CARD
-  Widget _buildInfoBelowMap(ThemeData theme, TrackPersonViewModel model) {
+  Widget _buildInfoBelowMap(
+      BuildContext context,
+      ThemeData theme,
+      TrackPersonViewModel model,
+      ) {
     return Card(
       elevation: 0,
       color: theme.colorScheme.surfaceContainerHighest,
@@ -221,7 +226,9 @@ class TrackPersonPage extends StatelessWidget {
                 ),
               ],
             ),
+
             const SizedBox(height: 10),
+
             Row(
               children: [
                 Expanded(
@@ -251,6 +258,9 @@ class TrackPersonPage extends StatelessWidget {
                 ),
               ],
             ),
+
+            const SizedBox(height: 10),
+
             ValueListenableBuilder<String>(
               valueListenable: model.destinationAddress,
               builder: (_, address, __) {
@@ -262,22 +272,30 @@ class TrackPersonPage extends StatelessWidget {
                 );
               },
             ),
+
+            const SizedBox(height: 12),
+
+            // ✅ BUTTON
+            ElevatedButton.icon(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) =>
+                        WaypointPage(user: model.selectedUser),
+                  ),
+                );
+              },
+              icon: const Icon(Icons.route),
+              label: const Text("View Travel History"),
+            ),
           ],
         ),
       ),
     );
   }
 
-
-
   //==========================adding the new feature============================
-
-
-
-
-
-
-
 
 
   Widget _miniMetric(ThemeData theme, IconData icon, String value) {
