@@ -19,12 +19,14 @@ class WaypointData {
   final String referenceType;
   final String referenceName;
   final String description;
+  final String datetime;
 
   WaypointData({
     required this.position,
     required this.referenceType,
     required this.referenceName,
     required this.description,
+    required this.datetime,
   });
 }
 
@@ -95,6 +97,7 @@ class WaypointViewModel extends BaseViewModel {
           referenceType: e["reference_type"]?.toString() ?? "",
           referenceName: e["reference_name"]?.toString() ?? "",
           description: e["description"]?.toString() ?? "",
+          datetime: e["datetime"]?.toString() ?? "",
         );
       }).toList();
 

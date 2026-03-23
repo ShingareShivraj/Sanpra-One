@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:intl/intl.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:stacked/stacked.dart';
 
@@ -82,78 +83,130 @@ class WaypointPage extends StatelessWidget {
                     ),
 
                   MarkerLayer(
-                    markers: model.waypoints.asMap().entries.map((entry) {
-                      int i = entry.key;
-                      final wp = entry.value;
+                    markers: [
+                      // ✅ STATIC WAYPOINT MARKERS
+                      ...model.waypoints.asMap().entries.map((entry) {
+                        int i = entry.key;
+                        final wp = entry.value;
 
-                      Color color;
+                        Color color;
 
-                      if (i == 0) {
-                        color = Colors.green;
-                      } else if (i == model.waypoints.length - 1) {
-                        color = Colors.red;
-                      } else {
-                        color = Colors.blue;
-                      }
+                        if (i == 0) {
+                          color = Colors.green;
+                        } else if (i == model.waypoints.length - 1) {
+                          color = Colors.red;
+                        } else {
+                          color = Colors.blue;
+                        }
 
-                      return Marker(
-                        point: wp.position,
-                        width: 50,
-                        height: 50,
-                        child: GestureDetector(
-                          onTap: () {
-                            showDialog(
-                              context: context,
-                              builder: (_) {
-                                return AlertDialog(
-                                  title: const Text("Details"),
-                                  content: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        "Reference Type: ${wp.referenceType}",
-                                        style: const TextStyle(
-                                          color: Colors.orange,
-                                          fontWeight: FontWeight.bold,
-                                        ),
+                        return Marker(
+                          point: wp.position,
+                          width: 50,
+                          height: 50,
+                          child: GestureDetector(
+                            onTap: () {
+                              showDialog(
+                                context: context,
+                                builder: (_) {
+                                  final dt = DateTime.tryParse(wp.datetime);
+
+                                  String formattedDate = "--";
+                                  String formattedTime = "--";
+
+                                  if (dt != null) {
+                                    formattedDate = DateFormat("dd/MM/yyyy").format(dt);
+                                    formattedTime = DateFormat("hh:mm a").format(dt);
+                                  }
+
+                                  return Dialog(
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Container(
+                                      padding: const EdgeInsets.all(12),
+                                      constraints: const BoxConstraints(
+                                        maxWidth: 260,
                                       ),
-                                      const SizedBox(height: 8),
-                                      Text(
-                                        "Reference Name: ${wp.referenceName}",
-                                        style: const TextStyle(
-                                          color: Colors.green,
-                                          fontWeight: FontWeight.bold,
-                                        ),
+                                      child: Column(
+                                        mainAxisSize: MainAxisSize.min,
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+
+                                          const Text(
+                                            "Details",
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+
+                                          const SizedBox(height: 8),
+
+                                          Text(
+                                            "Type: ${wp.referenceType}",
+                                            style: const TextStyle(
+                                              color: Colors.orange,
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+
+                                          const SizedBox(height: 4),
+
+                                          Text(
+                                            "Name: ${wp.referenceName}",
+                                            style: const TextStyle(
+                                              color: Colors.green,
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+
+                                          const SizedBox(height: 4),
+
+                                          Text(
+                                            "Desc: ${wp.description}",
+                                            style: const TextStyle(
+                                              fontSize: 11,
+                                            ),
+                                          ),
+
+                                          const SizedBox(height: 6),
+
+                                          Text(
+                                            "Date: $formattedDate",
+                                            style: const TextStyle(fontSize: 11),
+                                          ),
+
+                                          Text(
+                                            "Time: $formattedTime",
+                                            style: const TextStyle(fontSize: 11),
+                                          ),
+                                        ],
                                       ),
-                                      const SizedBox(height: 8),
-                                      Text(
-                                        "Description: ${wp.description}",
-                                        style: const TextStyle(color: Colors.black),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              },
-                            );
-                          },
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: color,
-                              shape: BoxShape.circle,
-                            ),
-                            alignment: Alignment.center,
-                            child: Text(
-                              "${i + 1}",
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
+                                    ),
+                                  );
+                                },
+                              );
+                            },
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: color,
+                                shape: BoxShape.circle,
+                              ),
+                              alignment: Alignment.center,
+                              child: Text(
+                                "${i + 1}",
+                                style: const TextStyle(color: Colors.white),
                               ),
                             ),
                           ),
-                        ),
-                      );
-                    }).toList(),
+                        );
+                      }),
+
+                      // 🚴 MOVING BIKE MARKER (IMPORTANT)
+                      if (model.movingMarker != null) model.movingMarker!,
+                    ],
                   ),
                 ],
               ),
