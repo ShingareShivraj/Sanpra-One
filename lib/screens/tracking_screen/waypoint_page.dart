@@ -205,7 +205,9 @@ class _WaypointPageState extends State<WaypointPage>
       markers.add(Marker(
         markerId: MarkerId("wp_$i"),
         position: wp.position,
-        icon: icon,
+        icon: model.markerIcons.length > i
+            ? model.markerIcons[i]
+            : BitmapDescriptor.defaultMarker,
         infoWindow: InfoWindow(
           title: wp.referenceName.isNotEmpty ? wp.referenceName : "Stop ${i + 1}",
           snippet: wp.referenceType,
@@ -218,7 +220,7 @@ class _WaypointPageState extends State<WaypointPage>
       markers.add(Marker(
         markerId: const MarkerId("moving"),
         position: model.movingMarkerPosition!,
-        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueViolet),
+        icon: model.walkIcon ?? BitmapDescriptor.defaultMarker,
         zIndex: 10,
       ));
     }
@@ -313,10 +315,31 @@ class _WaypointPageState extends State<WaypointPage>
 
   // ── BOTTOM PANEL ──────────────────────────────────────────
   Widget _buildBottomPanel(BuildContext context, WaypointViewModel model) {
-    return SizedBox(
-      height: 120, // simplified for demo
-      child: Center(
-        child: Text("Waypoints count: ${model.waypoints.length}"),
+    return Container(
+      height: 120,
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+
+          Text(
+            "${model.waypoints.length} stops",
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+
+          ElevatedButton.icon(
+            onPressed: model.startAnimation,
+            icon: const Icon(Icons.play_arrow),
+            label: const Text("Start"),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF4F46E5),
+              foregroundColor: Colors.white,
+            ),
+          ),
+        ],
       ),
     );
   }

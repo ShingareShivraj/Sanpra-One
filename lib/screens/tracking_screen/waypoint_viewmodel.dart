@@ -1,13 +1,15 @@
 import 'dart:convert';
 import 'dart:async';
 import 'dart:math';
-
+import 'dart:ui' as ui;
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:stacked/stacked.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
+import 'package:flutter/services.dart';
 
 import 'company_auth.dart';
 import '../../../constants.dart';
@@ -45,7 +47,7 @@ class WaypointViewModel extends BaseViewModel {
   LatLng? movingMarkerPosition;
 
   double totalDistance = 0;
-
+  BitmapDescriptor? walkIcon;
   bool isAnimating = false;
   bool stopAnimation = false;
   bool isMapReady = false;
@@ -54,12 +56,14 @@ class WaypointViewModel extends BaseViewModel {
 
   LatLng initialPosition = const LatLng(16.8512, 74.6126);
 
-  double animationSpeed = 2.0;
-
+  double animationSpeed = 3.0;
+  List<BitmapDescriptor> markerIcons = [];
   // ── INIT ─────────────────────────────────────────────
 
   Future<void> init() async {
+    await loadWalkIcon();
     await fetchData();
+
   }
 
   // ── FETCH DATA ───────────────────────────────────────
@@ -94,7 +98,7 @@ class WaypointViewModel extends BaseViewModel {
       if (list.isNotEmpty) {
         final lastRow = list.last;
         totalDistance =
-            double.tryParse(lastRow["distance_km"]?.toString() ?? "0") ?? 0;
+            double.tryParse(lastRow["Distance(in Km)"]?.toString() ?? "0") ?? 0;
       }
 
       waypoints = list.map<WaypointData>((e) {
@@ -126,12 +130,34 @@ class WaypointViewModel extends BaseViewModel {
       }
 
       notifyListeners();
+      await generateMarkerIcons();
     } catch (e) {
       debugPrint("fetchData error: $e");
     }
 
     setBusy(false);
   }
+
+  // ----------------- icon
+
+  Future<void> loadWalkIcon() async {
+    try {
+      final data = await rootBundle.load('assets/images/walking.png');
+      final bytes = data.buffer.asUint8List();
+
+      final codec = await instantiateImageCodec(bytes, targetWidth: 80);
+      final frame = await codec.getNextFrame();
+
+      final resizedBytes = await frame.image.toByteData(format: ImageByteFormat.png);
+
+      walkIcon = BitmapDescriptor.fromBytes(resizedBytes!.buffer.asUint8List());
+
+      debugPrint("✅ Large icon loaded");
+    } catch (e) {
+      debugPrint("❌ Icon error: $e");
+    }
+  }
+
 
   // ── CHUNKED ROUTE BUILDER ─────────────────────────────
 
@@ -249,7 +275,7 @@ class WaypointViewModel extends BaseViewModel {
       final start = routePoints[i];
       final end = routePoints[i + 1];
 
-      const steps = 5;
+      const steps = 4;
 
       for (int j = 0; j <= steps; j++) {
         if (stopAnimation) break;
@@ -261,11 +287,7 @@ class WaypointViewModel extends BaseViewModel {
 
         movingMarkerPosition = LatLng(lat, lng);
 
-        if (j % 2 == 0) {
-          googleMapController?.animateCamera(
-            CameraUpdate.newLatLng(movingMarkerPosition!),
-          );
-        }
+
 
         notifyListeners();
 
@@ -296,6 +318,69 @@ class WaypointViewModel extends BaseViewModel {
     stopAnimation = true;
     isAnimating = false;
     movingMarkerPosition = null;
+    notifyListeners();
+  }
+
+  //===================== custom marker
+  Future<BitmapDescriptor> createNumberedMarker(int number, Color color) async {
+    final pictureRecorder = ui.PictureRecorder();
+    final canvas = Canvas(pictureRecorder);
+
+    const double size = 80; // 🔥 smaller size
+    final center = Offset(size / 2, size / 2);
+
+    // circle
+    final paint = Paint()..color = color;
+    canvas.drawCircle(center, 28, paint); // 🔥 smaller radius
+
+    // text
+    final textPainter = TextPainter(
+      text: TextSpan(
+        text: number.toString(),
+        style: const TextStyle(
+          fontSize: 24, // 🔥 reduced
+          color: Colors.white,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+      textDirection: ui.TextDirection.ltr,
+    );
+
+    textPainter.layout();
+    textPainter.paint(
+      canvas,
+      Offset(
+        center.dx - textPainter.width / 2,
+        center.dy - textPainter.height / 2,
+      ),
+    );
+
+    final img = await pictureRecorder.endRecording().toImage(
+      size.toInt(),
+      size.toInt(),
+    );
+
+    final data = await img.toByteData(format: ui.ImageByteFormat.png);
+
+    return BitmapDescriptor.fromBytes(data!.buffer.asUint8List());
+  }
+  //--------------------- marker
+
+  Future<void> generateMarkerIcons() async {
+    markerIcons.clear();
+
+    for (int i = 0; i < waypoints.length; i++) {
+      final color = i == 0
+          ? Colors.green
+          : i == waypoints.length - 1
+          ? Colors.red
+          : Colors.blue;
+
+      final icon = await createNumberedMarker(i + 1, color);
+
+      markerIcons.add(icon);
+    }
+
     notifyListeners();
   }
 
