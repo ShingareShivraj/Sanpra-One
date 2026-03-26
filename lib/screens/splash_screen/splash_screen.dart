@@ -461,7 +461,7 @@ class _SplashScreenState extends State<SplashScreen>
       child: SlideTransition(
         position: _nameSlide,
         child: const Text(
-          'Durocon Pvt Ltd',
+          'Durocon',
           style: TextStyle(
             fontSize: 22,
             fontWeight: FontWeight.w700,
