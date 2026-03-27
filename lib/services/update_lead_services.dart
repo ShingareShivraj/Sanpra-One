@@ -1,136 +1,155 @@
-import 'dart:convert';
-
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:geolocation/constants.dart';
-import 'package:geolocation/model/notes_list.dart';
 import 'package:logger/logger.dart';
 
-class UpdateLeadServices{
+import '../constants.dart';
+import '../model/notes_list.dart';
 
+class UpdateLeadServices {
+  final Logger _log = Logger();
 
-    Future<List<NotesList>> getnotes(String leadname) async {
-    baseurl =  await geturl();
-    var data = {'doc_name': leadname};
+  late Dio _dio;
+
+  UpdateLeadServices() {
+    _dio = Dio(BaseOptions(
+      connectTimeout: const Duration(seconds: 15),
+      receiveTimeout: const Duration(seconds: 15),
+      responseType: ResponseType.json,
+    ));
+
+    /// 🔥 INTERCEPTOR (AUTO TOKEN)
+    _dio.interceptors.add(
+      InterceptorsWrapper(
+        onRequest: (options, handler) async {
+          final token = await getTocken();
+          final baseurl = await geturl();
+
+          options.headers['Authorization'] = token;
+          options.baseUrl = baseurl;
+
+          _log.i("➡️ ${options.method} ${options.path}");
+
+          return handler.next(options);
+        },
+        onError: (e, handler) {
+          _handleError(e);
+          return handler.next(e);
+        },
+      ),
+    );
+  }
+
+  /// ================= COMMON ERROR =================
+  void _handleError(DioException e, {String? msg}) {
+    String error = "Something went wrong";
 
     try {
-      var dio = Dio();
-      var response = await dio.request(
-        '$baseurl/api/method/mobile.mobile_env.app.get_data_from_notes',
-        options: Options(
-          method: 'GET',
-          headers: {'Authorization': await getTocken()},
-        ),
-        data: data,
+      if (e.response?.data != null) {
+        final data = e.response!.data;
+
+        if (data["exception"] != null) {
+          error = data["exception"].toString().split(":").last.trim();
+        } else if (data["message"] != null) {
+          error = data["message"].toString();
+        }
+      }
+    } catch (_) {}
+
+    _log.e("❌ $error");
+
+    Fluttertoast.showToast(
+      msg: msg ?? error,
+      backgroundColor: Colors.red,
+      textColor: Colors.white,
+    );
+  }
+
+  /// ================= GET NOTES =================
+  Future<List<NotesList>> getnotes(String leadname) async {
+    try {
+      final response = await _dio.get(
+        '/api/method/mobile.mobile_env.app.get_data_from_notes',
+        queryParameters: {'doc_name': leadname},
       );
 
       if (response.statusCode == 200) {
-        Map<String, dynamic> jsonData = json.decode(json.encode(response.data));
-        List<NotesList> caneList = List.from(jsonData['data'])
-            .map<NotesList>((data) => NotesList.fromJson(data))
+        final List data = response.data["data"] ?? [];
+
+        return data
+            .map<NotesList>((e) => NotesList.fromJson(e))
             .toList();
-        return caneList;
-      } else {
-        Fluttertoast.showToast(msg: "UNABLE TO get notes!");
-        return [];
       }
     } on DioException catch (e) {
-      Fluttertoast.showToast(gravity:ToastGravity.BOTTOM,msg: 'Error: ${e.response!.data["exception"].toString().split(":").elementAt(1).trim()} ',textColor:Color(0xFFFFFFFF),backgroundColor: Color(0xFFBA1A1A),);
-      Logger().e(e.response!.data["exception"].toString());
+      _handleError(e, msg: "Failed to fetch notes");
     }
+
     return [];
   }
 
-
-  
-    Future<bool> deletenotes(String leadname,int index) async {
-    baseurl =  await geturl();
-    var data = {'doc_name': leadname,'row_id':index.toString()};
-
+  /// ================= DELETE NOTE =================
+  Future<bool> deletenotes(String leadname, int index) async {
     try {
-      var dio = Dio();
-      var response = await dio.request(
-        '$baseurl/api/method/mobile.mobile_env.app.delete_note_in_lead',
-        options: Options(
-          method: 'POST',
-          headers: {'Authorization': await getTocken()},
-        ),
-        data: data,
+      final response = await _dio.post(
+        '/api/method/mobile.mobile_env.app.delete_note_in_lead',
+        data: {
+          'doc_name': leadname,
+          'row_id': index.toString(),
+        },
       );
 
       if (response.statusCode == 200) {
-   
-   Logger().i(response.data["data"].toString());
-   Fluttertoast.showToast(msg: response.data["message"].toString());
+        Fluttertoast.showToast(msg: response.data["message"]);
         return true;
-      } else {
-        Fluttertoast.showToast(msg: "UNABLE TO delete notes!");
-        return false;
       }
     } on DioException catch (e) {
-      Fluttertoast.showToast(gravity:ToastGravity.BOTTOM,msg: 'Error: ${e.response!.data["message"].toString().split(":").elementAt(1).trim()} ',textColor:Color(0xFFFFFFFF),backgroundColor: Color(0xFFBA1A1A),);
-      Logger().e(e);
+      _handleError(e, msg: "Failed to delete note");
     }
+
     return false;
   }
 
-  
-    Future<bool> addnotes(String leadname,dynamic note) async {
-    baseurl =  await geturl();
-    var data = {'doc_name': leadname,'note':note};
-
+  /// ================= ADD NOTE =================
+  Future<bool> addnotes(String leadname, dynamic note) async {
     try {
-      var dio = Dio();
-      var response = await dio.request(
-        '$baseurl/api/method/mobile.mobile_env.app.add_note_in_lead',
-        options: Options(
-          method: 'POST',
-          headers: {'Authorization': await getTocken()},
-        ),
-        data: data,
+      final response = await _dio.post(
+        '/api/method/mobile.mobile_env.app.add_note_in_lead',
+        data: {
+          'doc_name': leadname,
+          'note': note,
+        },
       );
 
       if (response.statusCode == 200) {
-    Logger().i(response.data["message"]);
+        _log.i(response.data["message"]);
         return true;
-      } else {
-        Fluttertoast.showToast(msg: "UNABLE TO add notes!");
-        return false;
       }
     } on DioException catch (e) {
-      Fluttertoast.showToast(gravity:ToastGravity.BOTTOM,msg: 'Error: ${e.response!.data["exception"].toString().split(":").elementAt(1).trim()} ',textColor:Color(0xFFFFFFFF),backgroundColor: Color(0xFFBA1A1A),);
-      Logger().e(e);
+      _handleError(e, msg: "Failed to add note");
     }
+
     return false;
   }
 
-   Future<bool> changestatus(String leadname,String type) async {
-    baseurl =  await geturl();
-    var data = {'doc_name': leadname,'type':type};
-
+  /// ================= CHANGE STATUS =================
+  Future<bool> changestatus(String leadname, String type) async {
     try {
-      var dio = Dio();
-      var response = await dio.request(
-        '$baseurl/api/method/mobile.mobile_env.app.change_status',
-        options: Options(
-          method: 'POST',
-          headers: {'Authorization': await getTocken()},
-        ),
-        data: data,
+      final response = await _dio.post(
+        '/api/method/mobile.mobile_env.app.change_status',
+        data: {
+          'doc_name': leadname,
+          'type': type,
+        },
       );
 
       if (response.statusCode == 200) {
-   Logger().i(response.data["message"].toString());
+        _log.i(response.data["message"]);
         return true;
-      } else {
-        Fluttertoast.showToast(msg: "UNABLE TO change status!");
-        return false;
       }
     } on DioException catch (e) {
-      Fluttertoast.showToast(gravity:ToastGravity.BOTTOM,msg: 'Error: ${e.response!.data["message"].toString()} ',textColor:Color(0xFFFFFFFF),backgroundColor: Color(0xFFBA1A1A),);
-      Logger().e(e);
+      _handleError(e, msg: "Failed to change status");
     }
+
     return false;
   }
 }
