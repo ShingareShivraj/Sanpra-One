@@ -217,6 +217,7 @@ class AddQuotationModel extends BaseViewModel {
     isSame = false;
     selectedItems = items;
 
+    // calculate item amount safely
     for (final item in selectedItems) {
       item.amount = (item.qty ?? 1.0) * (item.rate ?? 0.0);
     }
@@ -226,7 +227,15 @@ class AddQuotationModel extends BaseViewModel {
 
     try {
       final details = await _service.quotationdetails(quotationdata);
-      _applyQuotationDetails(details);
+
+      // ✅ FIX: check before using
+      if (details != null && details.isNotEmpty) {
+        _applyQuotationDetails(details);
+      } else {
+        _logger.w("Quotation details empty or null");
+        _showToast("No calculation data received");
+      }
+
     } catch (e) {
       _logger.e(e);
       _showToast("Failed to calculate quotation", isError: true);

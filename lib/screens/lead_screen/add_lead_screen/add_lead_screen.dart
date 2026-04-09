@@ -74,17 +74,17 @@ class _AddLeadScreenState extends State<AddLeadScreen> {
                                 onChanged: model.setIndustry,
                               ),
                             ),
-                            const SizedBox(width: 5),
-                            Expanded(
-                              child: CustomDropdownButton2(
-                                prefixIcon: Icons.type_specimen,
-                                labelText: 'Lead Type',
-                                value: model.leadData.marketSegment,
-                                items: model.types,
-                                hintText: 'type',
-                                onChanged: model.setLeadType,
-                              ),
-                            ),
+                            // const SizedBox(width: 5),
+                            // Expanded(
+                            //   child: CustomDropdownButton2(
+                            //     prefixIcon: Icons.type_specimen,
+                            //     labelText: 'Lead Type',
+                            //     value: model.leadData.marketSegment,
+                            //     items: model.types,
+                            //     hintText: 'type',
+                            //     onChanged: model.setLeadType,
+                            //   ),
+                            // ),
                           ],
                         ),
                       ],
@@ -139,14 +139,14 @@ class _AddLeadScreenState extends State<AddLeadScreen> {
                           hintText: 'select territory',
                           onChanged: model.setTerritory,
                         ),
-                        const SizedBox(height: 12),
-                        CustomSmallTextFormField(
-                          prefixIcon: Icons.shopify_outlined,
-                          controller: model.gstinController,
-                          labelText: 'GST IN',
-                          hintText: 'GST IN',
-                          onChanged: model.setGstin,
-                        ),
+                        // const SizedBox(height: 12),
+                        // CustomSmallTextFormField(
+                        //   prefixIcon: Icons.shopify_outlined,
+                        //   controller: model.gstinController,
+                        //   labelText: 'GST IN',
+                        //   hintText: 'GST IN',
+                        //   onChanged: model.setGstin,
+                        // ),
                         const SizedBox(height: 12),
                         CustomSmallTextFormField(
                           prefixIcon: Icons.note,
@@ -216,8 +216,8 @@ class _AddLeadScreenState extends State<AddLeadScreen> {
                             ),
                             const SizedBox(width: 12),
                             if ((model.leadData.source ?? "")
-                                    .trim()
-                                    .toLowerCase() ==
+                                .trim()
+                                .toLowerCase() ==
                                 "existing customer")
                               Expanded(
                                 child: CustomDropdownButton2(
@@ -264,15 +264,8 @@ class _AddLeadScreenState extends State<AddLeadScreen> {
                       const SizedBox(width: 14),
                       Expanded(
                         child: CTextButton(
-                          onPressed: model.selectedImage == null &&
-                                  model.isEdit == false
-                              ? () => model.pickPhoto(fromCamera: true)
-                              : () => model.onSavePressed(context),
-                          text: model.isEdit
-                              ? 'Update Lead'
-                              : model.selectedImage == null
-                                  ? 'Add Photo'
-                                  : 'Create Lead',
+                          onPressed: () => model.onSavePressed(context),
+                          text: model.isEdit ? 'Update Lead' : 'Create Lead',
                           buttonColor: Colors.blueAccent.shade400,
                         ),
                       ),

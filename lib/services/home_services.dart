@@ -60,7 +60,7 @@ class HomeServices {
     required String logType,
     required String latitude,
     required String longitude,
-    required File photoFile,
+    File? photoFile,
     String? meterReading,
   }) async {
     try {
@@ -71,12 +71,26 @@ class HomeServices {
         "log_type": logType,
         "latitude": latitude,
         "longitude": longitude,
-        "meter_reading": meterReading,
-        "photo": await MultipartFile.fromFile(
-          photoFile.path,
-          filename: photoFile.path.split('/').last, // IMPORTANT
-        ),
       });
+
+      // ✅ send meter only if exists
+      if (meterReading != null && meterReading.isNotEmpty) {
+        formData.fields.add(MapEntry("meter_reading", meterReading));
+      }
+
+      // ✅ send photo only if exists
+      if (photoFile != null && photoFile.path.isNotEmpty) {
+        formData.files.add(
+          MapEntry(
+            "photo",
+            await MultipartFile.fromFile(
+              photoFile.path,
+              filename: photoFile.path.split('/').last,
+            ),
+          ),
+        );
+      }
+
       final response = await _dio.post(
         url,
         data: formData,
@@ -85,20 +99,29 @@ class HomeServices {
         }),
       );
 
-      if (response.statusCode == 200 && response.data["message"] != null) {
-        _showToast(
-          response.data["message"].toString().toUpperCase(),
-          success: true,
-        );
+      if (response.statusCode == 200) {
+        _showToast("Employee Log Added", success: true);
         return true;
-      } else {
-        _showToast("Unable to log employee check-in/out");
       }
+
+      _showToast("Unable to log employee check-in/out");
+      return false;
+
+      // ❌ fallback
+      print("API FAILED ❌");
+      _showToast("Unable to log employee check-in/out");
+      return false;
+
     } on DioException catch (e) {
-      print(e.response);
-      _handleDioError(e.response, context: "employeeCheckin");
+      print("ERROR RESPONSE: ${e.response?.data}");
+      _showToast("Server error", isError: true);
+      return false;
+    } catch (e) {
+      print("UNEXPECTED ERROR: $e");
+      _showToast("Unexpected error", isError: true);
+      print("RETURNING FALSE AT END");
+      return false;
     }
-    return false;
   }
 
   Future<List<LeaveData>> fetchleavedata() async {
@@ -152,7 +175,7 @@ class HomeServices {
         options: Options(headers: {'Authorization': await getTocken()}),
       );
 
-      if (response.statusCode == 200 && response.data["message"] != null) {
+      if (response.statusCode == 200) {
         return List<String>.from(
             response.data["message"].map((item) => item.toString()));
       } else {

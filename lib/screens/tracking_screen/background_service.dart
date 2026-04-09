@@ -272,7 +272,7 @@ Future<bool> sendToFrappe(
   Map<String, dynamic> body,
 ) async {
   final url = Uri.parse(
-    "https://durocon.erpkey.in/api/method/mobile.mobile.doctype.get_employee_location.get_employee_location.get_parameters",
+    "https://live.erpkey.in/api/method/mobile.mobile.doctype.get_employee_location.get_employee_location.get_parameters",
   );
 
   try {

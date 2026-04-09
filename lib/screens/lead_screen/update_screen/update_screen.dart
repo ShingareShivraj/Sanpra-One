@@ -100,22 +100,22 @@ class _UpdateLeadScreenState extends State<UpdateLeadScreen> {
                               _buildActionButton(
                                   Iconsax.call,
                                   "Phone",
-                                  () => model.callService
+                                      () => model.callService
                                       .call(model.leadData.mobileNo ?? "")),
                               _buildActionButton(
                                   Icons.message,
                                   "Message",
-                                  () => model.callService
+                                      () => model.callService
                                       .sendSms(model.leadData.mobileNo ?? "")),
                               _buildActionButton(
                                   Icons.email,
                                   "Email",
-                                  () => model.callService
+                                      () => model.callService
                                       .sendEmail(model.leadData.emailId ?? "")),
                               _buildActionButton(
                                   Iconsax.message5,
                                   "WhatsApp",
-                                  () => model.openWhatsApp(
+                                      () => model.openWhatsApp(
                                       model.leadData.mobileNo ?? "")),
                             ],
                           ),
@@ -283,7 +283,7 @@ class _UpdateLeadScreenState extends State<UpdateLeadScreen> {
               // ===== ADD COMMENT INPUT =====
               Container(
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 color: Colors.white,
                 child: Row(
                   children: [
@@ -337,12 +337,12 @@ class _UpdateLeadScreenState extends State<UpdateLeadScreen> {
         : 'Unknown Lead';
 
     final String? companyName =
-        lead.companyName?.trim().isNotEmpty == true ? lead.companyName : null;
+    lead.companyName?.trim().isNotEmpty == true ? lead.companyName : null;
 
     final String? currentStatus =
-        UpdateLeadModel.statusOptions.contains(lead.status)
-            ? lead.status
-            : null;
+    UpdateLeadModel.statusOptions.contains(lead.status)
+        ? lead.status
+        : null;
 
     final Color statusColor = model.getStatusColor(lead.status);
 
@@ -523,7 +523,7 @@ class _UpdateLeadScreenState extends State<UpdateLeadScreen> {
         children: [
           Text(title,
               style:
-                  const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+              const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
           const SizedBox(height: 12),
           ...children,
         ],
@@ -543,7 +543,7 @@ class _UpdateLeadScreenState extends State<UpdateLeadScreen> {
             child: Text(value,
                 textAlign: TextAlign.right,
                 style:
-                    TextStyle(fontWeight: FontWeight.w500, color: valueColor)),
+                TextStyle(fontWeight: FontWeight.w500, color: valueColor)),
           ),
         ],
       ),
@@ -579,7 +579,7 @@ class _StatusDropdown extends StatelessWidget {
           filled: true,
           fillColor: statusColor.withOpacity(0.15),
           contentPadding:
-              const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+          const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(14),
             borderSide: BorderSide.none,

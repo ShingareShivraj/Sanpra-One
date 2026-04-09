@@ -82,6 +82,7 @@ dependencies:
   android_id: ^0.4.0
   flutter_background_service: ^5.0.5
   flutter_background_service_android: ^6.2.2
+  share_plus: ^7.2.1
 
 
 
@@ -105,7 +106,7 @@ dev_dependencies:
 flutter_launcher_icons:
   android: "launcher_icon"
   ios: true
-  image_path: "assets/images/logo.jpeg"
+  image_path: "assets/images/logo.png"
   min_sdk_android: 21 # android min sdk min:16, default 21
 # The following section is specific to Flutter packages.
 flutter:

@@ -225,29 +225,55 @@ class HomeViewModel extends BaseViewModel {
     }
   }
 
+  //-------------------------------------geolocation-----------------------------
+  Future<Position> getLocation() async {
+    LocationPermission permission = await Geolocator.checkPermission();
+
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+    }
+
+    return await Geolocator.getCurrentPosition(
+      desiredAccuracy: LocationAccuracy.high,
+    );
+  }
+
   // ───────────────────────────────────────── CHECK-IN / OUT ─────────────────────────────────────────
   Future<bool> employeeLog(
     String logType,
     BuildContext context, {
-    required File photoFile,
+    File? photoFile,
     String? meterReading,
     required Position position,
   }) async {
     _setLoading(logType, true);
 
     try {
-      final compressed = await FlutterImageCompress.compressAndGetFile(
-        photoFile.path,
-        "${photoFile.path}_compressed.jpg",
-        quality: 60,
-      );
+      File? finalPhoto;
+
+
+
+      if (photoFile != null && photoFile.path.isNotEmpty) {
+        try {
+          final compressed = await FlutterImageCompress.compressAndGetFile(
+            photoFile.path,
+            "${photoFile.path}_compressed.jpg",
+            quality: 60,
+          );
+
+          finalPhoto = File(compressed?.path ?? photoFile.path);
+        } catch (e) {
+          print("Compression failed: $e");
+          finalPhoto = photoFile; // fallback ✅
+        }
+      }
 
       final success = await _service.employeeCheckin(
         logType: logType,
         latitude: position.latitude.toString(),
         longitude: position.longitude.toString(),
         meterReading: meterReading,
-        photoFile: File(compressed?.path ?? photoFile.path),
+        photoFile: finalPhoto,
       );
 
       if (!success) return false;

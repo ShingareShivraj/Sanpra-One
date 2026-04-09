@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:stacked/stacked.dart';
+import 'dart:io';
+import 'package:flutter/services.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../../../model/quotation_list_model.dart';
 import '../../../router.router.dart';
@@ -10,7 +13,7 @@ class ListQuotationModel extends BaseViewModel {
 
   List<QuotationList> quotationlist = [];
   List<QuotationList> filterquotationlist = [];
-
+  static const platform = MethodChannel('whatsapp_sender');
   List<String> customer = [];
   final List<String> quotation = ["Customer", "Lead"];
 
@@ -86,6 +89,55 @@ class ListQuotationModel extends BaseViewModel {
     }
   }
 
+  Future<void> shareQuotation(QuotationList quotation) async {
+    File? file;
+
+    try {
+      setBusy(true);
+
+      /// STEP 1: Download PDF
+      file = await _service.downloadQuotationPDF(
+        quotation.name ?? "",
+      );
+
+      /// STEP 2: Get mobile (NOW WORKS ✅)
+      String phone = quotation.contactMobile ?? "";
+
+      if (phone.isEmpty) {
+        setBusy(false);
+        print("No mobile number found");
+        return;
+      }
+
+      /// STEP 3: Format phone
+      phone = phone.replaceAll(RegExp(r'\D'), '');
+      if (!phone.startsWith("91")) {
+        phone = "91$phone";
+      }
+
+      setBusy(false);
+
+      /// STEP 4: WhatsApp (JID)
+      await platform.invokeMethod('sendPdfWhatsApp', {
+        'filePath': file.path,
+        'phone': phone,
+        'message': "Please find your quotation",
+      });
+
+    } catch (e) {
+      setBusy(false);
+
+      /// Fallback
+      if (file != null) {
+        await Share.shareXFiles(
+          [XFile(file.path)],
+          text: "Quotation ${quotation.name}",
+        );
+      }
+
+      print(e);
+    }
+  }
 
 
   void searchPartyName(String value) {

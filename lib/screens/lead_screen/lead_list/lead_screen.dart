@@ -69,30 +69,30 @@ class _LeadListScreenState extends State<LeadListScreen> {
                   child: model.filterleadlist.isEmpty
                       ? const _EmptyState()
                       : RefreshIndicator(
-                          onRefresh: model.refresh,
-                          child: ListView.builder(
-                            padding: const EdgeInsets.only(bottom: 90),
-                            physics: const AlwaysScrollableScrollPhysics(),
-                            itemCount: model.filterleadlist.length,
-                            itemBuilder: (context, index) {
-                              final lead = model.filterleadlist[index];
+                    onRefresh: model.refresh,
+                    child: ListView.builder(
+                      padding: const EdgeInsets.only(bottom: 90),
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      itemCount: model.filterleadlist.length,
+                      itemBuilder: (context, index) {
+                        final lead = model.filterleadlist[index];
 
-                              return InkWell(
-                                onTap: () => model.onRowClick(context, lead),
-                                child: LeadCard(
-                                  user: lead.leadOwner ?? '',
-                                  status: lead.status ?? '',
-                                  name: lead.name ?? '',
-                                  company: lead.companyName ?? '',
-                                  region: lead.territory ?? 'N/A',
-                                  location: lead.customLocationAddress ??
-                                      'Location not available',
-                                  date: lead.creation ?? '',
-                                ),
-                              );
-                            },
+                        return InkWell(
+                          onTap: () => model.onRowClick(context, lead),
+                          child: LeadCard(
+                            user: lead.leadOwner ?? '',
+                            status: lead.status ?? '',
+                            name: lead.name ?? '',
+                            company: lead.companyName ?? '',
+                            region: lead.territory ?? 'N/A',
+                            location: lead.customLocationAddress ??
+                                'Location not available',
+                            date: lead.creation ?? '',
                           ),
-                        ),
+                        );
+                      },
+                    ),
+                  ),
                 ),
               ],
             ),

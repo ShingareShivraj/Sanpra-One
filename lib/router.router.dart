@@ -11,66 +11,66 @@ import 'package:flutter/material.dart' as _i37;
 import 'package:geolocation/model/add_order_model.dart' as _i38;
 import 'package:geolocation/model/addquotation_model.dart' as _i39;
 import 'package:geolocation/screens/attendence_screen/attendence_view.dart'
-    as _i19;
+as _i19;
 import 'package:geolocation/screens/change_password/change_password_screen.dart'
-    as _i25;
+as _i25;
 import 'package:geolocation/screens/customer_screen/add_customer/add_customer_view.dart'
-    as _i27;
+as _i27;
 import 'package:geolocation/screens/customer_screen/customer_list/customer_list_screen.dart'
-    as _i26;
+as _i26;
 import 'package:geolocation/screens/customer_screen/Update_Customer/update_customer_screen.dart'
-    as _i28;
+as _i28;
 import 'package:geolocation/screens/delivery_note.dart' as _i34;
 import 'package:geolocation/screens/delivery_note_list.dart' as _i33;
 import 'package:geolocation/screens/Distributor%20Sales%20Order/add_sales_order/add_distributor_order_screen.dart'
-    as _i10;
+as _i10;
 import 'package:geolocation/screens/Distributor%20Sales%20Order/list_sales_order/list_sales_distributor_order_screen.dart'
-    as _i9;
+as _i9;
 import 'package:geolocation/screens/expense_screen/add_expense/add_expense_view.dart'
-    as _i21;
+as _i21;
 import 'package:geolocation/screens/expense_screen/list_expense/list_expense_view.dart'
-    as _i20;
+as _i20;
 import 'package:geolocation/screens/geolocation/geolocation_view.dart' as _i5;
 import 'package:geolocation/screens/holiday_screen/holiday_view.dart' as _i18;
 import 'package:geolocation/screens/home_screen/home_page.dart' as _i3;
 import 'package:geolocation/screens/lead_screen/add_lead_screen/add_lead_screen.dart'
-    as _i13;
+as _i13;
 import 'package:geolocation/screens/lead_screen/lead_list/lead_screen.dart'
-    as _i12;
+as _i12;
 import 'package:geolocation/screens/lead_screen/update_screen/update_screen.dart'
-    as _i14;
+as _i14;
 import 'package:geolocation/screens/leave_screen/add_leave/add_leave_view.dart'
-    as _i23;
+as _i23;
 import 'package:geolocation/screens/leave_screen/list_leave/list_leave_view.dart'
-    as _i22;
+as _i22;
 import 'package:geolocation/screens/location_tracking/location_tracker.dart'
-    as _i6;
+as _i6;
 import 'package:geolocation/screens/login/login_view.dart' as _i4;
 import 'package:geolocation/screens/profile_screen/profile_screen.dart' as _i24;
 import 'package:geolocation/screens/Quotation/Add%20Quotation/add_quotation_screen.dart'
-    as _i15;
+as _i15;
 import 'package:geolocation/screens/Quotation/Items/items_screen.dart' as _i17;
 import 'package:geolocation/screens/Quotation/List%20Quotation/list_quotation_view.dart'
-    as _i16;
+as _i16;
 import 'package:geolocation/screens/retailer_registration/add_retailer/add_retailer_screen.dart'
-    as _i32;
+as _i32;
 import 'package:geolocation/screens/sales_order/add_sales_order/add_order_screen.dart'
-    as _i8;
+as _i8;
 import 'package:geolocation/screens/sales_order/items/add_items_screen.dart'
-    as _i11;
+as _i11;
 import 'package:geolocation/screens/sales_order/list_sales_order/list_sales_order_screen.dart'
-    as _i7;
+as _i7;
 import 'package:geolocation/screens/self_orders/items/add_self_order_screen.dart'
-    as _i36;
+as _i36;
 import 'package:geolocation/screens/self_orders/list_sales_order/list_self_order_screen.dart'
-    as _i35;
+as _i35;
 import 'package:geolocation/screens/splash_screen/splash_screen.dart' as _i2;
 import 'package:geolocation/screens/visit_screens/add_visit/add_visit_view.dart'
-    as _i30;
+as _i30;
 import 'package:geolocation/screens/visit_screens/update_visit/update_visit_view.dart'
-    as _i31;
+as _i31;
 import 'package:geolocation/screens/visit_screens/visit_List/visit_list_screen.dart'
-    as _i29;
+as _i29;
 import 'package:stacked/stacked.dart' as _i1;
 import 'package:stacked_services/stacked_services.dart' as _i40;
 
@@ -787,9 +787,9 @@ class ItemScreenArguments {
   @override
   int get hashCode {
     return key.hashCode ^
-        warehouse.hashCode ^
-        items.hashCode ^
-        selectedItems.hashCode;
+    warehouse.hashCode ^
+    items.hashCode ^
+    selectedItems.hashCode;
   }
 }
 
@@ -1376,7 +1376,7 @@ extension NavigatorStateExtension on _i40.NavigationService {
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
     return navigateTo<dynamic>(
       Routes.splashScreen,
@@ -1394,7 +1394,7 @@ extension NavigatorStateExtension on _i40.NavigationService {
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
     return navigateTo<dynamic>(
       Routes.homePage,
@@ -1412,7 +1412,7 @@ extension NavigatorStateExtension on _i40.NavigationService {
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
     return navigateTo<dynamic>(
       Routes.loginViewScreen,
@@ -1430,7 +1430,7 @@ extension NavigatorStateExtension on _i40.NavigationService {
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
     return navigateTo<dynamic>(
       Routes.geolocation,
@@ -1448,7 +1448,7 @@ extension NavigatorStateExtension on _i40.NavigationService {
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
     return navigateTo<dynamic>(
       Routes.locationTracker,
@@ -1466,7 +1466,7 @@ extension NavigatorStateExtension on _i40.NavigationService {
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
     return navigateTo<dynamic>(
       Routes.listOrderScreen,
@@ -1485,7 +1485,7 @@ extension NavigatorStateExtension on _i40.NavigationService {
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
     return navigateTo<dynamic>(
       Routes.addOrderScreen,
@@ -1503,7 +1503,7 @@ extension NavigatorStateExtension on _i40.NavigationService {
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
     return navigateTo<dynamic>(
       Routes.listDistributorOrderScreen,
@@ -1522,7 +1522,7 @@ extension NavigatorStateExtension on _i40.NavigationService {
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
     return navigateTo<dynamic>(
       Routes.addDistributorOrderScreen,
@@ -1543,7 +1543,7 @@ extension NavigatorStateExtension on _i40.NavigationService {
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
     return navigateTo<dynamic>(
       Routes.itemScreen,
@@ -1566,7 +1566,7 @@ extension NavigatorStateExtension on _i40.NavigationService {
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
     return navigateTo<dynamic>(
       Routes.leadListScreen,
@@ -1585,7 +1585,7 @@ extension NavigatorStateExtension on _i40.NavigationService {
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
     return navigateTo<dynamic>(
       Routes.addLeadScreen,
@@ -1604,7 +1604,7 @@ extension NavigatorStateExtension on _i40.NavigationService {
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
     return navigateTo<dynamic>(
       Routes.updateLeadScreen,
@@ -1623,7 +1623,7 @@ extension NavigatorStateExtension on _i40.NavigationService {
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
     return navigateTo<dynamic>(
       Routes.addQuotationView,
@@ -1641,7 +1641,7 @@ extension NavigatorStateExtension on _i40.NavigationService {
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
     return navigateTo<dynamic>(
       Routes.listQuotationScreen,
@@ -1660,7 +1660,7 @@ extension NavigatorStateExtension on _i40.NavigationService {
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
     return navigateTo<dynamic>(
       Routes.quotationItemScreen,
@@ -1678,7 +1678,7 @@ extension NavigatorStateExtension on _i40.NavigationService {
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
     return navigateTo<dynamic>(
       Routes.holidayScreen,
@@ -1696,7 +1696,7 @@ extension NavigatorStateExtension on _i40.NavigationService {
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
     return navigateTo<dynamic>(
       Routes.attendanceScreen,
@@ -1714,7 +1714,7 @@ extension NavigatorStateExtension on _i40.NavigationService {
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
     return navigateTo<dynamic>(
       Routes.expenseScreen,
@@ -1733,7 +1733,7 @@ extension NavigatorStateExtension on _i40.NavigationService {
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
     return navigateTo<dynamic>(
       Routes.addExpenseScreen,
@@ -1751,7 +1751,7 @@ extension NavigatorStateExtension on _i40.NavigationService {
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
     return navigateTo<dynamic>(
       Routes.listLeaveScreen,
@@ -1770,7 +1770,7 @@ extension NavigatorStateExtension on _i40.NavigationService {
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
     return navigateTo<dynamic>(
       Routes.addLeaveScreen,
@@ -1788,7 +1788,7 @@ extension NavigatorStateExtension on _i40.NavigationService {
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
     return navigateTo<dynamic>(
       Routes.profileScreen,
@@ -1806,7 +1806,7 @@ extension NavigatorStateExtension on _i40.NavigationService {
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
     return navigateTo<dynamic>(
       Routes.changePasswordScreen,
@@ -1824,7 +1824,7 @@ extension NavigatorStateExtension on _i40.NavigationService {
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
     return navigateTo<dynamic>(
       Routes.customerList,
@@ -1843,7 +1843,7 @@ extension NavigatorStateExtension on _i40.NavigationService {
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
     return navigateTo<dynamic>(
       Routes.addCustomer,
@@ -1862,7 +1862,7 @@ extension NavigatorStateExtension on _i40.NavigationService {
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
     return navigateTo<dynamic>(
       Routes.updateCustomer,
@@ -1880,7 +1880,7 @@ extension NavigatorStateExtension on _i40.NavigationService {
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
     return navigateTo<dynamic>(
       Routes.visitScreen,
@@ -1899,7 +1899,7 @@ extension NavigatorStateExtension on _i40.NavigationService {
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
     return navigateTo<dynamic>(
       Routes.addVisitScreen,
@@ -1918,7 +1918,7 @@ extension NavigatorStateExtension on _i40.NavigationService {
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
     return navigateTo<dynamic>(
       Routes.updateVisitScreen,
@@ -1937,7 +1937,7 @@ extension NavigatorStateExtension on _i40.NavigationService {
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
     return navigateTo<dynamic>(
       Routes.retailerFormView,
@@ -1955,7 +1955,7 @@ extension NavigatorStateExtension on _i40.NavigationService {
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
     return navigateTo<dynamic>(
       Routes.listDeliveryNoteScreen,
@@ -1974,7 +1974,7 @@ extension NavigatorStateExtension on _i40.NavigationService {
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
     return navigateTo<dynamic>(
       Routes.deliveryNoteScreen,
@@ -1992,7 +1992,7 @@ extension NavigatorStateExtension on _i40.NavigationService {
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
     return navigateTo<dynamic>(
       Routes.listSelfOrderScreen,
@@ -2011,7 +2011,7 @@ extension NavigatorStateExtension on _i40.NavigationService {
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
     return navigateTo<dynamic>(
       Routes.createSelfOrderScreen,
@@ -2029,7 +2029,7 @@ extension NavigatorStateExtension on _i40.NavigationService {
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
     return replaceWith<dynamic>(
       Routes.splashScreen,
@@ -2047,7 +2047,7 @@ extension NavigatorStateExtension on _i40.NavigationService {
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
     return replaceWith<dynamic>(
       Routes.homePage,
@@ -2065,7 +2065,7 @@ extension NavigatorStateExtension on _i40.NavigationService {
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
     return replaceWith<dynamic>(
       Routes.loginViewScreen,
@@ -2083,7 +2083,7 @@ extension NavigatorStateExtension on _i40.NavigationService {
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
     return replaceWith<dynamic>(
       Routes.geolocation,
@@ -2101,7 +2101,7 @@ extension NavigatorStateExtension on _i40.NavigationService {
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
     return replaceWith<dynamic>(
       Routes.locationTracker,
@@ -2119,7 +2119,7 @@ extension NavigatorStateExtension on _i40.NavigationService {
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
     return replaceWith<dynamic>(
       Routes.listOrderScreen,
@@ -2138,7 +2138,7 @@ extension NavigatorStateExtension on _i40.NavigationService {
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
     return replaceWith<dynamic>(
       Routes.addOrderScreen,
@@ -2156,7 +2156,7 @@ extension NavigatorStateExtension on _i40.NavigationService {
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
     return replaceWith<dynamic>(
       Routes.listDistributorOrderScreen,
@@ -2175,7 +2175,7 @@ extension NavigatorStateExtension on _i40.NavigationService {
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
     return replaceWith<dynamic>(
       Routes.addDistributorOrderScreen,
@@ -2196,7 +2196,7 @@ extension NavigatorStateExtension on _i40.NavigationService {
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
     return replaceWith<dynamic>(
       Routes.itemScreen,
@@ -2219,7 +2219,7 @@ extension NavigatorStateExtension on _i40.NavigationService {
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
     return replaceWith<dynamic>(
       Routes.leadListScreen,
@@ -2238,7 +2238,7 @@ extension NavigatorStateExtension on _i40.NavigationService {
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
     return replaceWith<dynamic>(
       Routes.addLeadScreen,
@@ -2257,7 +2257,7 @@ extension NavigatorStateExtension on _i40.NavigationService {
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
     return replaceWith<dynamic>(
       Routes.updateLeadScreen,
@@ -2276,7 +2276,7 @@ extension NavigatorStateExtension on _i40.NavigationService {
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
     return replaceWith<dynamic>(
       Routes.addQuotationView,
@@ -2294,7 +2294,7 @@ extension NavigatorStateExtension on _i40.NavigationService {
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
     return replaceWith<dynamic>(
       Routes.listQuotationScreen,
@@ -2313,7 +2313,7 @@ extension NavigatorStateExtension on _i40.NavigationService {
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
     return replaceWith<dynamic>(
       Routes.quotationItemScreen,
@@ -2331,7 +2331,7 @@ extension NavigatorStateExtension on _i40.NavigationService {
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
     return replaceWith<dynamic>(
       Routes.holidayScreen,
@@ -2349,7 +2349,7 @@ extension NavigatorStateExtension on _i40.NavigationService {
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
     return replaceWith<dynamic>(
       Routes.attendanceScreen,
@@ -2367,7 +2367,7 @@ extension NavigatorStateExtension on _i40.NavigationService {
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
     return replaceWith<dynamic>(
       Routes.expenseScreen,
@@ -2386,7 +2386,7 @@ extension NavigatorStateExtension on _i40.NavigationService {
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
     return replaceWith<dynamic>(
       Routes.addExpenseScreen,
@@ -2404,7 +2404,7 @@ extension NavigatorStateExtension on _i40.NavigationService {
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
     return replaceWith<dynamic>(
       Routes.listLeaveScreen,
@@ -2423,7 +2423,7 @@ extension NavigatorStateExtension on _i40.NavigationService {
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
     return replaceWith<dynamic>(
       Routes.addLeaveScreen,
@@ -2441,7 +2441,7 @@ extension NavigatorStateExtension on _i40.NavigationService {
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
     return replaceWith<dynamic>(
       Routes.profileScreen,
@@ -2459,7 +2459,7 @@ extension NavigatorStateExtension on _i40.NavigationService {
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
     return replaceWith<dynamic>(
       Routes.changePasswordScreen,
@@ -2477,7 +2477,7 @@ extension NavigatorStateExtension on _i40.NavigationService {
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
     return replaceWith<dynamic>(
       Routes.customerList,
@@ -2496,7 +2496,7 @@ extension NavigatorStateExtension on _i40.NavigationService {
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
     return replaceWith<dynamic>(
       Routes.addCustomer,
@@ -2515,7 +2515,7 @@ extension NavigatorStateExtension on _i40.NavigationService {
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
     return replaceWith<dynamic>(
       Routes.updateCustomer,
@@ -2533,7 +2533,7 @@ extension NavigatorStateExtension on _i40.NavigationService {
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
     return replaceWith<dynamic>(
       Routes.visitScreen,
@@ -2552,7 +2552,7 @@ extension NavigatorStateExtension on _i40.NavigationService {
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
     return replaceWith<dynamic>(
       Routes.addVisitScreen,
@@ -2571,7 +2571,7 @@ extension NavigatorStateExtension on _i40.NavigationService {
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
     return replaceWith<dynamic>(
       Routes.updateVisitScreen,
@@ -2590,7 +2590,7 @@ extension NavigatorStateExtension on _i40.NavigationService {
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
     return replaceWith<dynamic>(
       Routes.retailerFormView,
@@ -2608,7 +2608,7 @@ extension NavigatorStateExtension on _i40.NavigationService {
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
     return replaceWith<dynamic>(
       Routes.listDeliveryNoteScreen,
@@ -2627,7 +2627,7 @@ extension NavigatorStateExtension on _i40.NavigationService {
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
     return replaceWith<dynamic>(
       Routes.deliveryNoteScreen,
@@ -2645,7 +2645,7 @@ extension NavigatorStateExtension on _i40.NavigationService {
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
     return replaceWith<dynamic>(
       Routes.listSelfOrderScreen,
@@ -2664,7 +2664,7 @@ extension NavigatorStateExtension on _i40.NavigationService {
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
     return replaceWith<dynamic>(
       Routes.createSelfOrderScreen,

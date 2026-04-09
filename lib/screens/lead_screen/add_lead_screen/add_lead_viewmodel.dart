@@ -281,10 +281,10 @@ class AddLeadViewModel extends BaseViewModel {
   Future<void> onSavePressed(BuildContext context) async {
     if (!formKey.currentState!.validate()) return;
 
-    if (!isEdit && selectedImage == null) {
-      Fluttertoast.showToast(msg: "Photo is required");
-      return;
-    }
+    // if (!isEdit && selectedImage == null) {
+    //   Fluttertoast.showToast(msg: "Photo is required");
+    //   return;
+    // }
 
     setBusy(true);
     try {
@@ -303,11 +303,11 @@ class AddLeadViewModel extends BaseViewModel {
 
       final success = isEdit
           ? await service
-              .updateLead(leadData)
-              .timeout(const Duration(seconds: 25))
+          .updateLead(leadData)
+          .timeout(const Duration(seconds: 25))
           : await service
-              .addLead(leadData, imageFile: selectedImage)
-              .timeout(const Duration(seconds: 25));
+          .addLead(leadData, imageFile: selectedImage)
+          .timeout(const Duration(seconds: 25));
 
       if (success && context.mounted) {
         Navigator.pop(context, true);

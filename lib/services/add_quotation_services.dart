@@ -78,7 +78,7 @@ class AddQuotationServices {
     try {
       var dio = Dio();
       var response = await dio.request(
-        '$baseurl/api/method/mobile.mobile_env.quotation.get_customer_list',
+        '$baseurl/api/method/mobile.mobile_env.quotation.get_customer_list_by_doctype',
         options: Options(
           method: 'GET',
           headers: {'Authorization': await getTocken()},
@@ -279,8 +279,15 @@ class AddQuotationServices {
 
       if (response.statusCode == 200) {
         Map<String, dynamic> jsonData = json.decode(json.encode(response.data));
-        List<QuotationDetailsModel> caneList = List.from(jsonData['data'])
-            .map<QuotationDetailsModel>((data) => QuotationDetailsModel.fromJson(data))
+        var rawData = jsonData['data'];
+
+// FIX: handle both Map and List
+        List<dynamic> dataList =
+        rawData is List ? rawData : [rawData];
+
+        List<QuotationDetailsModel> caneList = dataList
+            .map<QuotationDetailsModel>(
+                (data) => QuotationDetailsModel.fromJson(data))
             .toList();
         // Fluttertoast.showToast(msg: jsonData['message']);
         return caneList;

@@ -86,21 +86,56 @@ class _HomePageState extends State<HomePage> {
           Row(
             children: [
               // Logo (kept your fade-in, but wrapped + sized consistently)
-              SizedBox(
-                height: 40,
-                child: Image.asset(
-                  'assets/images/Logo D CMYK.png',
-                  width: 120,
-                  fit: BoxFit.contain,
-                  frameBuilder:
-                      (context, child, frame, wasSynchronouslyLoaded) {
-                    if (wasSynchronouslyLoaded) return child;
-                    return AnimatedOpacity(
-                      opacity: frame == null ? 0 : 1,
-                      duration: const Duration(milliseconds: 250),
-                      child: child,
-                    );
-                  },
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+
+                    // 👇 TOP ROW
+                    Row(
+                      children: [
+                        Container(
+                          height: 38,
+                          width: 38,
+                          decoration: BoxDecoration(
+                            color: Colors.redAccent.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(
+                            Icons.business,
+                            color: Colors.redAccent,
+                            size: 22,
+                          ),
+                        ),
+
+                        const SizedBox(width: 8),
+
+                        // 👇 TEXT NOW USES FULL WIDTH
+                        Expanded(
+                          child:Text(
+                            model.dashboard.company ?? '',
+                            maxLines: 1,
+                            overflow: TextOverflow.visible, // 🔥 KEY
+                            softWrap: false, // 🔥 IMPORTANT
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold, // 🔥 THIS MAKES IT BOLD
+                            ),
+                          )
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 2),
+
+                    Text(
+                      "Welcome back",
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.grey.shade600,
+                      ),
+                    ),
+                  ],
                 ),
               ),
 
@@ -210,99 +245,181 @@ class _HomePageState extends State<HomePage> {
                     /// Right side button
                     ElevatedButton(
                       onPressed: () async {
+
+                        bool isTrackingEnabled =
+                            model.dashboard.trackingEnabled == true;
+
                         final nextType = model.isCheckedIn ? "OUT" : "IN";
 
                         String? meterReading;
+                        File? photoFile;
+                        Position? position;
 
-                        // ✅ Only require meter reading if tracking is enabled
-                        if (model.dashboard.trackingEnabled == true) {
+                        // =========================
+                        // 🔴 DAY-OUT LOGIC
+                        // =========================
+                        if (model.isCheckedIn) {
+
+                          // 👉 TRACKING OFF → SLIDE SCREEN
+                          if (!isTrackingEnabled) {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => CheckOutScreen(model: model),
+                              ),
+                            );
+                            return;
+                          }
+
+                          // 👉 TRACKING ON → FULL FLOW
+                          // 1️⃣ Meter Reading
                           meterReading = await Navigator.push<String>(
                             context,
                             MaterialPageRoute(
                               fullscreenDialog: true,
-                              builder: (_) =>
-                                  MeterReadingScreen(type: nextType),
+                              builder: (_) => MeterReadingScreen(type: nextType),
                             ),
                           );
 
-                          if (!mounted ||
-                              meterReading == null ||
-                              meterReading.isEmpty) {
-                            _showError(context, "Meter reading required");
+                          if (!mounted || meterReading == null) return;
+
+                          // 2️⃣ Photo
+                          final photoPath = await Navigator.push<String>(
+                            context,
+                            MaterialPageRoute(
+                              fullscreenDialog: true,
+                              builder: (_) => PhotoCaptureScreen(type: nextType),
+                            ),
+                          );
+
+                          if (!mounted || photoPath == null) return;
+                          photoFile = File(photoPath);
+
+                          // 3️⃣ Location
+                          position = await Navigator.push<Position>(
+                            context,
+                            MaterialPageRoute(
+                              fullscreenDialog: true,
+                              builder: (_) => LocationScreen(type: nextType),
+                            ),
+                          );
+
+                          if (!mounted || position == null) {
+                            _showError(context, "Location access failed");
                             return;
                           }
                         }
 
-                        final photoPath = await Navigator.push<String>(
-                          context,
-                          MaterialPageRoute(
-                            fullscreenDialog: true,
-                            builder: (_) => PhotoCaptureScreen(type: nextType),
-                          ),
-                        );
-                        if (!mounted ||
-                            photoPath == null ||
-                            photoPath.isEmpty) {
-                          _showError(context, "Photo capture cancelled");
-                          return;
-                        }
-                        final photoFile = File(photoPath);
+                        // =========================
+                        // 🟢 DAY-IN LOGIC
+                        // =========================
+                        else {
 
-                        final position = await Navigator.push<Position>(
-                          context,
-                          MaterialPageRoute(
-                            fullscreenDialog: true,
-                            builder: (_) => LocationScreen(type: nextType),
-                          ),
-                        );
-                        if (!mounted || position == null) {
-                          _showError(context, "Location access failed");
-                          return;
+                          // 👉 TRACKING ON → FULL FLOW
+                          if (isTrackingEnabled) {
+                            // 1️⃣ Meter Reading
+                            meterReading = await Navigator.push<String>(
+                              context,
+                              MaterialPageRoute(
+                                fullscreenDialog: true,
+                                builder: (_) => MeterReadingScreen(type: nextType),
+                              ),
+                            );
+
+                            if (!mounted || meterReading == null) return;
+
+                            // 2️⃣ Photo
+                            final photoPath = await Navigator.push<String>(
+                              context,
+                              MaterialPageRoute(
+                                fullscreenDialog: true,
+                                builder: (_) => PhotoCaptureScreen(type: nextType),
+                              ),
+                            );
+
+                            if (!mounted || photoPath == null) return;
+                            photoFile = File(photoPath);
+
+                            // 3️⃣ Location
+                            position = await Navigator.push<Position>(
+                              context,
+                              MaterialPageRoute(
+                                fullscreenDialog: true,
+                                builder: (_) => LocationScreen(type: nextType),
+                              ),
+                            );
+
+                            if (!mounted || position == null) {
+                              _showError(context, "Location access failed");
+                              return;
+                            }
+                          }
+
+                          // 👉 TRACKING OFF → DIRECT LOCATION
+                          else {
+                            position = await Geolocator.getCurrentPosition(
+                              desiredAccuracy: LocationAccuracy.high,
+                            );
+                          }
                         }
 
-                        // Processing overlay
+                        // =========================
+                        // PROCESSING SCREEN
+                        // =========================
                         if (!mounted) return;
+
                         showDialog(
                           context: context,
                           barrierDismissible: false,
                           builder: (_) => ProcessingScreen(type: nextType),
                         );
 
+                        // =========================
+                        // API CALL
+                        // =========================
                         final success = await model.employeeLog(
                           nextType,
                           context,
                           photoFile: photoFile,
                           meterReading: meterReading,
-                          position: position,
+                          position: position!,
                         );
 
                         if (!mounted) return;
-                        Navigator.pop(context); // close processing
+                        Navigator.pop(context);
 
+                        // =========================
+                        // RESULT MESSAGE
+                        // =========================
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text(success
                                 ? "Employee $nextType successful"
                                 : "Failed to update log"),
-                            backgroundColor:
-                                success ? Colors.green : Colors.red,
+                            backgroundColor: success ? Colors.green : Colors.red,
                           ),
                         );
 
                         model.notifyListeners();
                       },
+
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.redAccent,
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 18, vertical: 10),
+                          horizontal: 18,
+                          vertical: 10,
+                        ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
+
                       child: Text(
                         model.isCheckedIn ? "Day-Out" : "Day-In",
-                        style:
-                            const TextStyle(color: Colors.white, fontSize: 16),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                        ),
                       ),
                     ),
                   ],
@@ -522,8 +639,11 @@ class _HomePageState extends State<HomePage> {
                       child: _QuickActionCard(
                         icon: Iconsax.activity,
                         label: "Lead",
-                        onTap: () =>
-                            Navigator.pushNamed(context, Routes.leadListScreen),
+                        onTap: () => Navigator.pushNamed(
+                          context,
+                          Routes.leadListScreen,
+                          arguments: const LeadListScreenArguments(),
+                        ),
                       ),
                     ),
                   if (model.isFormAvailableForDocType("Visit"))
@@ -541,9 +661,9 @@ class _HomePageState extends State<HomePage> {
                       padding: const EdgeInsets.only(right: 16.0),
                       child: _QuickActionCard(
                         icon: Iconsax.shopping_cart,
-                        label: "Orders",
+                        label: "Quotation",
                         onTap: () => Navigator.pushNamed(
-                            context, Routes.listOrderScreen),
+                            context, Routes.listQuotationScreen),
                       ),
                     ),
                   if (model.isFormAvailableForDocType("Expense Claim"))
@@ -986,11 +1106,11 @@ class _QuickActionGridState extends State<QuickActionGrid>
           "icon": Iconsax.activity,
           "route": Routes.leadListScreen
         },
-      if (widget.model.isFormAvailableForDocType("Sales Order"))
+      if (widget.model.isFormAvailableForDocType("Quotation"))
         {
-          "label": "Orders",
+          "label": "Quotation",
           "icon": Iconsax.shopping_cart,
-          "route": Routes.listOrderScreen
+          "route": Routes.listQuotationScreen
         },
       // if (widget.model.isFormAvailableForDocType("Delivery Note"))
       //   {
@@ -1351,9 +1471,19 @@ class _CheckInLockScreenState extends State<CheckInLockScreen> {
     });
 
     try {
-      // 1️⃣ Meter reading
+      // 🔥 CHECK TRACKING FIRST
+      bool isTrackingEnabled =
+          widget.model.dashboard.trackingEnabled == true;
+
       String? meterReading;
-      if (widget.model.dashboard.trackingEnabled == true) {
+      File? photoFile;
+      Position? position;
+
+      // =========================
+      // ✅ IF TRACKING ENABLED
+      // =========================
+      if (isTrackingEnabled) {
+        // 1️⃣ Meter reading
         meterReading = await Navigator.push<String>(
           context,
           MaterialPageRoute(
@@ -1362,50 +1492,63 @@ class _CheckInLockScreenState extends State<CheckInLockScreen> {
           ),
         );
 
-        if (!mounted || meterReading == null) {
-          return _reset();
-        }
+        if (!mounted || meterReading == null) return _reset();
+
+        // 2️⃣ Photo
+        final photoPath = await Navigator.push<String>(
+          context,
+          MaterialPageRoute(
+            fullscreenDialog: true,
+            builder: (_) => const PhotoCaptureScreen(type: "IN"),
+          ),
+        );
+
+        if (!mounted || photoPath == null) return _reset();
+        photoFile = File(photoPath);
+
+        // 3️⃣ Location
+        position = await Navigator.push<Position>(
+          context,
+          MaterialPageRoute(
+            fullscreenDialog: true,
+            builder: (_) => const LocationScreen(type: "IN"),
+          ),
+        );
+
+        if (!mounted || position == null) return _reset();
       }
-      // 2️⃣ Photo
-      final photoPath = await Navigator.push<String>(
-        context,
-        MaterialPageRoute(
-          fullscreenDialog: true,
-          builder: (_) => const PhotoCaptureScreen(type: "IN"),
-        ),
-      );
-      if (!mounted || photoPath == null) return _reset();
 
-      // 3️⃣ Location
-      final position = await Navigator.push<Position>(
-        context,
-        MaterialPageRoute(
-          fullscreenDialog: true,
-          builder: (_) => const LocationScreen(type: "IN"),
-        ),
-      );
-      if (!mounted || position == null) return _reset();
+      // =========================
+      // 🚀 IF TRACKING DISABLED
+      // =========================
+      else {
+        // 👉 directly get location silently (no UI)
+        position = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.high,
+        );
 
-      // 4️⃣ Show processing overlay
-      if (mounted) {}
+        // 👉 dummy photo (or skip if backend allows null)
+        photoFile = null; // ⚠️ or handle backend optional
+      }
 
-      // 5️⃣ API call
+      // =========================
+      // API CALL
+      // =========================
       final success = await widget.model.employeeLog(
         "IN",
         context,
-        photoFile: File(photoPath),
+        photoFile: photoFile,
         meterReading: meterReading,
-        position: position,
+        position: position!,
       );
+      print("CHECKIN SUCCESS: $success");
 
       if (!mounted) return;
-
-      // 6️⃣ Hide overlay
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content:
-              Text(success ? "Check-in successful ✅" : "Check-in failed ❌"),
+          Text(success ? "Check-in successful ✅" : "Check-in failed ❌"),
           backgroundColor: success ? Colors.green : Colors.red,
         ),
       );
@@ -1432,6 +1575,188 @@ class _CheckInLockScreenState extends State<CheckInLockScreen> {
     if (mounted) {
       setState(() => _processing = false);
     }
+  }
+}
+
+class CheckOutScreen extends StatefulWidget {
+  final HomeViewModel model;
+
+  const CheckOutScreen({super.key, required this.model});
+
+  @override
+  State<CheckOutScreen> createState() => _CheckOutScreenState();
+}
+
+class _CheckOutScreenState extends State<CheckOutScreen> {
+  bool _processing = false;
+
+  Future<void> _handleCheckOut() async {
+    if (_processing) return;
+
+    setState(() => _processing = true);
+
+    try {
+      bool isTrackingEnabled =
+          widget.model.dashboard.trackingEnabled == true;
+
+      Position? position;
+
+      if (isTrackingEnabled) {
+        position = await Navigator.push<Position>(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const LocationScreen(type: "OUT"),
+          ),
+        );
+
+        if (!mounted) return;
+
+        if (position == null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Location not found")),
+          );
+          return;
+        }
+      } else {
+        position = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.high,
+        );
+      }
+
+      if (position == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Location not found")),
+        );
+        return;
+      }
+
+      final success = await widget.model.employeeLog(
+        "OUT",
+        context,
+        photoFile: null,
+        meterReading: null,
+        position: position!,
+      );
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(success
+              ? "Check-out successful ✅"
+              : "Check-out failed ❌"),
+        ),
+      );
+
+      Navigator.pop(context);
+    } catch (e) {
+      print(e);
+    } finally {
+      if (mounted) setState(() => _processing = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: SafeArea(
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xFFE53935), Color(0xFFEF5350)], // 🔴 red theme
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+            ),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // 🔓 Icon (changed from lock to logout)
+              TweenAnimationBuilder<double>(
+                tween: Tween(begin: 0.85, end: 1),
+                duration: const Duration(milliseconds: 600),
+                curve: Curves.easeOutBack,
+                builder: (context, scale, child) =>
+                    Transform.scale(scale: scale, child: child),
+                child: Container(
+                  padding: const EdgeInsets.all(26),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: LinearGradient(
+                      colors: [
+                        Colors.white.withOpacity(0.28),
+                        Colors.white.withOpacity(0.08),
+                      ],
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.25),
+                        blurRadius: 18,
+                        offset: const Offset(0, 10),
+                      ),
+                    ],
+                  ),
+                  child: const Icon(
+                    Icons.logout_rounded, // 🔥 changed icon
+                    size: 96,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 32),
+
+              const Text(
+                "Ready to Wrap Up?",
+                style: TextStyle(
+                  fontSize: 34,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.6,
+                  color: Colors.white,
+                ),
+              ),
+
+              const SizedBox(height: 8),
+
+              Text(
+                "Slide to check-out and end your workday",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 17,
+                  height: 1.4,
+                  color: Colors.white.withOpacity(0.85),
+                ),
+              ),
+
+              const SizedBox(height: 44),
+
+              // 🔴 SLIDE TO CHECK-OUT
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(36),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Colors.black26,
+                      blurRadius: 8,
+                      offset: Offset(0, 4),
+                    )
+                  ],
+                ),
+                padding: const EdgeInsets.all(4),
+                child: SwipeToConfirm(
+                  processing: _processing,
+                  text: "Slide to Check-Out 🔚", // 🔥 changed text
+                  onConfirm: _handleCheckOut,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 

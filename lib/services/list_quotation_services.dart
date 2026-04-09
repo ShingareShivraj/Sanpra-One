@@ -6,6 +6,9 @@ import 'package:logger/logger.dart';
 import '../constants.dart';
 import '../model/addquotation_model.dart';
 import '../model/quotation_list_model.dart';
+import 'dart:io';
+import 'package:dio/dio.dart';
+import 'package:path_provider/path_provider.dart';
 
 class QuotationServices {
   Future<List<QuotationList>> fetchquotation() async {
@@ -14,7 +17,7 @@ class QuotationServices {
       var dio = Dio();
       var response = await dio.request(
 
-        '$baseurl/api/resource/Quotation?order_by=modified desc&fields=["name","customer_name","transaction_date","grand_total","status","total_qty"]',
+        '$baseurl/api/resource/Quotation?order_by=modified desc&fields=["name","customer_name","transaction_date","grand_total","status","total_qty","contact_mobile"]',
         options: Options(
           method: 'GET',
           headers: {'Authorization': await getTocken()},
@@ -41,6 +44,34 @@ class QuotationServices {
     }
   }
 
+  Future<File> downloadQuotationPDF(String quotationName) async {
+    final baseurl = await geturl();
+
+    final dio = Dio();
+
+    final dir = await getTemporaryDirectory();
+    final filePath = "${dir.path}/$quotationName.pdf";
+
+    final url =
+        "$baseurl/api/method/frappe.utils.print_format.download_pdf"
+        "?doctype=Quotation"
+        "&name=$quotationName"
+        "&format=Standard";
+
+    await dio.download(
+      url,
+      filePath,
+      options: Options(
+        headers: {
+          "Authorization": await getTocken(),
+        },
+        responseType: ResponseType.bytes,
+      ),
+    );
+
+    return File(filePath);
+  }
+
 
   Future<List<QuotationList>> fetchfilterquotation(String quotaionto,String customerName) async {
     baseurl = await geturl();
@@ -49,7 +80,7 @@ class QuotationServices {
 
       // Construct the base URL
       String apiUrl =
-          '$baseurl/api/resource/Quotation?order_by=modified desc&fields=["name","customer_name","transaction_date","grand_total","status","total_qty"]';
+          '$baseurl/api/resource/Quotation?order_by=modified desc&fields=["name","customer_name","transaction_date","grand_total","status","total_qty","contact_mobile"]';
 
       if(customerName.isNotEmpty && quotaionto.isNotEmpty){
         apiUrl += '&filters=[["customer_name", "=", "$customerName"],["quotation_to", "=", "$quotaionto"]]';

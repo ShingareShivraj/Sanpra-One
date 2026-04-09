@@ -95,6 +95,12 @@ class ListQuotationScreen extends StatelessWidget {
                                       ),
                                     ),
                                   ),
+                                  IconButton(
+                                    icon: const Icon(Icons.share),
+                                    onPressed: () {
+                                      model.shareQuotation(item);
+                                    },
+                                  ),
 
                                   Container(
                                     padding: const EdgeInsets.symmetric(

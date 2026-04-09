@@ -9,6 +9,7 @@ class QuotationList {
   double? grandTotal;
   String? status;
   double? totalQty;
+  String? contactMobile;
   QuotationList({
 
   this.name,
@@ -26,8 +27,8 @@ class QuotationList {
 
   this.grandTotal,
 
-  this.status
-
+  this.status,
+  this.contactMobile
 
 
 });
@@ -40,6 +41,7 @@ class QuotationList {
   grandTotal = json['grand_total'];
   status = json['status'];
   totalQty = json['total_qty'];
+  contactMobile = json["contact_mobile"];
   }
 
 
@@ -53,6 +55,7 @@ class QuotationList {
     data['grand_total'] = grandTotal;
     data['status'] = status;
     data['total_qty'] = totalQty;
+    data['contact_mobile']=contactMobile;
     return data;
   }
 
