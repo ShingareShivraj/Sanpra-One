@@ -92,4 +92,38 @@ class LoginServices {
       return false;
     }
   }
+
+  Future<void> saveFCMToken(String url, String? token, String deviceId) async {
+    final prefs = await SharedPreferences.getInstance();
+
+    var apiKey = prefs.getString("api_key");
+    var apiSecret = prefs.getString("api_secret");
+    var user = prefs.getString("user");
+
+    var dio = Dio();
+
+    try {
+      print("========== API DEBUG ==========");
+      print("SENDING TOKEN: $token");
+      print("DEVICE ID: $deviceId");
+
+      var response = await dio.post(
+        '$url/api/method/mobile.mobile_env.app.save_fcm_token',
+        options: Options(
+          headers: {
+            "Authorization": "token $apiKey:$apiSecret",
+          },
+        ),
+        data: {
+          "token": token,
+          "device_id": deviceId,
+          "user": user,
+        },
+      );
+
+      print("✅ API RESPONSE: ${response.data}");
+    } catch (e) {
+      print("❌ Error saving FCM token: $e");
+    }
+  }
 }

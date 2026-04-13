@@ -1,5 +1,4 @@
-import 'dart:async';
-
+import 'package:firebase_core/firebase_core.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -8,17 +7,31 @@ import 'package:geolocation/screens/splash_screen/splash_screen.dart';
 import 'package:geolocation/themes/color_schemes.g.dart';
 import 'package:geolocation/themes/custom_color.g.dart';
 import 'package:stacked_services/stacked_services.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 import 'router.router.dart';
+import 'services/notification_service.dart'; // 🔥 ADD THIS
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   setupLocator();
+
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
+
+  await Firebase.initializeApp();
+
+  // 🔥 ONLY THIS LINE handles all notifications
+  await NotificationService().init();
+  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+
   runApp(const MyApp());
+}
+@pragma('vm:entry-point')
+Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  print("📩 Background message: ${message.data}");
 }
 
 class MyApp extends StatelessWidget {

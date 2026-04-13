@@ -52,14 +52,14 @@ class AddVisitModel {
     name = json['name'];
     owner = json['owner'];
     modifiedBy = json['modified_by'];
-    docstatus = json['docstatus'];
-    idx = json['idx'];
+    docstatus = toInt(json['docstatus']);
+    idx = toInt(json['idx']);
     visitTo = json['visit_to'];
     visitor = json['visitor'];
     visitorsName = json['visitors_name'];
     time = json['time'];
     date = json['date'];
-    duration = json['duration'];
+    duration = toDouble(json['duration']);
     attachmentUrl = json['attachment_url'];
     description = json['description'];
     visitInLatitude = json['visit_in_latitude'];
@@ -101,4 +101,12 @@ class AddVisitModel {
     data['user'] = this.user;
     return data;
   }
+}
+double? toDouble(dynamic value) {
+  if (value == null) return null;
+  return (value as num).toDouble();
+}
+int? toInt(dynamic value) {
+  if (value == null) return null;
+  return (value as num).toInt();
 }

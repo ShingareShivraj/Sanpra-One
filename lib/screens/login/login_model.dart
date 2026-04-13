@@ -4,7 +4,8 @@ import 'package:geolocation/constants.dart';
 import 'package:geolocation/services/login_services.dart';
 import 'package:logger/logger.dart';
 import 'package:stacked/stacked.dart';
-
+import 'package:geolocation/services/notification_service.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import '../../router.router.dart';
 
 class LoginViewModel extends BaseViewModel {
@@ -72,6 +73,27 @@ class LoginViewModel extends BaseViewModel {
       await LoginServices().login(baseUrl, username, password, androidId);
 
       if (loginSuccess) {
+
+        /// 🔥 STEP 1: Ask permission FIRST
+        await FirebaseMessaging.instance.requestPermission();
+
+        /// 🔥 STEP 2: Get token
+        String? fcmToken = await NotificationService.getFCMToken();
+
+        /// 🔥 DEBUG
+        print("========== FCM DEBUG ==========");
+        print("FCM TOKEN GENERATED: $fcmToken");
+        print("ANDROID ID: $androidId");
+
+        /// ❌ STOP if token is null
+        if (fcmToken == null) {
+          print("❌ TOKEN IS NULL - NOT SENDING TO BACKEND");
+          return;
+        }
+
+        /// 🔥 STEP 3: Send to backend
+        await LoginServices().saveFCMToken(baseUrl, fcmToken, androidId);
+
         if (context.mounted) {
           Navigator.popAndPushNamed(context, Routes.homePage);
         }

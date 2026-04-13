@@ -5,7 +5,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:logger/logger.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
+import 'package:firebase_messaging/firebase_messaging.dart';
 import '../../constants.dart';
 import '../../router.router.dart';
 
@@ -63,6 +63,8 @@ class _SplashScreenState extends State<SplashScreen>
     _setupAnimations();
     _startAnimations();
     WidgetsBinding.instance.addPostFrameCallback((_) => _startFlow());
+    requestNotificationPermission();
+    getToken();
   }
 
   void _setupAnimations() {
@@ -195,6 +197,23 @@ class _SplashScreenState extends State<SplashScreen>
     }
 
     return status.isGranted;
+  }
+
+  Future<void> requestNotificationPermission() async {
+    FirebaseMessaging messaging = FirebaseMessaging.instance;
+
+    NotificationSettings settings = await messaging.requestPermission(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
+
+    print('Permission: ${settings.authorizationStatus}');
+  }
+
+  Future<void> getToken() async {
+    String? token = await FirebaseMessaging.instance.getToken();
+    print("FCM TOKEN: $token");
   }
 
   Future<void> _performAsyncOperations() async {
