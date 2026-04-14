@@ -5,10 +5,13 @@ import 'dart:ui';
 import 'package:dio/dio.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:logger/logger.dart';
+import 'package:provider/provider.dart';
 
 import '../constants.dart';
 import '../model/add_visit_model.dart';
 import '../screens/visit_screens/add_visit/add_visit_viewmodel.dart';
+
+import '../../app_state.dart';
 
 class AddVisitServices {
   AddVisitServices() {

@@ -8,6 +8,8 @@ import 'package:geolocation/themes/color_schemes.g.dart';
 import 'package:geolocation/themes/custom_color.g.dart';
 import 'package:stacked_services/stacked_services.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:provider/provider.dart';
+import 'app_state.dart';
 
 import 'router.router.dart';
 import 'services/notification_service.dart'; // 🔥 ADD THIS
@@ -27,7 +29,12 @@ Future<void> main() async {
   await NotificationService().init();
   FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
 
-  runApp(const MyApp());
+  runApp(
+    ChangeNotifierProvider(
+      create: (_) => AppState(),
+      child: const MyApp(),
+    ),
+  );
 }
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {

@@ -18,6 +18,8 @@ import '../../model/emp_data.dart';
 import '../../router.router.dart';
 import '../../services/geolocation_services.dart';
 import '../../services/home_services.dart';
+import 'package:flutter_background_service/flutter_background_service.dart';
+import '../tracking_screen/background_service.dart';
 
 class HomeViewModel extends BaseViewModel {
   final HomeServices _service = HomeServices();
@@ -277,6 +279,26 @@ class HomeViewModel extends BaseViewModel {
       );
 
       if (!success) return false;
+
+// ✅ ADD THIS BLOCK HERE
+      final prefs = await SharedPreferences.getInstance();
+
+      if (logType == "IN") {
+        // ✅ CHECK-IN → start tracking
+        await prefs.setBool("is_checked_in", true);
+
+        await initializeService(); // 🔥 START SERVICE
+
+        print("✅ CHECK-IN → Tracking Started");
+      } else {
+        // ❌ CHECK-OUT → stop tracking
+        await prefs.setBool("is_checked_in", false);
+
+        final service = FlutterBackgroundService();
+        service.invoke("stopService");
+
+        print("❌ CHECK-OUT → Tracking Stopped");
+      }
 
       _commit(() {
         isCheckedIn = logType == "IN";

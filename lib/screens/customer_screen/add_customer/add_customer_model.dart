@@ -18,6 +18,8 @@ class AddCustomerViewModel extends BaseViewModel {
     "Proprietorship",
     "Partnership"
   ];
+  List<String> salesPersonList = [];
+  String? selectedSalesPerson;
 
   List<String> gstCategory = [
     "Registered Regular",
@@ -39,6 +41,7 @@ class AddCustomerViewModel extends BaseViewModel {
 
   initialise(BuildContext context, String customerId) async {
     setBusy(true);
+    salesPersonList = await AddCustomerServices().fetchSalesPerson();
     groupList = await AddCustomerServices().fetchCustomerGroup();
     territoryList = await AddCustomerServices().fetchTerritory();
     customerData.gstCategory = "Unregistered";
@@ -59,6 +62,10 @@ class AddCustomerViewModel extends BaseViewModel {
 
     setBusy(false);
   }
+  void setSalesPerson(String? value) {
+    selectedSalesPerson = value;
+    notifyListeners();
+  }
 
   void onSavePressed(BuildContext context) async {
     if (billing.country == null && shipping.country == null) {
@@ -71,7 +78,21 @@ class AddCustomerViewModel extends BaseViewModel {
     }
     setBusy(true);
 
+    if (selectedSalesPerson == null) {
+      Fluttertoast.showToast(msg: "Please select Sales Person");
+      return;
+    }
+
     if (formKey.currentState!.validate()) {
+      customerData.salesTeam = [
+        {
+          "sales_person": selectedSalesPerson,
+          "allocated_percentage": 100
+        }
+      ];
+
+
+
       customerData.billing = billing;
       customerData.shipping = shipping;
       Logger().i(customerData.toJson());

@@ -2,7 +2,7 @@ import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocation/widgets/full_screen_loader.dart';
 import 'package:stacked/stacked.dart';
-
+import 'package:geolocation/screens/customer_screen/add_customer/add_customer_view.dart';
 import 'customer_list_viewmodel.dart';
 
 class CustomerList extends StatefulWidget {
@@ -26,6 +26,19 @@ class _CustomerListState extends State<CustomerList> {
           title: const Text("Customer Details"),
           centerTitle: true,
           elevation: 0,
+        ),
+        floatingActionButton: FloatingActionButton(
+          onPressed: () async {
+            await Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => AddCustomer(id: ""),
+              ),
+            );
+            model.refresh();
+          },
+          backgroundColor: Colors.blue,
+          child: const Icon(Icons.add),
         ),
         body: fullScreenLoader(
           loader: model.isBusy,

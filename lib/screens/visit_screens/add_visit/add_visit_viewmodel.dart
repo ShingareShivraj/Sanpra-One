@@ -12,7 +12,8 @@ import 'package:stacked/stacked.dart';
 import 'package:image/image.dart' as img;
 import 'package:path_provider/path_provider.dart';
 import '../../../services/add_visit_services.dart';
-
+import 'package:provider/provider.dart';
+import '../../../app_state.dart';
 class AddVisitViewModel extends BaseViewModel {
   // ================= STATE =================
   int currentStep = 0;
@@ -186,48 +187,61 @@ class AddVisitViewModel extends BaseViewModel {
   }
 
   Future<void> saveVisitStep(bool isVisitIn, BuildContext context) async {
-    // ✅ VISIT OUT: do NOT keep busy while opening camera
+
     if (!isVisitIn) {
       final ok = await _ensureLocationReadyDirect();
       if (!ok) return;
+
       final positionFuture = _getBestPositionFast();
-
-      // ✅ Camera (no loader)
-      final photo = await _picker.pickImage(
-        source: ImageSource.camera,
-        imageQuality: 60,
-        maxWidth: 1280,
-        maxHeight: 720,
-      );
-
-      if (photo == null) {
-        Fluttertoast.showToast(msg: "Photo is required to complete visit");
-        return;
-      }
-
       final pos = await positionFuture;
+
       if (pos == null) {
         Fluttertoast.showToast(msg: "Unable to get location. Try again.");
         return;
       }
 
-      // ✅ Upload phase (loader + progress)
+      // 🔥 GET GLOBAL VALUE
+      final trackingEnabled =
+          Provider.of<AppState>(context, listen: false).trackingEnabled;
+
+      File? imageFile;
+
+      // 🔥 CONDITION BASED ON BACKEND FLAG
+      if (trackingEnabled) {
+        final photo = await _picker.pickImage(
+          source: ImageSource.camera,
+          imageQuality: 60,
+          maxWidth: 1280,
+          maxHeight: 720,
+        );
+
+        if (photo == null) {
+          Fluttertoast.showToast(msg: "Photo is required");
+          return;
+        }
+
+        // OPTIONAL: Add location label
+        imageFile = await addLocationLabel(
+          File(photo.path),
+          pos.latitude,
+          pos.longitude,
+        );
+      } else {
+        // ❌ No photo required
+        imageFile = null;
+      }
+
+      // 🔥 UPLOAD / SAVE VISIT
       setBusy(true);
       uploading = true;
       uploadProgress = 0.0;
       notifyListeners();
 
       try {
-        File labeledImage = await addLocationLabel(
-          File(photo.path),
-          pos.latitude,
-          pos.longitude,
-        );
-
         await _saveVisitOutUpload(
           pos.latitude,
           pos.longitude,
-          labeledImage,
+          imageFile, // can be null
           context,
         );
       } on TimeoutException {
@@ -237,10 +251,11 @@ class AddVisitViewModel extends BaseViewModel {
         setBusy(false);
         notifyListeners();
       }
+
       return;
     }
 
-    // ✅ VISIT IN
+    // ✅ VISIT IN (unchanged)
     setBusy(true);
     try {
       final ok = await _ensureLocationReadyDirect();
@@ -327,7 +342,7 @@ class AddVisitViewModel extends BaseViewModel {
   Future<void> _saveVisitOutUpload(
     double lat,
     double lng,
-    File imageFile,
+    File? imageFile,
     BuildContext context,
   ) async {
     outImage = imageFile;

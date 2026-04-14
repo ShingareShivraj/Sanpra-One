@@ -8,7 +8,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import '../../constants.dart';
 import '../../router.router.dart';
-
+import 'package:provider/provider.dart';
+import '../../app_state.dart';
+import '../../services/home_services.dart';
 // ─── Blue Accent Palette (matches your CustomColors) ───────────────────────
 const _blue = Color(0xFF448AFF);        // sourceCustomcolor1 / blueAccent
 const _blueDark = Color(0xFF0065C2);    // customcolor1
@@ -232,6 +234,15 @@ class _SplashScreenState extends State<SplashScreen>
     final ok = await _ensureLocationGateAndAutoOpenSettings();
     if (!ok) return;
     await _performAsyncOperations();
+
+    final dashboard = await HomeServices().dashboard();
+
+    if (dashboard != null) {
+      Provider.of<AppState>(context, listen: false)
+          .setTracking(dashboard.trackingEnabled ?? false);
+
+      print("Tracking Enabled: ${dashboard.trackingEnabled}");
+    }
     if (!mounted) return;
     if (_isLoggedIn) {
       Navigator.popAndPushNamed(context, Routes.homePage);

@@ -21,9 +21,15 @@ bool streamStarted = false;
 /// =======================================================
 Future<void> initializeService() async {
   final service = FlutterBackgroundService();
+  final prefs = await SharedPreferences.getInstance();
+  bool isCheckedIn = prefs.getBool("is_checked_in") ?? false;
+
+  if (!isCheckedIn) {
+    print("❌ Not checked-in → service will NOT start");
+    return;
+  }
 
   bool isRunning = await service.isRunning();
-
   if (isRunning) {
     print("Service already running → restart safe");
 
@@ -56,6 +62,16 @@ Future<void> initializeService() async {
 /// =======================================================
 @pragma('vm:entry-point')
 void onStart(ServiceInstance service) async {
+
+  final prefs = await SharedPreferences.getInstance();
+  bool isCheckedIn = prefs.getBool("is_checked_in") ?? false;
+
+  if (!isCheckedIn) {
+    print("❌ Service started but user not checked-in → stopping");
+    service.stopSelf();
+    return;
+  }
+
   try {
     if (service is AndroidServiceInstance) {
       service.setAsForegroundService();
@@ -116,7 +132,7 @@ void onStart(ServiceInstance service) async {
     streamRestartTimer?.cancel();
 
     streamRestartTimer = Timer.periodic(
-      const Duration(seconds: 30),
+      const Duration(minutes: 2),
       (timer) {
         positionStream?.cancel();
         streamStarted = false;
@@ -156,7 +172,7 @@ void startLocationStream(
   positionStream = Geolocator.getPositionStream(
     locationSettings: const LocationSettings(
       accuracy: LocationAccuracy.bestForNavigation,
-      distanceFilter: 10, // update only when moved 5m
+      distanceFilter: 20, // update only when moved 5m
     ),
   ).listen((Position position) async {
     await handleLocationUpdate(

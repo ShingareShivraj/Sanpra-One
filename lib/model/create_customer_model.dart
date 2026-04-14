@@ -11,6 +11,7 @@ class CreateCustomer {
   String? contactId;
   Billing? billing;
   Shipping? shipping;
+  List<Map<String, dynamic>>? salesTeam;
 
   CreateCustomer(
       {this.name,
@@ -24,7 +25,8 @@ class CreateCustomer {
         this.mobileNo,
         this.contactId,
         this.billing,
-        this.shipping});
+        this.shipping,
+        this.salesTeam});
 
   CreateCustomer.fromJson(Map<String, dynamic> json) {
     name = json['name'];
@@ -42,11 +44,14 @@ class CreateCustomer {
     shipping = json['shipping'] != null
         ? new Shipping.fromJson(json['shipping'])
         : null;
+
   }
 
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = new Map<String, dynamic>();
-    data['name'] = this.name;
+    if (name != null && name!.isNotEmpty) {
+      data['name'] = name;
+    }
     data['customer_name'] = this.customerName;
     data['customer_type'] = this.customerType;
     data['customer_group'] = this.customerGroup;
@@ -55,12 +60,18 @@ class CreateCustomer {
     data['gstin'] = this.gstin;
     data['email_id'] = this.emailId;
     data['mobile_no'] = this.mobileNo;
-    data['contact_id'] = this.contactId;
-    if (this.billing != null) {
-      data['billing'] = this.billing!.toJson();
+    if (contactId != null && contactId!.isNotEmpty) {
+      data['contact_id'] = contactId;
     }
-    if (this.shipping != null) {
-      data['shipping'] = this.shipping!.toJson();
+    if (billing != null && billing!.addressLine1 != null) {
+      data['billing'] = billing!.toJson();
+    }
+
+    if (shipping != null && shipping!.addressLine1 != null) {
+      data['shipping'] = shipping!.toJson();
+    }
+    if (salesTeam != null) {
+      data['sales_team'] = salesTeam;
     }
     return data;
   }
@@ -95,14 +106,19 @@ class Billing {
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
-    data['billing_id'] = this.billingId;
-    data['address_line1'] = this.addressLine1;
-    data['address_line2'] = this.addressLine2;
-    data['city'] = this.city;
-    data['state'] = this.state;
-    data['pincode'] = this.pincode;
-    data['country'] = this.country;
+    final Map<String, dynamic> data = {};
+
+    if (billingId != null) {
+      data['billing_id'] = billingId;
+    }
+
+    data['address_line1'] = addressLine1;
+    data['address_line2'] = addressLine2;
+    data['city'] = city;
+    data['state'] = state;
+    data['pincode'] = pincode;
+    data['country'] = country;
+
     return data;
   }
 }
@@ -136,14 +152,19 @@ class Shipping {
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
-    data['shipping_id'] = this.shippingId;
-    data['address_line1'] = this.addressLine1;
-    data['address_line2'] = this.addressLine2;
-    data['city'] = this.city;
-    data['state'] = this.state;
-    data['pincode'] = this.pincode;
-    data['country'] = this.country;
+    final Map<String, dynamic> data = {};
+
+    if (shippingId != null) {
+      data['shipping_id'] = shippingId;
+    }
+
+    data['address_line1'] = addressLine1;
+    data['address_line2'] = addressLine2;
+    data['city'] = city;
+    data['state'] = state;
+    data['pincode'] = pincode;
+    data['country'] = country;
+
     return data;
   }
 }

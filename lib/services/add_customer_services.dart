@@ -39,6 +39,12 @@ class AddCustomerServices {
   // COMMON ERROR HANDLER
   // ----------------------------
   void _handleDioError(DioException e) {
+    print("===== API ERROR START =====");
+    print("STATUS CODE: ${e.response?.statusCode}");
+    print("FULL RESPONSE: ${e.response?.data}");
+    print("MESSAGE: ${e.message}");
+    print("===== API ERROR END =====");
+
     final message = e.response?.data?["message"] ??
         e.response?.data?["exception"] ??
         e.message ??
@@ -113,6 +119,8 @@ class AddCustomerServices {
   Future<bool> createCustomer(CreateCustomer customer) async {
     try {
       final dio = await _getDio();
+      print("FINAL JSON => ${customer.toJson()}"); // ✅ ADD THIS
+
 
       final res = await dio.post(
         '/api/method/mobile.mobile_env.customer.create_customer',
@@ -151,6 +159,28 @@ class AddCustomerServices {
     } on DioException catch (e) {
       _handleDioError(e);
       return null;
+    }
+  }
+
+  //=========================== get sales person========================
+
+  Future<List<String>> fetchSalesPerson() async {
+    try {
+      final dio = await _getDio();
+
+      final res = await dio.get(
+        '/api/resource/Sales Person',
+        queryParameters: {
+          "limit_page_length": 999,
+        },
+      );
+
+      return (res.data["data"] as List)
+          .map((e) => e["name"].toString())
+          .toList();
+    } on DioException catch (e) {
+      _handleDioError(e);
+      return [];
     }
   }
 

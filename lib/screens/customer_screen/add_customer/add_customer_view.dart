@@ -63,6 +63,21 @@ class _AddCustomerState extends State<AddCustomer> {
                               labelText: 'Customer Group',
                               validator: model.validateGroup,
                             ),
+                            const SizedBox(height: 15),
+
+                            CustomDropdownButton2(
+                              value: model.selectedSalesPerson,
+                              items: model.salesPersonList,
+                              hintText: 'Select Sales Person',
+                              onChanged: model.setSalesPerson,
+                              labelText: 'Sales Person',
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Please select Sales Person';
+                                }
+                                return null;
+                              },
+                            ),
                             const SizedBox(
                               height: 5,
                             ),

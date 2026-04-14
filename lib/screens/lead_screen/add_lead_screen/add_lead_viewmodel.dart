@@ -12,6 +12,8 @@ import 'package:image/image.dart' as img;
 import '../../../model/add_lead_model.dart';
 import '../../../model/lead_details_model.dart';
 import '../../../services/add_lead_services.dart';
+import 'package:provider/provider.dart';
+import '../../../app_state.dart';
 
 class AddLeadViewModel extends BaseViewModel {
   // ───────────────────────────────────────── Controllers ─────────────────────────────────────────
@@ -281,23 +283,46 @@ class AddLeadViewModel extends BaseViewModel {
   Future<void> onSavePressed(BuildContext context) async {
     if (!formKey.currentState!.validate()) return;
 
-    // if (!isEdit && selectedImage == null) {
-    //   Fluttertoast.showToast(msg: "Photo is required");
-    //   return;
-    // }
+    final trackingEnabled =
+        Provider.of<AppState>(context, listen: false).trackingEnabled;
 
-    setBusy(true);
     try {
       _syncControllersToModel();
       leadData.notes = notes;
 
       if (!isEdit) {
-        // ✅ MUST be current location (fresh)
         final pos = await _getCurrentLocationRequired();
+
         leadData
           ..latitude = pos.latitude.toString()
           ..longitude = pos.longitude.toString();
+
+        // ✅ CAMERA LOGIC
+        if (trackingEnabled && selectedImage == null) {
+          final picked = await ImagePicker().pickImage(
+            source: ImageSource.camera,
+            imageQuality: 60,
+            maxWidth: 1280,
+            maxHeight: 1280,
+          );
+
+          if (picked == null) {
+            Fluttertoast.showToast(msg: "Photo is required");
+            return;
+          }
+
+          File original = File(picked.path);
+
+          selectedImage = await addLocationLabel(
+            original,
+            pos.latitude,
+            pos.longitude,
+          );
+        }
       }
+
+      // ✅ LOADER AFTER CAMERA
+      setBusy(true);
 
       final service = AddLeadServices();
 
